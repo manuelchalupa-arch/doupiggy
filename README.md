@@ -1,4 +1,4 @@
-# DouPiggy — proyecto completo (lógica + diseño visual + assets)
+# DuoPiggy — proyecto completo (lógica + diseño visual + assets)
 
 App de gastos compartidos en pesos argentinos, React + Firebase, offline-first,
 con identidad visual de dibujos animados de los años 70 y mascota propia (el
