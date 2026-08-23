@@ -1,8 +1,8 @@
 // components/CrearGrupoScreen.jsx
 // Se muestra cuando el usuario ya inició sesión pero todavía no es miembro
-// de ningún grupo (típicamente: primer login). Una vez creado el grupo,
-// la suscripción de groupService.suscribirseAGruposDeUsuario en App.jsx lo
-// detecta sola y pasa directo a AppShell — no hace falta redirigir a mano.
+// de ningún grupo (típicamente: primer login). Tras crear el grupo, NO pasa
+// directo a AppShell: llama a onCreado(grupoId) para que App.jsx muestre
+// primero la pantalla de invitar, y recién después pasa a AppShell.
 
 import { useState } from "react";
 import { crearGrupo } from "../services/groupService";
@@ -12,8 +12,9 @@ import { brandingAssets } from "../assets";
  * @param {object} props
  * @param {string} props.uidActual
  * @param {object} props.usuarioAuth - objeto de Firebase Auth (para nombre/foto)
+ * @param {(grupoId: string) => void} props.onCreado
  */
-export default function CrearGrupoScreen({ uidActual, usuarioAuth }) {
+export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
   const [nombre, setNombre] = useState("");
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState(null);
@@ -24,15 +25,13 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth }) {
     setError(null);
     setCreando(true);
     try {
-      await crearGrupo({
+      const grupoId = await crearGrupo({
         nombre: nombre.trim(),
         creadoPor: uidActual,
         nombreCreador: usuarioAuth?.displayName ?? "Vos",
         fotoCreador: usuarioAuth?.photoURL ?? null,
       });
-      // No hace falta hacer nada más acá: en cuanto Firestore confirma la
-      // escritura, la suscripción en tiempo real de App.jsx actualiza la
-      // lista de grupos y la app pasa sola a AppShell.
+      onCreado(grupoId);
     } catch (err) {
       setError(err.message);
       setCreando(false);
