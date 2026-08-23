@@ -63,12 +63,28 @@ export function suscribirseAGrupo(grupoId, callback) {
  * Usa `miembros` (array-contains) en vez de `usuarios.gruposIds` para que
  * quede validado también por las reglas de seguridad al leer.
  */
-export function suscribirseAGruposDeUsuario(uid, callback) {
+/**
+ * Suscripción a todos los grupos donde el usuario es miembro.
+ * Usa `miembros` (array-contains) en vez de `usuarios.gruposIds` para que
+ * quede validado también por las reglas de seguridad al leer.
+ *
+ * @param {(error: Error) => void} [onError] - se dispara si Firestore
+ * rechaza la suscripción (típicamente: reglas de seguridad sin publicar).
+ * Sin esto, un error de permisos queda "colgado" en silencio para siempre.
+ */
+export function suscribirseAGruposDeUsuario(uid, callback, onError) {
   const q = query(collection(db, "grupos"), where("miembros", "array-contains", uid));
-  return onSnapshot(q, (snapshot) => {
-    const grupos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(grupos);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const grupos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(grupos);
+    },
+    (error) => {
+      console.error("Error al suscribirse a los grupos del usuario:", error);
+      onError?.(error);
+    }
+  );
 }
 
 export async function renombrarGrupo(grupoId, nuevoNombre) {
