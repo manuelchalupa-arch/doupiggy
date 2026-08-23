@@ -10,6 +10,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import SplashScreen from "./components/SplashScreen";
 import AppShell from "./components/AppShell";
 import CrearGrupoScreen from "./components/CrearGrupoScreen";
+import InvitarTrasCrear from "./components/InvitarTrasCrear";
 import { useAuthState } from "./hooks/useAuthState";
 import { suscribirseAGruposDeUsuario } from "./services/groupService";
 import { iniciarSesionConGoogle } from "./services/authService";
@@ -21,6 +22,9 @@ export default function App() {
   const [cargandoGrupos, setCargandoGrupos] = useState(true);
   const [grupoSeleccionadoId, setGrupoSeleccionadoId] = useState(null);
   const [errorGrupos, setErrorGrupos] = useState(null);
+  // Grupo recién creado que todavía no pasó por la pantalla de invitar.
+  // Mientras tenga un valor, tiene prioridad sobre AppShell.
+  const [grupoParaInvitarId, setGrupoParaInvitarId] = useState(null);
 
   useEffect(() => {
     if (!estaAutenticado) {
@@ -64,8 +68,21 @@ export default function App() {
         <PantallaError error={errorGrupos} />
       ) : cargandoGrupos ? (
         <PantallaCarga texto="Buscando tus grupos..." />
+      ) : grupoParaInvitarId ? (
+        <InvitarTrasCrear
+          grupoId={grupoParaInvitarId}
+          uidActual={usuario.uid}
+          onContinuar={() => {
+            setGrupoSeleccionadoId(grupoParaInvitarId);
+            setGrupoParaInvitarId(null);
+          }}
+        />
       ) : grupos.length === 0 ? (
-        <CrearGrupoScreen uidActual={usuario.uid} usuarioAuth={usuario} />
+        <CrearGrupoScreen
+          uidActual={usuario.uid}
+          usuarioAuth={usuario}
+          onCreado={setGrupoParaInvitarId}
+        />
       ) : (
         <AppShell
           grupoId={grupoSeleccionado.id}
