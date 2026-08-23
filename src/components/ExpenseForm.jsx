@@ -11,12 +11,7 @@ import {
 } from "../services/expenseService";
 import { useExpenses } from "../hooks/useExpenses";
 import { backgroundAssets, iconAssets } from "../assets";
-
-const formatoARS = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
+import { formatoARS } from "../utils/format";
 
 /**
  * @param {object} props
@@ -172,7 +167,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
                 aria-label="Borrar gasto"
                 onClick={() => manejarBorrado(g.id)}
               >
-                <img src={iconAssets.trash} alt="" style={{ width: 14, height: 14 }} />
+                <img src={iconAssets.trash} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
               </button>
             </div>
           ))}

@@ -5,12 +5,7 @@
 import { useState } from "react";
 import { crearPrestamo, pagarCuota, eliminarPrestamo } from "../services/loanService";
 import { iconAssets } from "../assets";
-
-const formatoARS = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
+import { formatoARS } from "../utils/format";
 
 /**
  * @param {object} props
@@ -156,7 +151,7 @@ export default function LoanManager({ grupoId, uidActual, miembros, prestamos })
                 aria-label="Borrar préstamo"
                 onClick={() => eliminarPrestamo(grupoId, p.id)}
               >
-                <img src={iconAssets.trash} alt="" style={{ width: 14, height: 14 }} />
+                <img src={iconAssets.trash} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
               </button>
             </p>
             <p style={{ margin: "2px 0 8px", fontSize: 12, color: "var(--burnt)", fontWeight: 600 }}>

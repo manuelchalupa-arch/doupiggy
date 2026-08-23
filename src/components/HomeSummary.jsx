@@ -29,11 +29,18 @@ const DATOS_ZONA = {
   "le-deben-mucho": { detalle: "Te deben bastante", offsetX: 60, angulo: 14 },
 };
 
-const formatoARS = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
+import { formatoARS } from "../utils/format";
+
+// Geometría compartida entre los sprites y la soga: antes eran números
+// mágicos repetidos (150, 6, 92...) sin relación explícita entre sí, lo que
+// hacía que la flecha quedara desalineada de las manos de los chanchitos
+// apenas cambiaba el tamaño real de un sprite. Ahora la posición vertical
+// de la soga se calcula a partir de estas mismas constantes.
+const SPRITE_ANCHO = 118;
+const SPRITE_ALTO = 150;
+const SPRITE_BOTTOM = 6;
+const SOGA_ALTO_RELATIVO = 0.58; // 0 = base del sprite, 1 = punta de la cabeza
+const SOGA_TOP = SPRITE_BOTTOM + SPRITE_ALTO * (1 - SOGA_ALTO_RELATIVO);
 
 /**
  * @param {object} props
@@ -105,13 +112,27 @@ function CuerdaAnimada({ offsetX, angulo }) {
         src={spriteAssets.pigBoy}
         alt="Chanchito tironeando desde la izquierda"
         className="pig-boy-sprite"
-        style={{ position: "absolute", left: 4, bottom: 6, height: 150, width: "auto" }}
+        style={{
+          position: "absolute",
+          left: 4,
+          bottom: SPRITE_BOTTOM,
+          width: SPRITE_ANCHO,
+          height: SPRITE_ALTO,
+          objectFit: "contain",
+        }}
       />
       <img
         src={spriteAssets.pigGirl}
         alt="Chanchita tironeando desde la derecha"
         className="pig-girl-sprite"
-        style={{ position: "absolute", right: 4, bottom: 6, height: 150, width: "auto" }}
+        style={{
+          position: "absolute",
+          right: 4,
+          bottom: SPRITE_BOTTOM,
+          width: SPRITE_ANCHO,
+          height: SPRITE_ALTO,
+          objectFit: "contain",
+        }}
       />
       <img
         src={spriteAssets.ropeArrow}
@@ -119,7 +140,7 @@ function CuerdaAnimada({ offsetX, angulo }) {
         style={{
           position: "absolute",
           left: "50%",
-          top: 92,
+          top: SOGA_TOP,
           width: 200,
           transform: `translateX(calc(-50% + ${offsetX}px)) rotate(${angulo}deg)`,
           transition: "transform 0.6s ease",

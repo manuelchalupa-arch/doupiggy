@@ -4,12 +4,7 @@
 
 import { useMemo } from "react";
 import { calcularLiquidacion } from "../services/settlementService";
-
-const formatoARS = new Intl.NumberFormat("es-AR", {
-  style: "currency",
-  currency: "ARS",
-  maximumFractionDigits: 0,
-});
+import { formatoARS } from "../utils/format";
 
 /**
  * @param {object} props
