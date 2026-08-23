@@ -1,5 +1,5 @@
 // components/InfoProfile.jsx
-// Perfil del usuario (nombre, correo, CBU/alias obligatorios para cobrar),
+// Perfil del usuario (nombre, correo, CBU/alias mutuamente opcionales),
 // generación de informes por rango de fechas (Excel o PDF) y el switch de
 // modo oscuro (que solo ajusta brillo, ver context/ThemeContext.jsx).
 
@@ -10,6 +10,7 @@ import { crearGrupo } from "../services/groupService";
 import { useTheme } from "../context/ThemeContext";
 import CalendarioRango from "./CalendarioRango";
 import { brandingAssets, backgroundAssets, iconAssets } from "../assets";
+import InvitarGrupo from "./InvitarGrupo";
 
 /**
  * @param {object} props
@@ -38,9 +39,15 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
   const [nombreNuevoGrupo, setNombreNuevoGrupo] = useState("");
   const [creandoGrupo, setCreandoGrupo] = useState(false);
   const [errorGrupo, setErrorGrupo] = useState(null);
+  const [grupoRecienCreadoId, setGrupoRecienCreadoId] = useState(null);
 
-  const cbuInvalido = tocado.cbu && !esCbuValido(cbu);
-  const aliasInvalido = tocado.alias && !esAliasValido(alias);
+  // CBU y alias son mutuamente opcionales: alcanza con completar uno de los
+  // dos. Cada campo solo se marca inválido si tiene contenido con formato
+  // incorrecto; el error de "falta al menos uno" se muestra una sola vez,
+  // no duplicado en los dos campos.
+  const cbuInvalido = tocado.cbu && cbu.trim() !== "" && !esCbuValido(cbu);
+  const aliasInvalido = tocado.alias && alias.trim() !== "" && !esAliasValido(alias);
+  const faltanAmbos = tocado.cbu && tocado.alias && cbu.trim() === "" && alias.trim() === "";
 
   const nombrePorUid = useMemo(() => {
     const mapa = { [uidActual]: nombre || "Vos" };
@@ -92,7 +99,7 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
     setErrorGrupo(null);
     setCreandoGrupo(true);
     try {
-      await crearGrupo({
+      const grupoId = await crearGrupo({
         nombre: nombreNuevoGrupo.trim(),
         creadoPor: uidActual,
         nombreCreador: perfil?.nombre ?? nombre ?? "Vos",
@@ -100,9 +107,10 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
       });
       // La suscripción en tiempo real de App.jsx detecta el grupo nuevo sola
       // y lo suma al selector del header — no hace falta redirigir a mano.
-      setModalGrupoAbierto(false);
+      // El modal se queda abierto un paso más, mostrando "Invitar" en el
+      // acto en vez de cerrarse solo.
+      setGrupoRecienCreadoId(grupoId);
       setNombreNuevoGrupo("");
-      setMensaje({ tipo: "ok", texto: `Grupo "${nombreNuevoGrupo.trim()}" creado` });
     } catch (err) {
       setErrorGrupo(err.message);
     } finally {
@@ -141,7 +149,11 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
           <label className="campo">Correo</label>
           <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
 
-          <label className="campo obligatorio">CBU</label>
+          <p style={{ margin: "10px 0 0", fontSize: 11, fontWeight: 700, color: "var(--burnt)" }}>
+            Completá CBU o alias (con uno de los dos alcanza para cobrar).
+          </p>
+
+          <label className="campo">CBU</label>
           <input
             type="text"
             value={cbu}
@@ -151,9 +163,9 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
             onChange={(e) => setCbu(e.target.value.replace(/\D/g, ""))}
             onBlur={() => setTocado((t) => ({ ...t, cbu: true }))}
           />
-          {cbuInvalido && <p className="ayuda-error">El CBU es obligatorio y debe tener 22 dígitos.</p>}
+          {cbuInvalido && <p className="ayuda-error">El CBU debe tener 22 dígitos.</p>}
 
-          <label className="campo obligatorio">Alias</label>
+          <label className="campo">Alias</label>
           <input
             type="text"
             value={alias}
@@ -162,7 +174,8 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
             onChange={(e) => setAlias(e.target.value)}
             onBlur={() => setTocado((t) => ({ ...t, alias: true }))}
           />
-          {aliasInvalido && <p className="ayuda-error">El alias es obligatorio para recibir pagos.</p>}
+          {aliasInvalido && <p className="ayuda-error">El alias debe tener al menos 6 caracteres.</p>}
+          {faltanAmbos && <p className="ayuda-error">Completá al menos uno de los dos: CBU o alias.</p>}
 
           {mensaje && (
             <p className="ayuda-error" style={{ color: mensaje.tipo === "ok" ? "var(--avocado)" : "var(--burnt)" }}>
@@ -188,7 +201,7 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           onClick={() => setModalAbierto(true)}
         >
-          <img src={iconAssets.calendar} alt="" style={{ width: 16, height: 16 }} />
+          <img src={iconAssets.calendar} alt="" className="icono-inline" style={{ "--icon-size": "16px" }} />
           Generar informe
         </button>
       </div>
@@ -260,7 +273,7 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
                 onClick={() => generar("excel")}
                 disabled={!rangoDesde}
               >
-                <img src={iconAssets.excel} alt="" style={{ width: 14, height: 14 }} />
+                <img src={iconAssets.excel} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
                 Excel
               </button>
               <button
@@ -270,7 +283,7 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
                 onClick={() => generar("pdf")}
                 disabled={!rangoDesde}
               >
-                <img src={iconAssets.pdf} alt="" style={{ width: 14, height: 14 }} />
+                <img src={iconAssets.pdf} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
                 PDF
               </button>
             </div>
@@ -279,33 +292,61 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
       )}
 
       {modalGrupoAbierto && (
-        <div className="modal-fondo" onClick={() => setModalGrupoAbierto(false)}>
+        <div
+          className="modal-fondo"
+          onClick={() => {
+            setModalGrupoAbierto(false);
+            setGrupoRecienCreadoId(null);
+          }}
+        >
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Crear otro grupo</h3>
-            <form onSubmit={crearOtroGrupo}>
-              <label className="campo">Nombre del grupo</label>
-              <input
-                type="text"
-                value={nombreNuevoGrupo}
-                onChange={(e) => setNombreNuevoGrupo(e.target.value)}
-                placeholder="Ej: Viaje a Bariloche"
-                required
-                autoFocus
-              />
-              {errorGrupo && <p className="ayuda-error">{errorGrupo}</p>}
-              <div className="modal-acciones">
-                <button
-                  type="button"
-                  className="btn chico secundario"
-                  onClick={() => setModalGrupoAbierto(false)}
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="btn chico bloque" disabled={creandoGrupo}>
-                  {creandoGrupo ? "Creando..." : "Crear grupo"}
-                </button>
-              </div>
-            </form>
+            {grupoRecienCreadoId ? (
+              <>
+                <h3>Grupo creado — invitá a tu gente</h3>
+                <InvitarGrupo grupoId={grupoRecienCreadoId} uidActual={uidActual} />
+                <div className="modal-acciones">
+                  <button
+                    type="button"
+                    className="btn chico bloque"
+                    onClick={() => {
+                      setModalGrupoAbierto(false);
+                      setGrupoRecienCreadoId(null);
+                      setMensaje({ tipo: "ok", texto: "Grupo creado" });
+                    }}
+                  >
+                    Listo
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Crear otro grupo</h3>
+                <form onSubmit={crearOtroGrupo}>
+                  <label className="campo">Nombre del grupo</label>
+                  <input
+                    type="text"
+                    value={nombreNuevoGrupo}
+                    onChange={(e) => setNombreNuevoGrupo(e.target.value)}
+                    placeholder="Ej: Viaje a Bariloche"
+                    required
+                    autoFocus
+                  />
+                  {errorGrupo && <p className="ayuda-error">{errorGrupo}</p>}
+                  <div className="modal-acciones">
+                    <button
+                      type="button"
+                      className="btn chico secundario"
+                      onClick={() => setModalGrupoAbierto(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button type="submit" className="btn chico bloque" disabled={creandoGrupo}>
+                      {creandoGrupo ? "Creando..." : "Crear grupo"}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}
