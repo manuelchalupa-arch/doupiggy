@@ -6,7 +6,6 @@ import {
   collection,
   doc,
   setDoc,
-  getDoc,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
@@ -41,28 +40,6 @@ export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador
   return ref.id;
 }
 
-/** Lectura puntual de un grupo (uso típico: validar antes de mostrar UI). */
-export async function obtenerGrupo(grupoId) {
-  const snap = await getDoc(doc(db, "grupos", grupoId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
-}
-
-/**
- * Suscripción en tiempo real a un grupo. Gracias al caché de IndexedDB
- * configurado en firebaseConfig.js, esto funciona offline: primero emite
- * los datos cacheados y luego los actualiza cuando hay red.
- */
-export function suscribirseAGrupo(grupoId, callback) {
-  return onSnapshot(doc(db, "grupos", grupoId), (snap) => {
-    callback(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-  });
-}
-
-/**
- * Suscripción a todos los grupos donde el usuario es miembro.
- * Usa `miembros` (array-contains) en vez de `usuarios.gruposIds` para que
- * quede validado también por las reglas de seguridad al leer.
- */
 /**
  * Suscripción a todos los grupos donde el usuario es miembro.
  * Usa `miembros` (array-contains) en vez de `usuarios.gruposIds` para que
@@ -85,11 +62,4 @@ export function suscribirseAGruposDeUsuario(uid, callback, onError) {
       onError?.(error);
     }
   );
-}
-
-export async function renombrarGrupo(grupoId, nuevoNombre) {
-  await updateDoc(doc(db, "grupos", grupoId), {
-    nombre: nuevoNombre,
-    actualizadoEn: serverTimestamp(),
-  });
 }

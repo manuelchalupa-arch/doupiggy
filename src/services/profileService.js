@@ -20,20 +20,27 @@ export function esAliasValido(alias) {
 
 /**
  * Actualiza nombre, correo (solo visual, no cambia el de auth) y los datos
- * de cobro del usuario. CBU y alias son obligatorios para poder recibir
- * pagos, así que se validan antes de escribir.
+ * de cobro del usuario. CBU y alias son mutuamente opcionales: alcanza con
+ * completar uno de los dos para poder recibir pagos, pero el que se
+ * complete tiene que tener un formato válido.
  */
 export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias }) {
-  if (!esCbuValido(cbu)) {
+  const cbuLimpio = (cbu ?? "").trim();
+  const aliasLimpio = (alias ?? "").trim();
+
+  if (!cbuLimpio && !aliasLimpio) {
+    throw new Error("Completá al menos un dato de cobro: CBU o alias.");
+  }
+  if (cbuLimpio && !esCbuValido(cbuLimpio)) {
     throw new Error("El CBU debe tener 22 dígitos.");
   }
-  if (!esAliasValido(alias)) {
+  if (aliasLimpio && !esAliasValido(aliasLimpio)) {
     throw new Error("El alias debe tener al menos 6 caracteres.");
   }
 
   await updateDoc(doc(db, "usuarios", uid), {
     nombre,
     correoContacto,
-    datosCobro: { cbu: cbu.trim(), alias: alias.trim() },
+    datosCobro: { cbu: cbuLimpio || null, alias: aliasLimpio || null },
   });
 }
