@@ -213,4 +213,16 @@ input.invalido { border-color: var(--burnt); background: #FBE4DC; }
 .tab-btn.activo { color: var(--burnt); }
 .tab-btn.activo .icon-bg { fill: var(--gold); }
 
+/* ---------- íconos inline (trash, calendar, pdf, excel) ---------- */
+/* object-fit: contain evita deformación si el PNG real no es 1:1 como el
+   placeholder; el tamaño se controla con --icon-size en vez de repetir
+   width/height inline en cada componente. */
+.icono-inline {
+  width: var(--icon-size, 16px);
+  height: var(--icon-size, 16px);
+  object-fit: contain;
+  vertical-align: middle;
+  flex: none;
+}
+
 .contenido-tab { padding: 18px 16px 100px; max-width: 480px; margin: 0 auto; }
