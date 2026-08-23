@@ -20,22 +20,32 @@ export default function App() {
   const [grupos, setGrupos] = useState([]);
   const [cargandoGrupos, setCargandoGrupos] = useState(true);
   const [grupoSeleccionadoId, setGrupoSeleccionadoId] = useState(null);
+  const [errorGrupos, setErrorGrupos] = useState(null);
 
   useEffect(() => {
     if (!estaAutenticado) {
       setGrupos([]);
       setCargandoGrupos(true);
+      setErrorGrupos(null);
       return undefined;
     }
-    return suscribirseAGruposDeUsuario(usuario.uid, (lista) => {
-      setGrupos(lista);
-      setCargandoGrupos(false);
-      // Si el grupo seleccionado ya no está en la lista (o todavía no hay
-      // ninguno elegido), se elige el primero disponible automáticamente.
-      setGrupoSeleccionadoId((actual) =>
-        lista.some((g) => g.id === actual) ? actual : lista[0]?.id ?? null
-      );
-    });
+    return suscribirseAGruposDeUsuario(
+      usuario.uid,
+      (lista) => {
+        setErrorGrupos(null);
+        setGrupos(lista);
+        setCargandoGrupos(false);
+        // Si el grupo seleccionado ya no está en la lista (o todavía no hay
+        // ninguno elegido), se elige el primero disponible automáticamente.
+        setGrupoSeleccionadoId((actual) =>
+          lista.some((g) => g.id === actual) ? actual : lista[0]?.id ?? null
+        );
+      },
+      (error) => {
+        setCargandoGrupos(false);
+        setErrorGrupos(error);
+      }
+    );
   }, [estaAutenticado, usuario]);
 
   const grupoSeleccionado = grupos.find((g) => g.id === grupoSeleccionadoId) ?? null;
@@ -50,6 +60,8 @@ export default function App() {
         <PantallaCarga texto="Cargando tu sesión..." />
       ) : !estaAutenticado ? (
         <PantallaLogin />
+      ) : errorGrupos ? (
+        <PantallaError error={errorGrupos} />
       ) : cargandoGrupos ? (
         <PantallaCarga texto="Buscando tus grupos..." />
       ) : grupos.length === 0 ? (
@@ -72,6 +84,25 @@ function PantallaCarga({ texto }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ fontFamily: "var(--font-display)", fontSize: 14, color: "var(--ink)" }}>{texto}</p>
+    </div>
+  );
+}
+
+function PantallaError({ error }) {
+  const esPermisos = error?.code === "permission-denied";
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 24, textAlign: "center" }}>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "var(--burnt)" }}>
+        No se pudo conectar con la base de datos
+      </p>
+      <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", maxWidth: 320 }}>
+        {esPermisos
+          ? "Firestore rechazó el pedido por permisos. Revisá que publicaste las reglas de seguridad (firebase/firestore.rules) en Firebase Console > Firestore Database > Rules."
+          : `Código de error: ${error?.code ?? "desconocido"}. Revisá que Firestore Database esté creado en Firebase Console.`}
+      </p>
+      <button className="btn" onClick={() => window.location.reload()}>
+        Reintentar
+      </button>
     </div>
   );
 }
