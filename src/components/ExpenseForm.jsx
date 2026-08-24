@@ -14,6 +14,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { backgroundAssets, iconAssets } from "../assets";
 import { formatoARS } from "../utils/format";
 import CalendarioRango from "./CalendarioRango";
+import InvitarGrupo from "./InvitarGrupo";
 
 /**
  * @param {object} props
@@ -30,6 +31,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   );
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
+  const [invitarAbierto, setInvitarAbierto] = useState(false);
 
   // El historial visible sale de la misma suscripción en tiempo real que
   // usa el resto de la app: mantenemos una sola fuente de verdad.
@@ -81,6 +83,14 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
 
   return (
     <>
+      {/* Botón de invitar: siempre referido al grupo activo (grupoId de
+          este mismo render), nunca a un grupo distinto ni "global". */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        <button type="button" className="btn chico" onClick={() => setInvitarAbierto(true)}>
+          Invitar a este grupo
+        </button>
+      </div>
+
       <div
         className="tarjeta"
         style={{
@@ -174,6 +184,20 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
       </div>
 
       <GeneradorInformes gastos={gastos} miembros={miembros} uidActual={uidActual} />
+
+      {invitarAbierto && (
+        <div className="modal-fondo" onClick={() => setInvitarAbierto(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Invitá a este grupo</h3>
+            <InvitarGrupo grupoId={grupoId} uidActual={uidActual} />
+            <div className="modal-acciones">
+              <button type="button" className="btn chico secundario" onClick={() => setInvitarAbierto(false)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

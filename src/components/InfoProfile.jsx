@@ -1,8 +1,8 @@
 // components/InfoProfile.jsx
-// Perfil del usuario (nombre, correo, CBU/alias mutuamente opcionales),
-// gestión de grupos, y el switch de modo día/noche con paleta real (ver
-// context/ThemeContext.jsx). El generador de informes se movió a la
-// pestaña de Gastos (components/ExpenseForm.jsx).
+// Perfil del usuario (nombre, correo, CBU/alias mutuamente opcionales) y
+// gestión de grupos. El apartado de invitar YA NO está acá (vive en Gastos,
+// aplicado siempre al grupo activo). El switch de día/noche tampoco es una
+// fila más de la pantalla: es una burbuja flotante fija en una esquina.
 
 import { useState } from "react";
 import { actualizarPerfil, esCbuValido, esAliasValido } from "../services/profileService";
@@ -15,10 +15,12 @@ import { IconoSol, IconoLuna } from "./IconoAstro";
 /**
  * @param {object} props
  * @param {string} props.uidActual
- * @param {object} props.perfil - documento de /usuarios del usuario actual
+ * @param {object} props.perfil
  * @param {string} props.grupoId
+ * @param {Array} [props.grupos]
+ * @param {(id: string) => void} [props.onCambiarGrupo]
  */
-export default function InfoProfile({ uidActual, perfil, grupoId }) {
+export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], onCambiarGrupo }) {
   const { modoOscuro, alternarModo } = useTheme();
 
   const [nombre, setNombre] = useState(perfil?.nombre ?? "");
@@ -35,9 +37,6 @@ export default function InfoProfile({ uidActual, perfil, grupoId }) {
   const [errorGrupo, setErrorGrupo] = useState(null);
   const [grupoRecienCreadoId, setGrupoRecienCreadoId] = useState(null);
 
-  // CBU y alias son mutuamente opcionales: alcanza con completar uno de los
-  // dos. Cada campo solo se marca inválido si tiene contenido con formato
-  // incorrecto; el error de "falta al menos uno" se muestra una sola vez.
   const cbuInvalido = tocado.cbu && cbu.trim() !== "" && !esCbuValido(cbu);
   const aliasInvalido = tocado.alias && alias.trim() !== "" && !esAliasValido(alias);
   const faltanAmbos = tocado.cbu && tocado.alias && cbu.trim() === "" && alias.trim() === "";
@@ -76,9 +75,6 @@ export default function InfoProfile({ uidActual, perfil, grupoId }) {
         nombreCreador: perfil?.nombre ?? nombre ?? "Vos",
         fotoCreador: perfil?.foto ?? null,
       });
-      // La suscripción en tiempo real de App.jsx detecta el grupo nuevo sola
-      // y lo suma al selector del header. El modal se queda abierto un paso
-      // más, mostrando "Invitar" en el acto en vez de cerrarse solo.
       setGrupoRecienCreadoId(grupoIdNuevo);
       setNombreNuevoGrupo("");
     } catch (err) {
@@ -90,6 +86,17 @@ export default function InfoProfile({ uidActual, perfil, grupoId }) {
 
   return (
     <>
+      {/* Burbuja flotante de día/noche: fija en una esquina, no ocupa un
+          lugar en el flujo normal de la pantalla. */}
+      <button
+        type="button"
+        className={`switch-astro burbuja-tema${modoOscuro ? " noche" : ""}`}
+        aria-label={modoOscuro ? "Cambiar a modo día" : "Cambiar a modo noche"}
+        onClick={alternarModo}
+      >
+        {modoOscuro ? <IconoLuna tamano={22} /> : <IconoSol tamano={22} />}
+      </button>
+
       <div className="tarjeta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <img src={brandingAssets.logo} alt="DouPiggy" style={{ width: 56, height: 56, objectFit: "contain" }} />
         <div>
@@ -160,47 +167,26 @@ export default function InfoProfile({ uidActual, perfil, grupoId }) {
       </div>
 
       <div className="tarjeta">
-        <span className="etiqueta">Este grupo</span>
-        <h2>Invitar gente</h2>
-        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-          Generá un enlace para sumar a alguien a este grupo. (También podés
-          hacerlo desde el botón "Invitar" del encabezado.)
-        </p>
-        <InvitarGrupo grupoId={grupoId} uidActual={uidActual} />
-      </div>
-
-      <div className="tarjeta">
         <span className="etiqueta">Grupos</span>
-        <h2>¿Otro grupo de gastos?</h2>
+        {grupos.length > 1 && (
+          <>
+            <label className="campo">Grupo activo</label>
+            <select value={grupoId} onChange={(e) => onCambiarGrupo?.(e.target.value)}>
+              {grupos.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.nombre}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        <h2 style={{ marginTop: grupos.length > 1 ? 12 : 0 }}>¿Otro grupo de gastos?</h2>
         <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-          Creá un grupo nuevo (ej. para otro depto, un viaje, la familia) sin
-          perder este. Vas a poder cambiar entre grupos desde el header.
+          Creá un grupo nuevo (ej. para otro depto, un viaje, la familia) sin perder este.
         </p>
         <button type="button" className="btn secundario bloque" onClick={() => setModalGrupoAbierto(true)}>
           Crear otro grupo
         </button>
-      </div>
-
-      <div className="tarjeta">
-        <span className="etiqueta">Preferencias</span>
-        <div className="switch-wrap">
-          <div>
-            <h2 style={{ margin: 0 }}>{modoOscuro ? "Modo noche" : "Modo día"}</h2>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
-              Cambia toda la paleta de colores, no solo el brillo.
-            </p>
-          </div>
-          <div
-            className={`switch-astro${modoOscuro ? " noche" : ""}`}
-            role="switch"
-            aria-checked={modoOscuro}
-            tabIndex={0}
-            onClick={alternarModo}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && alternarModo()}
-          >
-            <span className="astro-icono">{modoOscuro ? <IconoLuna tamano={24} /> : <IconoSol tamano={24} />}</span>
-          </div>
-        </div>
       </div>
 
       {modalGrupoAbierto && (

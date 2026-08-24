@@ -1,6 +1,7 @@
 // components/SettlementPanel.jsx
-// Misma lógica de liquidación de siempre (settlementService), con la
-// identidad visual retro: tarjeta "sticker" + etiquetas de color por signo.
+// Vista minimalista: solo participantes y saldos pendientes entre ellos
+// (quién le paga a quién). Sin encabezados, sin párrafos explicativos, sin
+// tarjeta contenedora — el fondo de la app queda visible a pantalla completa.
 
 import { useMemo } from "react";
 import { calcularLiquidacion } from "../services/settlementService";
@@ -8,7 +9,7 @@ import { formatoARS } from "../utils/format";
 
 /**
  * @param {object} props
- * @param {Array} props.gastos - gastos del grupo (de useExpenses)
+ * @param {Array} props.gastos
  * @param {Array<{uid: string, nombre: string}>} props.miembros
  */
 export default function SettlementPanel({ gastos, miembros }) {
@@ -18,58 +19,41 @@ export default function SettlementPanel({ gastos, miembros }) {
     return mapa;
   }, [miembros]);
 
-  const { saldos, transacciones } = useMemo(
-    () => calcularLiquidacion(gastos),
-    [gastos]
-  );
+  const { transacciones } = useMemo(() => calcularLiquidacion(gastos), [gastos]);
+
+  if (transacciones.length === 0) {
+    return (
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink)" }}>Todo saldado</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="tarjeta">
-      <span className="etiqueta">Liquidación</span>
-      <h2>Saldos del grupo</h2>
-      <ul style={{ listStyle: "none", padding: 0, margin: "0 0 12px" }}>
-        {Object.entries(saldos).map(([uid, saldo]) => (
-          <li
-            key={uid}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 13,
-              fontWeight: 700,
-              padding: "6px 0",
-              borderBottom: "2px dashed var(--ink)",
-            }}
-          >
-            <span>{nombrePorUid[uid] ?? uid}</span>
-            <span style={{ color: saldo > 0 ? "var(--teal)" : saldo < 0 ? "var(--burnt)" : "var(--ink)" }}>
-              {saldo > 0
-                ? `le deben ${formatoARS.format(saldo)}`
-                : saldo < 0
-                ? `debe ${formatoARS.format(Math.abs(saldo))}`
-                : "está al día"}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <h2>Cómo saldar con menos pagos</h2>
-      {transacciones.length === 0 ? (
-        <p style={{ fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
-          No hay deudas pendientes en este grupo.
-        </p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {transacciones.map((t, idx) => (
-            <li
-              key={`${t.de}-${t.para}-${idx}`}
-              style={{ fontSize: 13, fontWeight: 600, padding: "4px 0" }}
-            >
-              {nombrePorUid[t.de] ?? t.de} le paga {formatoARS.format(t.monto)} a{" "}
-              {nombrePorUid[t.para] ?? t.para}
-            </li>
-          ))}
-        </ul>
-      )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 4 }}>
+      {transacciones.map((t, idx) => (
+        <div
+          key={`${t.de}-${t.para}-${idx}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            background: "var(--paper)",
+            border: "3px solid var(--ink)",
+            borderRadius: 14,
+            padding: "12px 16px",
+            boxShadow: "4px 4px 0 var(--ink)",
+          }}
+        >
+          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{nombrePorUid[t.de] ?? t.de}</span>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: 15, color: "var(--burnt)" }}>→</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "var(--ink)" }}>{nombrePorUid[t.para] ?? t.para}</span>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: 17, color: "var(--teal)", marginLeft: "auto" }}>
+            {formatoARS.format(t.monto)}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
