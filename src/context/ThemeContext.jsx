@@ -1,28 +1,35 @@
 // context/ThemeContext.jsx
-// El modo oscuro NUNCA cambia la paleta de colores: solo aplica un filtro de
-// brillo/contraste sobre el contenedor raíz de la app (ver .app-root.modo-oscuro
-// en styles/theme.css). Esto se pidió explícitamente en el brief de diseño.
+// Modo día / modo noche con paletas de color REALES y distintas (definidas
+// en styles/theme.css como .tema-dia / .tema-noche) — ya no es un filtro de
+// brillo. Se persiste en localStorage y respeta la preferencia del sistema
+// operativo la primera vez que se abre la app.
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-const CLAVE_STORAGE = "gastos-compartidos:modo";
+const CLAVE_STORAGE = "doupiggy:tema";
+
+function temaInicial() {
+  if (typeof window === "undefined") return "dia";
+  const guardado = window.localStorage.getItem(CLAVE_STORAGE);
+  if (guardado === "dia" || guardado === "noche") return guardado;
+  const prefiereOscuro = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  return prefiereOscuro ? "noche" : "dia";
+}
+
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [modoOscuro, setModoOscuro] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem(CLAVE_STORAGE) === "oscuro";
-  });
+  const [tema, setTema] = useState(temaInicial);
 
   useEffect(() => {
-    window.localStorage.setItem(CLAVE_STORAGE, modoOscuro ? "oscuro" : "claro");
-  }, [modoOscuro]);
+    window.localStorage.setItem(CLAVE_STORAGE, tema);
+  }, [tema]);
 
-  const alternarModo = () => setModoOscuro((prev) => !prev);
+  const alternarModo = () => setTema((t) => (t === "dia" ? "noche" : "dia"));
 
   return (
-    <ThemeContext.Provider value={{ modoOscuro, alternarModo }}>
-      <div className={`app-root${modoOscuro ? " modo-oscuro" : ""}`}>{children}</div>
+    <ThemeContext.Provider value={{ tema, modoOscuro: tema === "noche", alternarModo }}>
+      <div className={`app-root tema-${tema}`}>{children}</div>
     </ThemeContext.Provider>
   );
 }
