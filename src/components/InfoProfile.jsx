@@ -1,26 +1,24 @@
 // components/InfoProfile.jsx
 // Perfil del usuario (nombre, correo, CBU/alias mutuamente opcionales),
-// generación de informes por rango de fechas (Excel o PDF) y el switch de
-// modo oscuro (que solo ajusta brillo, ver context/ThemeContext.jsx).
+// gestión de grupos, y el switch de modo día/noche con paleta real (ver
+// context/ThemeContext.jsx). El generador de informes se movió a la
+// pestaña de Gastos (components/ExpenseForm.jsx).
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { actualizarPerfil, esCbuValido, esAliasValido } from "../services/profileService";
-import { generarInformeExcel, generarInformePdf } from "../services/reportService";
 import { crearGrupo } from "../services/groupService";
 import { useTheme } from "../context/ThemeContext";
-import CalendarioRango from "./CalendarioRango";
-import { brandingAssets, backgroundAssets, iconAssets } from "../assets";
+import { brandingAssets } from "../assets";
 import InvitarGrupo from "./InvitarGrupo";
+import { IconoSol, IconoLuna } from "./IconoAstro";
 
 /**
  * @param {object} props
  * @param {string} props.uidActual
  * @param {object} props.perfil - documento de /usuarios del usuario actual
  * @param {string} props.grupoId
- * @param {Array} props.gastos - gastos del grupo (de useExpenses), para el informe
- * @param {Array<{uid:string,nombre:string}>} [props.miembros]
  */
-export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }) {
+export default function InfoProfile({ uidActual, perfil, grupoId }) {
   const { modoOscuro, alternarModo } = useTheme();
 
   const [nombre, setNombre] = useState(perfil?.nombre ?? "");
@@ -31,10 +29,6 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
 
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [rangoDesde, setRangoDesde] = useState(null);
-  const [rangoHasta, setRangoHasta] = useState(null);
-
   const [modalGrupoAbierto, setModalGrupoAbierto] = useState(false);
   const [nombreNuevoGrupo, setNombreNuevoGrupo] = useState("");
   const [creandoGrupo, setCreandoGrupo] = useState(false);
@@ -43,17 +37,10 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
 
   // CBU y alias son mutuamente opcionales: alcanza con completar uno de los
   // dos. Cada campo solo se marca inválido si tiene contenido con formato
-  // incorrecto; el error de "falta al menos uno" se muestra una sola vez,
-  // no duplicado en los dos campos.
+  // incorrecto; el error de "falta al menos uno" se muestra una sola vez.
   const cbuInvalido = tocado.cbu && cbu.trim() !== "" && !esCbuValido(cbu);
   const aliasInvalido = tocado.alias && alias.trim() !== "" && !esAliasValido(alias);
   const faltanAmbos = tocado.cbu && tocado.alias && cbu.trim() === "" && alias.trim() === "";
-
-  const nombrePorUid = useMemo(() => {
-    const mapa = { [uidActual]: nombre || "Vos" };
-    for (const m of miembros) mapa[m.uid] = m.nombre;
-    return mapa;
-  }, [miembros, uidActual, nombre]);
 
   const iniciales = (nombre || "?")
     .split(" ")
@@ -77,39 +64,22 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
     }
   }
 
-  function generar(formato) {
-    if (!rangoDesde) return;
-    const hasta = rangoHasta ?? rangoDesde;
-    const generador = formato === "pdf" ? generarInformePdf : generarInformeExcel;
-    try {
-      const cantidad = generador(gastos, nombrePorUid, rangoDesde, hasta);
-      setModalAbierto(false);
-      setMensaje({
-        tipo: "ok",
-        texto: cantidad > 0 ? `Informe ${formato.toUpperCase()} generado (${cantidad} gastos)` : "No hubo gastos en ese rango",
-      });
-    } catch (err) {
-      setMensaje({ tipo: "error", texto: err.message });
-    }
-  }
-
   async function crearOtroGrupo(evento) {
     evento.preventDefault();
     if (!nombreNuevoGrupo.trim()) return;
     setErrorGrupo(null);
     setCreandoGrupo(true);
     try {
-      const grupoId = await crearGrupo({
+      const grupoIdNuevo = await crearGrupo({
         nombre: nombreNuevoGrupo.trim(),
         creadoPor: uidActual,
         nombreCreador: perfil?.nombre ?? nombre ?? "Vos",
         fotoCreador: perfil?.foto ?? null,
       });
       // La suscripción en tiempo real de App.jsx detecta el grupo nuevo sola
-      // y lo suma al selector del header — no hace falta redirigir a mano.
-      // El modal se queda abierto un paso más, mostrando "Invitar" en el
-      // acto en vez de cerrarse solo.
-      setGrupoRecienCreadoId(grupoId);
+      // y lo suma al selector del header. El modal se queda abierto un paso
+      // más, mostrando "Invitar" en el acto en vez de cerrarse solo.
+      setGrupoRecienCreadoId(grupoIdNuevo);
       setNombreNuevoGrupo("");
     } catch (err) {
       setErrorGrupo(err.message);
@@ -190,26 +160,19 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
       </div>
 
       <div className="tarjeta">
-        <span className="etiqueta">Informes</span>
-        <h2>Descargá tus gastos</h2>
-        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
-          Elegí un rango de fechas del calendario.
+        <span className="etiqueta">Este grupo</span>
+        <h2>Invitar gente</h2>
+        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
+          Generá un enlace para sumar a alguien a este grupo. (También podés
+          hacerlo desde el botón "Invitar" del encabezado.)
         </p>
-        <button
-          type="button"
-          className="btn secundario bloque"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-          onClick={() => setModalAbierto(true)}
-        >
-          <img src={iconAssets.calendar} alt="" className="icono-inline" style={{ "--icon-size": "16px" }} />
-          Generar informe
-        </button>
+        <InvitarGrupo grupoId={grupoId} uidActual={uidActual} />
       </div>
 
       <div className="tarjeta">
         <span className="etiqueta">Grupos</span>
         <h2>¿Otro grupo de gastos?</h2>
-        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
           Creá un grupo nuevo (ej. para otro depto, un viaje, la familia) sin
           perder este. Vas a poder cambiar entre grupos desde el header.
         </p>
@@ -222,74 +185,23 @@ export default function InfoProfile({ uidActual, perfil, gastos, miembros = [] }
         <span className="etiqueta">Preferencias</span>
         <div className="switch-wrap">
           <div>
-            <h2 style={{ margin: 0 }}>Modo oscuro</h2>
+            <h2 style={{ margin: 0 }}>{modoOscuro ? "Modo noche" : "Modo día"}</h2>
             <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
-              Solo baja el brillo, no cambia colores.
+              Cambia toda la paleta de colores, no solo el brillo.
             </p>
           </div>
           <div
-            className={`switch${modoOscuro ? " on" : ""}`}
+            className={`switch-astro${modoOscuro ? " noche" : ""}`}
             role="switch"
             aria-checked={modoOscuro}
             tabIndex={0}
             onClick={alternarModo}
             onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && alternarModo()}
           >
-            <div className="bola" />
+            <span className="astro-icono">{modoOscuro ? <IconoLuna tamano={24} /> : <IconoSol tamano={24} />}</span>
           </div>
         </div>
       </div>
-
-      {modalAbierto && (
-        <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
-          <div
-            className="modal"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundImage: `url(${backgroundAssets.report})`,
-              backgroundSize: "140px",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "bottom right",
-              backgroundBlendMode: "luminosity",
-            }}
-          >
-            <h3>Elegí el rango del informe</h3>
-            <CalendarioRango
-              desde={rangoDesde}
-              hasta={rangoHasta}
-              onCambiarRango={(d, h) => {
-                setRangoDesde(d);
-                setRangoHasta(h);
-              }}
-            />
-            <div className="modal-acciones">
-              <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn chico"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => generar("excel")}
-                disabled={!rangoDesde}
-              >
-                <img src={iconAssets.excel} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
-                Excel
-              </button>
-              <button
-                type="button"
-                className="btn chico"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => generar("pdf")}
-                disabled={!rangoDesde}
-              >
-                <img src={iconAssets.pdf} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
-                PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {modalGrupoAbierto && (
         <div

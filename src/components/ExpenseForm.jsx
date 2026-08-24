@@ -1,7 +1,7 @@
 // components/ExpenseForm.jsx
-// Formulario compacto de alta de gastos + historial de los últimos 4 con
-// scroll y borrado. Usa expenseService (lógica real) y aplica la identidad
-// visual retro definida en styles/theme.css.
+// Pestaña Gastos completa: alta de gastos, historial de los últimos 4 con
+// scroll y borrado, y el generador de informes (antes vivía en la pestaña
+// de Información, ahora está acá porque es donde tiene más sentido).
 
 import { useMemo, useState } from "react";
 import {
@@ -9,9 +9,11 @@ import {
   eliminarGasto,
   calcularDivisionIgualitaria,
 } from "../services/expenseService";
+import { generarInformeExcel, generarInformePdf } from "../services/reportService";
 import { useExpenses } from "../hooks/useExpenses";
 import { backgroundAssets, iconAssets } from "../assets";
 import { formatoARS } from "../utils/format";
+import CalendarioRango from "./CalendarioRango";
 
 /**
  * @param {object} props
@@ -70,9 +72,6 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   }
 
   async function manejarBorrado(gastoId) {
-    // Borrado optimista implícito: onSnapshot en useExpenses actualiza la
-    // lista sola en cuanto Firestore confirma (u offline, apenas se
-    // aplica al caché local).
     await eliminarGasto(grupoId, gastoId);
   }
 
@@ -173,6 +172,107 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
           ))}
         </div>
       </div>
+
+      <GeneradorInformes gastos={gastos} miembros={miembros} uidActual={uidActual} />
     </>
+  );
+}
+
+/** Generador de informes (antes en Información, ahora vive en Gastos). */
+function GeneradorInformes({ gastos, miembros, uidActual }) {
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [rangoDesde, setRangoDesde] = useState(null);
+  const [rangoHasta, setRangoHasta] = useState(null);
+  const [mensaje, setMensaje] = useState(null);
+
+  const nombrePorUid = useMemo(() => {
+    const mapa = {};
+    for (const m of miembros) mapa[m.uid] = m.nombre;
+    return mapa;
+  }, [miembros]);
+
+  function generar(formato) {
+    if (!rangoDesde) return;
+    const hasta = rangoHasta ?? rangoDesde;
+    const generador = formato === "pdf" ? generarInformePdf : generarInformeExcel;
+    try {
+      const cantidad = generador(gastos, nombrePorUid, rangoDesde, hasta);
+      setModalAbierto(false);
+      setMensaje(cantidad > 0 ? `Informe ${formato.toUpperCase()} generado (${cantidad} gastos)` : "No hubo gastos en ese rango");
+    } catch (err) {
+      setMensaje(err.message);
+    }
+  }
+
+  return (
+    <div
+      className="tarjeta"
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        backgroundImage: `url(${backgroundAssets.report})`,
+        backgroundSize: "150px",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "bottom right",
+        backgroundBlendMode: "luminosity",
+      }}
+    >
+      <span className="etiqueta">Informes</span>
+      <h2>Descargá tus gastos</h2>
+      <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
+        Elegí un rango de fechas del calendario.
+      </p>
+      <button
+        type="button"
+        className="btn secundario bloque"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        onClick={() => setModalAbierto(true)}
+      >
+        <img src={iconAssets.calendar} alt="" className="icono-inline" style={{ "--icon-size": "16px" }} />
+        Generar informe
+      </button>
+      {mensaje && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensaje}</p>}
+
+      {modalAbierto && (
+        <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Elegí el rango del informe</h3>
+            <CalendarioRango
+              desde={rangoDesde}
+              hasta={rangoHasta}
+              onCambiarRango={(d, h) => {
+                setRangoDesde(d);
+                setRangoHasta(h);
+              }}
+            />
+            <div className="modal-acciones">
+              <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn chico"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => generar("excel")}
+                disabled={!rangoDesde}
+              >
+                <img src={iconAssets.excel} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                Excel
+              </button>
+              <button
+                type="button"
+                className="btn chico"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => generar("pdf")}
+                disabled={!rangoDesde}
+              >
+                <img src={iconAssets.pdf} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
