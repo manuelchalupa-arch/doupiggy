@@ -216,6 +216,24 @@ input.invalido { border-color: var(--burnt); background: color-mix(in srgb, var(
 }
 .switch-astro.noche .astro-icono { left: 32px; }
 
+/* Burbuja flotante de día/noche (reemplaza la fila "Preferencias"): fija
+   en una esquina de la pantalla, no ocupa lugar en el flujo del contenido. */
+.burbuja-tema {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 70;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.burbuja-tema .astro-icono { position: static; }
+
 /* ---------- modal calendario ---------- */
 .modal-fondo {
   position: fixed; inset: 0;
@@ -256,19 +274,10 @@ input.invalido { border-color: var(--burnt); background: color-mix(in srgb, var(
 }
 #toast.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ---------- header + tabbar ---------- */
-.app-header { position: relative; padding: 30px 16px 18px; overflow: hidden; background: var(--paper); border-bottom: 5px solid var(--ink); display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.app-header .rayos { position: absolute; inset: -40px; background: repeating-conic-gradient(var(--gold) 0deg 8deg, transparent 8deg 16deg); opacity: 0.28; z-index: 0; }
-.app-header .titulo-wrap { position: relative; z-index: 1; min-width: 0; }
-.app-header h1 { margin: 0; font-size: 24px; }
-.app-header p { margin: 4px 0 0; font-size: 13px; font-weight: 700; color: var(--burnt); font-family: var(--font-body); }
-.app-header .acciones-header { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; flex: none; }
-
-.tabbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--paper); border-top: 5px solid var(--ink); padding: 8px 10px 12px; gap: 6px; z-index: 60; }
+/* ---------- tabbar ---------- */
 .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 6px 0; color: var(--ink); font-family: var(--font-body); font-weight: 700; font-size: 10px; }
 .tab-btn svg { width: 24px; height: 24px; }
 .tab-btn.activo { color: var(--burnt); }
-.tab-btn.activo .icon-bg { fill: var(--gold); }
 
 .contenido-tab { padding: 18px 16px 100px; max-width: 480px; margin: 0 auto; }
 
