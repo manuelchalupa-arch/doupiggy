@@ -1,291 +1,173 @@
-/* styles/theme.css
-   Identidad visual "animación de los años 30" (estilo rubber-hose, tipo
-   Cuphead): contornos negros gruesos, paleta de dibujo animado vintage,
-   textura de papel envejecido. Modo día y modo noche son DOS paletas de
-   color reales (no un filtro de brillo): cada una redefine las variables
-   de :root dentro de su propia clase en .app-root.
-*/
+/* ============================================================
+   DUOPIGGY — THEME.CSS (archivo maestro)
+   Importa todos los módulos del Design System.
 
-@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&family=Arvo:wght@400;700&display=swap');
+   Uso en React/Vite:
+   import './styles/theme.css';
 
-:root {
-  --radius-lg: 22px;
-  --radius-md: 14px;
-  --font-display: 'Fredericka the Great', cursive;
-  --font-body: 'Arvo', serif;
+   O en index.html:
+   <link rel="stylesheet" href="/styles/theme.css">
+   ============================================================ */
 
-  /* Paleta de DÍA como valores por defecto en :root: así el splash (que se
-     muestra antes de que exista <ThemeProvider>) y cualquier componente
-     fuera del árbol con tema siguen teniendo colores válidos. */
-  --cream: #F2E4C4;
-  --paper: #FBF2DE;
-  --ink: #241811;
-  --mustard: #E8B923;
-  --burnt: #C1442D;
-  --avocado: #5C7A3D;
-  --teal: #2E7D74;
-  --magenta: #B5384C;
-  --gold: #E8B923;
-  --sun: #FCEFCF;
-  --piggy: #E893A0;
-  --piggy-oreja: #C9596B;
-  --astro: var(--gold);
+/* 1. Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Baloo+2:wght@400;600;700;800&family=Courier+Prime:wght@400;700&display=swap');
+
+/* 2. Tokens (variables CSS) */
+@import url('./tokens.css');
+
+/* 3. Reset mínimo */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* .tema-dia no necesita redefinir nada: usa los defaults de :root de
-   arriba. Queda la clase para que el selector sea explícito y legible. */
-.app-root.tema-dia {}
-
-/* ---------- MODO NOCHE (paleta propia, no un filtro) ---------- */
-.app-root.tema-noche {
-  --cream: #1B1830;
-  --paper: #241F3D;
-  --ink: #F2E4C4;
-  --mustard: #E3B23C;
-  --burnt: #E0704F;
-  --avocado: #7FA85C;
-  --teal: #4FB3A6;
-  --magenta: #E06B87;
-  --gold: #E3B23C;
-  --sun: #2A2650;
-  --piggy: #D98AA0;
-  --piggy-oreja: #E0704F;
-  --astro: #C9CBEA;
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
-
-*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  margin: 0;
   font-family: var(--font-body);
-  background: var(--cream);
-  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--ink-black);
+  background: var(--paper-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-h1, h2, h3, .display {
+/* 4. Tipografía base */
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
-  letter-spacing: 0.5px;
+  color: var(--ink-black);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  font-weight: 400;
 }
 
-/* ---------- contenedor raíz: acá vive la paleta activa ---------- */
-.app-root {
-  min-height: 100vh;
-  background: var(--cream);
-  color: var(--ink);
-  transition: background-color 0.4s ease, color 0.4s ease;
-  /* textura sutil de "papel de cine" vintage, funciona en ambas paletas */
-  background-image: radial-gradient(var(--ink) 0.6px, transparent 0.6px);
-  background-size: 14px 14px;
-  background-blend-mode: overlay;
-  background-color: var(--cream);
-}
-.app-root.tema-noche { background-blend-mode: soft-light; }
+h1 { font-size: var(--text-display-xl); }
+h2 { font-size: var(--text-display-lg); }
+h3 { font-size: var(--text-display-md); }
+h4 { font-size: var(--text-heading); }
 
-/* ---------- tarjetas estilo "sticker" (opacas, para formularios) ---------- */
-.tarjeta {
-  background: var(--paper);
-  border: 4px solid var(--ink);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  box-shadow: 6px 6px 0 var(--ink);
-  margin-bottom: 18px;
-}
-.tarjeta h2 { font-size: 16px; margin: 0 0 10px; color: var(--ink); }
-
-/* tarjeta "flotante": para Inicio, semitransparente + blur, así el fondo
-   del nivel de saldo se sigue viendo detrás en vez de quedar tapado */
-.tarjeta-flotante {
-  background: color-mix(in srgb, var(--paper) 78%, transparent);
-  backdrop-filter: blur(6px);
-  border: 3px solid var(--ink);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
-  box-shadow: 5px 5px 0 color-mix(in srgb, var(--ink) 80%, transparent);
-  margin-bottom: 14px;
+p {
+  margin-bottom: var(--space-md);
+  font-size: var(--text-body);
 }
 
-.etiqueta {
-  display: inline-block;
-  font-family: var(--font-display);
-  font-size: 12px;
-  background: var(--gold);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-  border-radius: 20px;
-  padding: 3px 10px;
-  margin-bottom: 8px;
+a {
+  color: var(--water-turquoise-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--duration-fast);
 }
 
-/* ---------- botones ---------- */
-.btn {
-  font-family: var(--font-display);
-  font-size: 13px;
-  color: var(--paper);
-  background: var(--burnt);
-  border: 3px solid var(--ink);
-  border-radius: 14px;
-  padding: 11px 16px;
-  box-shadow: 4px 4px 0 var(--ink);
-  cursor: pointer;
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+a:hover {
+  color: var(--water-burnt);
 }
-.btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn.secundario { background: var(--teal); }
-.btn.chico { padding: 6px 10px; font-size: 11px; border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); }
-.btn.bloque { width: 100%; text-align: center; }
-.btn.fantasma { background: transparent; color: var(--ink); box-shadow: none; }
 
-/* ---------- formularios ---------- */
-label.campo { display: block; font-size: 12px; font-weight: 700; color: var(--ink); margin: 10px 0 4px; font-family: var(--font-body); }
-input[type=text], input[type=number], input[type=email], select {
+a:focus-visible {
+  outline: 3px dashed var(--water-mustard);
+  outline-offset: 2px;
+}
+
+/* 5. Listas */
+ul, ol {
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-lg);
+}
+
+li {
+  margin-bottom: var(--space-xs);
+}
+
+/* 6. Tablas base */
+table {
   width: 100%;
-  font-family: var(--font-body);
-  font-size: 14px;
-  padding: 9px 10px;
-  border: 3px solid var(--ink);
-  border-radius: 10px;
-  background: var(--paper);
-  color: var(--ink);
+  border-collapse: collapse;
+  margin-bottom: var(--space-md);
 }
-input:focus, select:focus { outline: 3px solid var(--gold); }
-input.invalido { border-color: var(--burnt); background: color-mix(in srgb, var(--burnt) 12%, var(--paper)); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.chip {
-  font-size: 11px; font-weight: 700;
-  padding: 6px 12px;
-  border: 2px solid var(--ink);
-  border-radius: 20px;
-  background: var(--paper);
-  color: var(--ink);
+
+th, td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  border: var(--border-thin);
+}
+
+th {
+  font-family: var(--font-display);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  background: var(--paper-aged);
+}
+
+tr:nth-child(even) {
+  background: rgba(232, 213, 176, 0.3);
+}
+
+/* 7. Imágenes */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 8. Botones nativos reset */
+button {
+  font-family: inherit;
+  font-size: inherit;
   cursor: pointer;
-  user-select: none;
-}
-.chip.sel { background: var(--mustard); }
-.ayuda-error { font-size: 11px; color: var(--burnt); font-weight: 700; margin: 2px 0 0; }
-.obligatorio::after { content: " *"; color: var(--burnt); }
-
-/* ---------- historial con scroll ---------- */
-.lista-historial { max-height: 172px; overflow-y: auto; padding-right: 4px; margin-top: 8px; }
-.lista-historial::-webkit-scrollbar { width: 9px; }
-.lista-historial::-webkit-scrollbar-thumb { background: var(--mustard); border: 2px solid var(--ink); border-radius: 8px; }
-.lista-historial::-webkit-scrollbar-track { background: var(--cream); }
-.item-gasto {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  background: var(--cream);
-  border: 2px solid var(--ink);
-  border-radius: 10px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-}
-.item-gasto .desc { font-weight: 700; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-gasto .meta { font-size: 11px; color: var(--burnt); font-weight: 600; }
-.item-gasto .monto { font-family: var(--font-display); font-size: 14px; color: var(--teal); white-space: nowrap; }
-.btn-borrar {
-  width: 26px; height: 26px; flex: none;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  background: var(--magenta);
-  color: var(--paper);
-  font-weight: 800;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+  background: none;
+  border: none;
 }
 
-/* ---------- perfil / info ---------- */
-.avatar {
-  width: 64px; height: 64px; border-radius: 50%;
-  background: var(--piggy);
-  border: 3px solid var(--ink);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-size: 22px; color: var(--ink);
-  flex: none;
+/* 9. Inputs nativos reset */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
 }
-.fila-perfil { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
 
-.switch-wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.switch-astro {
-  width: 60px; height: 32px; border: 3px solid var(--ink); border-radius: 20px;
-  background: var(--sun); position: relative; cursor: pointer; flex: none;
-  display: flex; align-items: center;
+/* 10. Scrollbar personalizada (WebKit) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-.switch-astro .astro-icono {
-  position: absolute; top: 1px; left: 2px;
-  width: 24px; height: 24px;
-  transition: left 0.25s ease;
-}
-.switch-astro.noche .astro-icono { left: 32px; }
 
-/* Burbuja flotante de día/noche (reemplaza la fila "Preferencias"): fija
-   en una esquina de la pantalla, no ocupa lugar en el flujo del contenido. */
-.burbuja-tema {
-  position: fixed;
-  top: max(16px, env(safe-area-inset-top));
-  right: 16px;
-  z-index: 70;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 3px 3px 0 var(--ink);
+::-webkit-scrollbar-track {
+  background: var(--paper-aged);
+  border-radius: var(--radius-sm);
 }
-.burbuja-tema .astro-icono { position: static; }
 
-/* ---------- modal calendario ---------- */
-.modal-fondo {
-  position: fixed; inset: 0;
-  background: color-mix(in srgb, var(--ink) 60%, transparent);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 80; padding: 24px;
+::-webkit-scrollbar-thumb {
+  background: var(--ink-sepia);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--paper-aged);
 }
-.modal {
-  width: 100%; max-width: 360px;
-  background: var(--paper);
-  border: 4px solid var(--ink);
-  border-radius: var(--radius-lg);
-  box-shadow: 6px 6px 0 var(--ink);
-  padding: 16px;
-  color: var(--ink);
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-brown);
 }
-.modal h3 { margin: 0 0 10px; font-size: 17px; }
-.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.cal-header button { border: 2px solid var(--ink); background: var(--mustard); border-radius: 8px; width: 26px; height: 26px; font-weight: 800; cursor: pointer; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-grid .dow { font-size: 10px; text-align: center; font-weight: 800; color: var(--burnt); }
-.cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border-radius: 8px; cursor: pointer; border: 2px solid transparent; background: none; color: var(--ink); font-family: var(--font-body); }
-.cal-day:hover { border-color: var(--ink); }
-.cal-day.en-rango { background: var(--gold); }
-.cal-day.extremo { background: var(--burnt); color: var(--paper); border-color: var(--ink); }
-.modal-acciones { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
 
-/* ---------- toast ---------- */
-#toast {
-  position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%) translateY(20px);
-  background: var(--ink); color: var(--paper);
-  font-weight: 700; font-size: 12px;
-  padding: 10px 16px; border-radius: 20px;
-  border: 2px solid var(--gold);
-  opacity: 0; pointer-events: none;
-  transition: all 0.25s ease;
-  z-index: 90; white-space: nowrap;
+/* 11. Selection */
+::selection {
+  background: var(--water-mustard);
+  color: var(--ink-black);
 }
-#toast.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ---------- tabbar ---------- */
-.tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 6px 0; color: var(--ink); font-family: var(--font-body); font-weight: 700; font-size: 10px; }
-.tab-btn svg { width: 24px; height: 24px; }
-.tab-btn.activo { color: var(--burnt); }
+/* 12. Componentes */
+@import url('./components.css');
 
-.contenido-tab { padding: 18px 16px 100px; max-width: 480px; margin: 0 auto; }
+/* 13. Animaciones */
+@import url('./animations.css');
 
-/* ---------- íconos inline (trash, calendar, pdf, excel) ---------- */
-.icono-inline {
-  width: var(--icon-size, 16px);
-  height: var(--icon-size, 16px);
-  object-fit: contain;
-  vertical-align: middle;
-  flex: none;
-}
+/* 14. Layout y Responsive */
+@import url('./layout.css');
+
+/* 15. Accesibilidad */
+@import url('./accessibility.css');
