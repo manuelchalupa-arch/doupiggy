@@ -1,0 +1,12 @@
+{
+  "name": "DouPiggy",
+  "short_name": "DouPiggy",
+  "description": "Gastos compartidos entre dos, con estilo de dibujo animado de los años 30.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1B1830",
+  "theme_color": "#C1442D",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
