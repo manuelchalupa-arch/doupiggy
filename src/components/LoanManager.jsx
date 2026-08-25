@@ -1,10 +1,9 @@
 // components/LoanManager.jsx
-// Misma lógica de préstamos/cuotas (loanService), con la identidad visual
-// retro: tarjeta "sticker", chips y botones consistentes con el resto de la app.
+// Misma lógica de préstamos/cuotas, con ícono trash reemplazado por SVG inline.
 
 import { useState } from "react";
 import { crearPrestamo, pagarCuota, eliminarPrestamo } from "../services/loanService";
-import { iconAssets } from "../assets";
+import { IconoTrash } from "./IconosRaster";
 import { formatoARS } from "../utils/format";
 
 /**
@@ -151,7 +150,7 @@ export default function LoanManager({ grupoId, uidActual, miembros, prestamos })
                 aria-label="Borrar préstamo"
                 onClick={() => eliminarPrestamo(grupoId, p.id)}
               >
-                <img src={iconAssets.trash} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                <IconoTrash tamano={14} />
               </button>
             </p>
             <p style={{ margin: "2px 0 8px", fontSize: 12, color: "var(--burnt)", fontWeight: 600 }}>

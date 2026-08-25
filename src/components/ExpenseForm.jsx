@@ -1,13 +1,9 @@
 // components/ExpenseForm.jsx
 // Pestaña Gastos completa: alta de gastos, historial de los últimos 4 con
-// scroll y borrado, y el generador de informes (antes vivía en la pestaña
-// de Información, ahora está acá porque es donde tiene más sentido).
+// scroll y borrado, y el generador de informes.
 //
-// Etapa 4 (rediseño): la tarjeta de alta ahora es una "hoja contable"
-// (clase .hoja-contable en theme.css: renglones horizontales + margen
-// rojo, como una libreta vieja) y el botón de guardar usa .btn.principal
-// para que sea inconfundible. El orden de los campos y la lógica del
-// formulario no cambiaron.
+// Etapa 4 (rediseño): íconos funcionales reemplazados por SVG inline
+// (IconosRaster.jsx) en vez de PNGs externos.
 
 import { useMemo, useState } from "react";
 import {
@@ -17,8 +13,9 @@ import {
 } from "../services/expenseService";
 import { generarInformeExcel, generarInformePdf } from "../services/reportService";
 import { useExpenses } from "../hooks/useExpenses";
-import { backgroundAssets, iconAssets } from "../assets";
+import { backgroundAssets } from "../assets";
 import { formatoARS } from "../utils/format";
+import { IconoTrash, IconoCalendar, IconoPdf, IconoExcel } from "./IconosRaster";
 import CalendarioRango from "./CalendarioRango";
 import InvitarGrupo from "./InvitarGrupo";
 
@@ -39,8 +36,6 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   const [error, setError] = useState(null);
   const [invitarAbierto, setInvitarAbierto] = useState(false);
 
-  // El historial visible sale de la misma suscripción en tiempo real que
-  // usa el resto de la app: mantenemos una sola fuente de verdad.
   const { gastos } = useExpenses(grupoId);
   const ultimosCuatro = gastos.slice(0, 4);
 
@@ -89,8 +84,6 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
 
   return (
     <>
-      {/* Botón de invitar: siempre referido al grupo activo (grupoId de
-          este mismo render), nunca a un grupo distinto ni "global". */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
         <button type="button" className="btn chico" onClick={() => setInvitarAbierto(true)}>
           Invitar a este grupo
@@ -185,7 +178,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
                 aria-label="Borrar gasto"
                 onClick={() => manejarBorrado(g.id)}
               >
-                <img src={iconAssets.trash} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                <IconoTrash tamano={14} />
               </button>
             </div>
           ))}
@@ -211,7 +204,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   );
 }
 
-/** Pequeño recibo dibujado (etapa 5: apoyo visual en cada renglón del historial). */
+/** Pequeño recibo dibujado (SVG inline, estilo rubber-hose). */
 function IconoRecibo() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" className="icono-renglon">
@@ -227,7 +220,7 @@ function IconoRecibo() {
   );
 }
 
-/** Generador de informes (antes en Información, ahora vive en Gastos). */
+/** Generador de informes. */
 function GeneradorInformes({ gastos, miembros, uidActual }) {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [rangoDesde, setRangoDesde] = useState(null);
@@ -277,7 +270,7 @@ function GeneradorInformes({ gastos, miembros, uidActual }) {
         style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         onClick={() => setModalAbierto(true)}
       >
-        <img src={iconAssets.calendar} alt="" className="icono-inline" style={{ "--icon-size": "16px" }} />
+        <IconoCalendar tamano={16} />
         Generar informe
       </button>
       {mensaje && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensaje}</p>}
@@ -305,7 +298,7 @@ function GeneradorInformes({ gastos, miembros, uidActual }) {
                 onClick={() => generar("excel")}
                 disabled={!rangoDesde}
               >
-                <img src={iconAssets.excel} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                <IconoExcel tamano={14} />
                 Excel
               </button>
               <button
@@ -315,7 +308,7 @@ function GeneradorInformes({ gastos, miembros, uidActual }) {
                 onClick={() => generar("pdf")}
                 disabled={!rangoDesde}
               >
-                <img src={iconAssets.pdf} alt="" className="icono-inline" style={{ "--icon-size": "14px" }} />
+                <IconoPdf tamano={14} />
                 PDF
               </button>
             </div>
