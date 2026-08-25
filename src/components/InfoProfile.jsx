@@ -1,8 +1,16 @@
 // components/InfoProfile.jsx
 // Perfil del usuario (nombre, correo, CBU/alias mutuamente opcionales) y
-// gestión de grupos. El apartado de invitar YA NO está acá (vive en Gastos,
-// aplicado siempre al grupo activo). El switch de día/noche tampoco es una
-// fila más de la pantalla: es una burbuja flotante fija en una esquina.
+// gestión de grupos. El apartado de invitar vive en Gastos (aplicado
+// siempre al grupo activo).
+//
+// Etapa 10 (rediseño): la pantalla ahora está dividida en 4 secciones
+// claras (Mi cuenta / Mis grupos / Informes / Configuración) con un
+// rótulo tipo cartel arriba de cada una, en vez de sentirse un "cajón de
+// sastre". El cambio de modo día/noche volvió a vivir DENTRO del flujo
+// de Configuración (ya no es una burbuja fija arriba a la derecha):
+// flotando ahí chocaba con el nuevo header "cartel" de la etapa 2. La
+// sección Informes no duplica el generador (que vive en Gastos, con su
+// propia lógica): sólo explica dónde está y ofrece un atajo directo.
 
 import { useState } from "react";
 import { actualizarPerfil, esCbuValido, esAliasValido } from "../services/profileService";
@@ -19,8 +27,9 @@ import { IconoSol, IconoLuna } from "./IconoAstro";
  * @param {string} props.grupoId
  * @param {Array} [props.grupos]
  * @param {(id: string) => void} [props.onCambiarGrupo]
+ * @param {() => void} [props.onIrAGastos] - atajo para la sección Informes
  */
-export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], onCambiarGrupo }) {
+export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], onCambiarGrupo, onIrAGastos }) {
   const { modoOscuro, alternarModo } = useTheme();
 
   const [nombre, setNombre] = useState(perfil?.nombre ?? "");
@@ -86,16 +95,8 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
 
   return (
     <>
-      {/* Burbuja flotante de día/noche: fija en una esquina, no ocupa un
-          lugar en el flujo normal de la pantalla. */}
-      <button
-        type="button"
-        className={`switch-astro burbuja-tema${modoOscuro ? " noche" : ""}`}
-        aria-label={modoOscuro ? "Cambiar a modo día" : "Cambiar a modo noche"}
-        onClick={alternarModo}
-      >
-        {modoOscuro ? <IconoLuna tamano={22} /> : <IconoSol tamano={22} />}
-      </button>
+      {/* ---------- MI CUENTA ---------- */}
+      <h1 className="titulo-seccion">Mi cuenta</h1>
 
       <div className="tarjeta" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <img src={brandingAssets.logo} alt="DouPiggy" style={{ width: 56, height: 56, objectFit: "contain" }} />
@@ -166,6 +167,9 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
         </form>
       </div>
 
+      {/* ---------- MIS GRUPOS ---------- */}
+      <h1 className="titulo-seccion">Mis grupos</h1>
+
       <div className="tarjeta">
         <span className="etiqueta">Grupos</span>
         {grupos.length > 1 && (
@@ -189,6 +193,43 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
         </button>
       </div>
 
+      {/* ---------- INFORMES ---------- */}
+      <h1 className="titulo-seccion">Informes</h1>
+
+      <div className="tarjeta">
+        <span className="etiqueta">PDF / Excel</span>
+        <h2 style={{ margin: 0 }}>Se generan desde Gastos</h2>
+        <p style={{ margin: "6px 0 12px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
+          Elegís el rango de fechas junto al historial del grupo activo.
+        </p>
+        <button type="button" className="btn secundario bloque" onClick={onIrAGastos} disabled={!onIrAGastos}>
+          Ir a Gastos
+        </button>
+      </div>
+
+      {/* ---------- CONFIGURACIÓN ---------- */}
+      <h1 className="titulo-seccion">Configuración</h1>
+
+      <div className="tarjeta">
+        <span className="etiqueta">Apariencia</span>
+        <div className="switch-wrap">
+          <div>
+            <h2 style={{ margin: 0 }}>Modo {modoOscuro ? "noche" : "día"}</h2>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
+              Cambia la paleta de toda la app.
+            </p>
+          </div>
+          <button
+            type="button"
+            className={`switch-astro${modoOscuro ? " noche" : ""}`}
+            aria-label={modoOscuro ? "Cambiar a modo día" : "Cambiar a modo noche"}
+            onClick={alternarModo}
+          >
+            <span className="astro-icono">{modoOscuro ? <IconoLuna tamano={22} /> : <IconoSol tamano={22} />}</span>
+          </button>
+        </div>
+      </div>
+
       {modalGrupoAbierto && (
         <div
           className="modal-fondo"
@@ -197,7 +238,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
             setGrupoRecienCreadoId(null);
           }}
         >
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Grupo" onClick={(e) => e.stopPropagation()}>
             {grupoRecienCreadoId ? (
               <>
                 <h3>Grupo creado — invitá a tu gente</h3>

@@ -1,6 +1,10 @@
 // components/CalendarioRango.jsx
 // Selector de rango de fechas por click (inicio, luego fin), sin dependencias
-// externas. Usado por InfoProfile para acotar el informe de gastos.
+// externas. Usado por ExpenseForm para acotar el informe de gastos.
+//
+// Etapa 11 (rediseño): el wrapper .calendario-pared le da la pinta de
+// almanaque de pared viejo (dos anillos arriba + encabezado tipo cartel),
+// pero el comportamiento de selección de rango es exactamente el mismo.
 
 import { useState } from "react";
 
@@ -47,12 +51,12 @@ export default function CalendarioRango({ desde, hasta, onCambiarRango }) {
   }
 
   return (
-    <div>
+    <div className="calendario-pared">
       <div className="cal-header">
         <button type="button" onClick={() => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1))}>
           ‹
         </button>
-        <strong style={{ fontSize: 12 }}>
+        <strong style={{ fontFamily: "var(--font-display)", fontSize: 15, letterSpacing: 0.4 }}>
           {MESES[mesActual.getMonth()]} {mesActual.getFullYear()}
         </strong>
         <button type="button" onClick={() => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 1))}>

@@ -2,6 +2,12 @@
 // Pestaña Gastos completa: alta de gastos, historial de los últimos 4 con
 // scroll y borrado, y el generador de informes (antes vivía en la pestaña
 // de Información, ahora está acá porque es donde tiene más sentido).
+//
+// Etapa 4 (rediseño): la tarjeta de alta ahora es una "hoja contable"
+// (clase .hoja-contable en theme.css: renglones horizontales + margen
+// rojo, como una libreta vieja) y el botón de guardar usa .btn.principal
+// para que sea inconfundible. El orden de los campos y la lógica del
+// formulario no cambiaron.
 
 import { useMemo, useState } from "react";
 import {
@@ -92,7 +98,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
       </div>
 
       <div
-        className="tarjeta"
+        className="tarjeta hoja-contable"
         style={{
           position: "relative",
           overflow: "hidden",
@@ -136,20 +142,22 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
           <label className="campo">Dividir entre</label>
           <div className="chips">
             {miembros.map((m) => (
-              <div
+              <button
+                type="button"
                 key={m.uid}
                 className={`chip${participantesSeleccionados.includes(m.uid) ? " sel" : ""}`}
+                aria-pressed={participantesSeleccionados.includes(m.uid)}
                 onClick={() => alternarParticipante(m.uid)}
               >
                 {m.nombre}
                 {previewDivision[m.uid] != null && ` — ${formatoARS.format(previewDivision[m.uid])}`}
-              </div>
+              </button>
             ))}
           </div>
 
           {error && <p className="ayuda-error">{error}</p>}
 
-          <button type="submit" className="btn bloque" style={{ marginTop: 14 }} disabled={enviando}>
+          <button type="submit" className="btn principal bloque" style={{ marginTop: 14 }} disabled={enviando}>
             {enviando ? "Guardando..." : "Agregar gasto"}
           </button>
         </form>
@@ -166,7 +174,8 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
           )}
           {ultimosCuatro.map((g) => (
             <div className="item-gasto" key={g.id}>
-              <div style={{ minWidth: 0 }}>
+              <IconoRecibo />
+              <div className="texto-gasto">
                 <div className="desc">{g.descripcion}</div>
                 <div className="meta">Pagó {nombreDe(g.pagadoPor)}</div>
               </div>
@@ -187,7 +196,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
 
       {invitarAbierto && (
         <div className="modal-fondo" onClick={() => setInvitarAbierto(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Invitá a este grupo" onClick={(e) => e.stopPropagation()}>
             <h3>Invitá a este grupo</h3>
             <InvitarGrupo grupoId={grupoId} uidActual={uidActual} />
             <div className="modal-acciones">
@@ -199,6 +208,22 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
         </div>
       )}
     </>
+  );
+}
+
+/** Pequeño recibo dibujado (etapa 5: apoyo visual en cada renglón del historial). */
+function IconoRecibo() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" className="icono-renglon">
+      <path
+        d="M6 3 H18 V21 L15.5 19 L13 21 L10.5 19 L8 21 L6 19 Z M8.5 8 H15.5 M8.5 12 H15.5 M8.5 16 H12.5"
+        fill="none"
+        stroke="var(--ink)"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -259,7 +284,7 @@ function GeneradorInformes({ gastos, miembros, uidActual }) {
 
       {modalAbierto && (
         <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
             <h3>Elegí el rango del informe</h3>
             <CalendarioRango
               desde={rangoDesde}

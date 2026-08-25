@@ -5,6 +5,11 @@
 // viendo, y la cuerda ya NO usa una flecha/brújula superpuesta: el balance
 // se lee directo en el tironeo de la soga (inclinación + desplazamiento) y
 // en el número de arriba.
+//
+// Etapa 3 (rediseño): la escena ahora se lee en dos golpes de vista, como
+// pide el brief: una etiqueta de estado bien grande ("TE DEBEN" / "DEBÉS"
+// / "ESTÁN A MANO") y, debajo, el monto en el mismo color. El cálculo del
+// saldo (calcularSaldosNetos) no se tocó: sólo cambió cómo se muestra.
 
 import { useMemo } from "react";
 import { calcularSaldosNetos } from "../services/settlementService";
@@ -24,12 +29,14 @@ function calcularZona(saldo) {
 
 // offsetX: cuánto se corre el nudo de la soga hacia el lado que "gana".
 // angulo: inclinación de la soga (reemplaza a la vieja flecha/brújula).
+// etiqueta: título grande de la escena. color: mismo color para etiqueta,
+// monto y matiz de la soga, así todo el bloque "cuenta" el mismo estado.
 const DATOS_ZONA = {
-  "muy-debe": { detalle: "Debés bastante", offsetX: -46, angulo: -10 },
-  debe: { detalle: "Debés un poco", offsetX: -22, angulo: -5 },
-  neutral: { detalle: "Están a mano", offsetX: 0, angulo: 0 },
-  "le-deben": { detalle: "Te deben un poco", offsetX: 22, angulo: 5 },
-  "le-deben-mucho": { detalle: "Te deben bastante", offsetX: 46, angulo: 10 },
+  "muy-debe": { etiqueta: "DEBÉS", subtitulo: "Bastante", color: "var(--burnt)", offsetX: -46, angulo: -10 },
+  debe: { etiqueta: "DEBÉS", subtitulo: "Un poco", color: "var(--burnt)", offsetX: -22, angulo: -5 },
+  neutral: { etiqueta: "ESTÁN A MANO", subtitulo: null, color: "var(--ink)", offsetX: 0, angulo: 0 },
+  "le-deben": { etiqueta: "TE DEBEN", subtitulo: "Un poco", color: "var(--teal)", offsetX: 22, angulo: 5 },
+  "le-deben-mucho": { etiqueta: "TE DEBEN", subtitulo: "Bastante", color: "var(--teal)", offsetX: 46, angulo: 10 },
 };
 
 const SPRITE_ANCHO = 118;
@@ -61,14 +68,16 @@ export default function HomeSummary({ grupo, gastos, miembros, uidActual }) {
         flexDirection: "column",
       }}
     >
-      {/* Tarjetas chicas y semitransparentes arriba, para no tapar el fondo */}
+      {/* Tarjetas chicas y semitransparentes arriba, para no tapar el fondo.
+          Se lee de arriba a abajo: "TE DEBEN" / "$8.450" — la etiqueta dice
+          la dirección de la deuda, el número ya no necesita el signo +/-. */}
       <div className="tarjeta-flotante">
         <span className="etiqueta">Resumen</span>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: 32, color: "var(--ink)", margin: "2px 0 0" }}>
-          {saldoActual >= 0 ? "+" : ""}
-          {formatoARS.format(saldoActual)}
-        </p>
-        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--burnt)", margin: 0 }}>{d.detalle}</p>
+        <p className="estado-etiqueta" style={{ color: d.color }}>{d.etiqueta}</p>
+        {zona !== "neutral" && (
+          <p className="estado-monto" style={{ color: d.color }}>{formatoARS.format(Math.abs(saldoActual))}</p>
+        )}
+        {d.subtitulo && <p className="estado-subtitulo">{d.subtitulo}</p>}
       </div>
 
       {/* La cuerda queda libre en el medio, sobre el fondo, sin tarjeta encima */}

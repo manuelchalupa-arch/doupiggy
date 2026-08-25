@@ -1,17 +1,26 @@
 // components/AppShell.jsx
-// Sin banner superior: el fondo de cada pestaña ocupa toda la pantalla
-// (Inicio ya lo hacía con su imagen de nivel; el resto usa la textura de
-// papel del tema, que ahora se ve completa al no estar tapada por un
-// header). El selector de grupo (si el usuario tiene más de uno) vive en
-// Información, no arriba. El botón de invitar vive en Gastos.
+// Header tipo "cartel" persistente arriba de las 4 pestañas (no es
+// position:fixed, así nunca compite con la burbuja de día/noche de
+// Cuenta). Debajo sigue el mismo contenido de siempre: Inicio conserva
+// su fondo a pantalla completa, el resto usa la textura de papel del
+// tema. El selector de grupo (si el usuario tiene más de uno) vive en
+// Información. El botón de invitar vive en Gastos.
 
 import { useMemo, useState } from "react";
 import { useExpenses } from "../hooks/useExpenses";
+import AppHeader from "./AppHeader";
 import HomeSummary from "./HomeSummary";
 import ExpenseForm from "./ExpenseForm";
 import SettlementPanel from "./SettlementPanel";
 import InfoProfile from "./InfoProfile";
 import { IconoTabInicio, IconoTabGastos, IconoTabLiquidacion, IconoTabInfo } from "./IconoTab";
+
+const CONTEXTO_TAB = {
+  inicio: "Inicio",
+  gastos: "Gastos",
+  liquidacion: "Liquidación",
+  info: "Tu cuenta",
+};
 
 /**
  * @param {object} props
@@ -36,7 +45,9 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
 
   return (
     <div>
-      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "max(18px, env(safe-area-inset-top))" }}>
+      <AppHeader contexto={CONTEXTO_TAB[tab]} grupoNombre={grupo?.nombre} />
+
+      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px" }}>
         {tab === "inicio" && (
           <HomeSummary grupo={grupo} gastos={gastos} miembros={miembros} uidActual={uidActual} />
         )}
@@ -54,6 +65,7 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
             grupoId={grupoId}
             grupos={grupos}
             onCambiarGrupo={onCambiarGrupo}
+            onIrAGastos={() => setTab("gastos")}
           />
         )}
       </main>
