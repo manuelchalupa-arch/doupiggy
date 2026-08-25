@@ -1,60 +1,46 @@
-/* ============================================================
-   DUOPIGGY — ACCESIBILIDAD
-   Focus states, screen-reader utilities, reduced-motion
-   Dependencia: tokens.css
-   ============================================================ */
+/* styles/accessibility.css
+   Accesibilidad: foco visible, reduced-motion, utilidades screen-reader.
+   Se importa AL FINAL para que tenga prioridad.
+*/
 
-/* ----------------------------------------------------------
-   FOCUS STATES
-   Todos los elementos interactivos DEBEN tener focus visible.
-   ---------------------------------------------------------- */
-*:focus {
-  outline: none;
-}
-
-*:focus-visible {
-  outline: 3px dashed var(--water-mustard);
-  outline-offset: 3px;
-}
-
-.dp-btn:focus-visible,
-.dp-nav-tab:focus-visible,
-.dp-input:focus-visible,
-.dp-toggle:focus-visible,
-.dp-avatar:focus-visible,
-.dp-coin:focus-visible,
-.dp-calendar__day:focus-visible {
-  outline: 3px dashed var(--water-mustard);
+/* ---------- Foco visible por teclado ---------- */
+.chip:focus-visible,
+.tab-btn:focus-visible,
+.btn-borrar:focus-visible,
+.cal-day:focus-visible,
+.switch-astro:focus-visible,
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--gold);
   outline-offset: 2px;
 }
 
-/* Skip link para navegación por teclado */
-.dp-skip-link {
-  position: absolute;
-  top: -100%;
-  left: var(--space-md);
-  z-index: var(--z-toast);
-  background: var(--water-mustard);
-  color: var(--ink-black);
-  padding: var(--space-sm) var(--space-md);
-  font-family: var(--font-display);
-  font-size: var(--text-label);
-  text-transform: uppercase;
-  text-decoration: none;
-  border: var(--border-medium);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-hard);
-  transition: top var(--duration-fast);
+/* ---------- prefers-reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .anim-bounce,
+  .anim-squash,
+  .anim-stretch,
+  .anim-wiggle,
+  .anim-wiggle-lento,
+  .anim-blink,
+  .anim-shake,
+  .anim-pop,
+  .anim-pull,
+  .anim-celebrate,
+  .tab-btn.activo svg,
+  .pig-boy-sprite,
+  .pig-girl-sprite {
+    animation: none !important;
+  }
+
+  .app-root {
+    transition: none !important;
+  }
 }
 
-.dp-skip-link:focus {
-  top: var(--space-md);
-}
-
-/* ----------------------------------------------------------
-   SCREEN READER UTILITIES
-   ---------------------------------------------------------- */
-.dp-sr-only {
+/* ---------- Screen reader only ---------- */
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -66,181 +52,17 @@
   border: 0;
 }
 
-.dp-sr-only-focusable:focus {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: var(--space-sm);
-  margin: 0;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
-/* ----------------------------------------------------------
-   LIVE REGIONS (ARIA)
-   ---------------------------------------------------------- */
-.dp-live-region {
+/* ---------- Skip link ---------- */
+.skip-link {
   position: absolute;
-  left: -10000px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
+  top: -40px;
+  left: 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 8px;
+  text-decoration: none;
+  z-index: 100;
+  transition: top var(--transition-fast);
 }
 
-/* ----------------------------------------------------------
-   REDUCED MOTION
-   Respetar preferencias del usuario. NUNCA ignorar esto.
-   ---------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-
-  .dp-anim-bounce,
-  .dp-anim-squash,
-  .dp-anim-stretch,
-  .dp-anim-wiggle,
-  .dp-anim-blink,
-  .dp-anim-shake,
-  .dp-anim-pop,
-  .dp-anim-pull,
-  .dp-anim-celebrate,
-  .dp-anim-fade-in,
-  .dp-anim-fade-in-up,
-  .dp-anim-slide-in-left,
-  .dp-anim-slide-in-right,
-  .dp-anim-slide-up,
-  .dp-anim-pulse,
-  .dp-anim-spin {
-    animation: none !important;
-  }
-
-  .dp-enter-pop > *,
-  .dp-enter-fade-up > * {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .dp-confetti,
-  .dp-confetti__piece {
-    display: none !important;
-  }
-
-  .dp-splash__progress-bar {
-    animation: none !important;
-    width: 100% !important;
-  }
-}
-
-/* ----------------------------------------------------------
-   ALTO CONTRASTE (Windows High Contrast Mode)
-   ---------------------------------------------------------- */
-@media (prefers-contrast: more) {
-  .dp-btn,
-  .dp-input,
-  .dp-card,
-  .dp-poster,
-  .dp-nav-tab,
-  .dp-badge,
-  .dp-coin,
-  .dp-avatar {
-    border-width: 3px !important;
-  }
-
-  .dp-input:focus,
-  .dp-btn:focus-visible,
-  .dp-nav-tab:focus-visible {
-    outline: 4px solid CanvasText !important;
-    outline-offset: 2px !important;
-  }
-}
-
-/* ----------------------------------------------------------
-   COLOR BLINDNESS SAFE
-   Nunca usar solo color para comunicar estado.
-   ---------------------------------------------------------- */
-.dp-text-positive::before {
-  content: '↑ ';
-}
-
-.dp-text-negative::before {
-  content: '↓ ';
-}
-
-.dp-badge--success::before {
-  content: '✓ ';
-}
-
-.dp-badge--error::before {
-  content: '✕ ';
-}
-
-/* ----------------------------------------------------------
-   TOUCH TARGETS
-   Asegurar mínimo 44x44px en todos los elementos interactivos.
-   ---------------------------------------------------------- */
-.dp-btn,
-.dp-nav-tab,
-.dp-input,
-.dp-calendar__day,
-.dp-ledger-line__action,
-.dp-modal__close,
-.dp-bottom-nav__item,
-.dp-sidebar__link {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-.dp-coin,
-.dp-avatar {
-  min-height: 48px;
-  min-width: 48px;
-}
-
-/* Inputs numéricos: evitar zoom en iOS */
-.dp-input[type="number"],
-.dp-input[type="tel"],
-.dp-input--currency,
-.dp-input--mono {
-  font-size: 16px; /* iOS no hace zoom con font-size >= 16px */
-}
-
-/* ----------------------------------------------------------
-   ESTADOS DE ERROR ACCESIBLES
-   ---------------------------------------------------------- */
-.dp-input[aria-invalid="true"] + .dp-error-msg,
-.dp-input--error + .dp-error-msg {
-  display: flex;
-}
-
-.dp-error-msg {
-  display: none; /* se muestra solo cuando hay error */
-}
-
-/* ----------------------------------------------------------
-   MODAL TRAP FOCUS
-   Clases para manejar focus trap en modales.
-   Usar con librería de focus-trap o implementación propia.
-   ---------------------------------------------------------- */
-.dp-modal--open {
-  overflow: hidden;
-}
-
-.dp-modal__focus-trap-start,
-.dp-modal__focus-trap-end {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
+.skip-link:focus { top: 0; }

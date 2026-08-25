@@ -1,130 +1,78 @@
-/* ============================================================
-   DUOPIGGY — TOKENS CSS
-   Sistema de diseño Rubber-Hose 1930s
-   No modificar valores directamente en componentes.
-   ============================================================ */
+/* styles/tokens.css
+   Tokens visuales: colores, espaciado, tipografía, radios, sombras.
+   Modo día y modo noche son DOS paletas reales (no un filtro).
+   Se importa PRIMERO en theme.css.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&family=Arvo:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
 
 :root {
-  /* ----------------------------------------------------------
-     1. PAPELES (fondos)
-     ---------------------------------------------------------- */
-  --paper-cream:        #F5E6C8;
-  --paper-aged:           #E8D5B0;
-  --paper-news:           #D4C4A0;
-  --paper-dark:           #C4B090;
+  /* ---------- Tipografía ---------- */
+  --font-display: 'Fredericka the Great', cursive;
+  --font-body: 'Arvo', serif;
+  --font-mono: 'Courier Prime', monospace;
 
-  /* ----------------------------------------------------------
-     2. TINTAS (texto, contornos, bordes)
-     ---------------------------------------------------------- */
-  --ink-black:            #1A120B;
-  --ink-brown:            #3D2B1F;
-  --ink-sepia:            #5C4033;
-  --ink-paper:            #2A1F14;
+  /* ---------- Radios ---------- */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 9999px;
 
-  /* ----------------------------------------------------------
-     3. ACUARELAS FUNCIONALES
-     ---------------------------------------------------------- */
-  --water-mustard:        #D4A017;
-  --water-mustard-light:  #E8C96E;
-  --water-mustard-dark:   #B8860B;
-  --water-burnt:          #CC5500;
-  --water-burnt-light:    #E07B3A;
-  --water-avocado:        #8FBC8F;
-  --water-avocado-dark:   #6B8E6B;
-  --water-turquoise:      #40E0D0;
-  --water-turquoise-dark: #20B2AA;
-  --water-magenta:        #C71585;
-  --water-magenta-light:  #DB7093;
-  --water-piggy:          #FFB6C1;
-  --water-piggy-dark:     #FF69B4;
-  --water-ink-blue:       #4682B4;
-  --water-rose:           #CD5C5C;
-  --water-mint:           #98D8C8;
+  /* ---------- Espaciado (base 4px) ---------- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
 
-  /* ----------------------------------------------------------
-     4. ESTADOS SEMÁNTICOS
-     ---------------------------------------------------------- */
-  --state-success:        #228B22;
-  --state-warning:        #DAA520;
-  --state-danger:         #B22222;
-  --state-info:           #4682B4;
+  /* ---------- Sombras (desplazamiento duro, sin blur) ---------- */
+  --shadow-soft: 3px 4px 0 var(--ink);
+  --shadow-medium: 4px 5px 0 var(--ink);
+  --shadow-hard: 5px 6px 0 var(--ink);
+  --shadow-pop: 6px 7px 0 var(--ink);
+  --shadow-inner: inset 2px 2px 4px color-mix(in srgb, var(--ink) 15%, transparent);
 
-  /* ----------------------------------------------------------
-     5. SOMBRAS (desplazamientos duros, nunca blur)
-     ---------------------------------------------------------- */
-  --shadow-soft:          3px 4px 0px rgba(26, 18, 11, 0.15);
-  --shadow-medium:        4px 5px 0px rgba(26, 18, 11, 0.25);
-  --shadow-hard:          5px 6px 0px rgba(26, 18, 11, 0.35);
-  --shadow-pop:           6px 7px 0px rgba(26, 18, 11, 0.40);
-  --shadow-inner:         inset 2px 2px 4px rgba(26, 18, 11, 0.10);
+  /* ---------- Bordes ---------- */
+  --border-thin: 2px solid var(--ink);
+  --border-medium: 3px solid var(--ink);
+  --border-thick: 4px solid var(--ink);
 
-  /* ----------------------------------------------------------
-     6. BORDES
-     ---------------------------------------------------------- */
-  --border-thin:          2px solid var(--ink-black);
-  --border-medium:        3px solid var(--ink-black);
-  --border-thick:         4px solid var(--ink-black);
-  --border-wobbly:        3px solid var(--ink-black);
+  /* ---------- Transiciones ---------- */
+  --transition-fast: 0.08s ease;
+  --transition-normal: 0.25s ease;
+  --transition-slow: 0.4s ease;
 
-  /* ----------------------------------------------------------
-     7. TIPOGRAFÍA
-     ---------------------------------------------------------- */
-  --font-display:         'Bungee', cursive;
-  --font-body:            'Baloo 2', sans-serif;
-  --font-mono:            'Courier Prime', monospace;
+  /* ---------- Paleta DÍA (defaults) ---------- */
+  --cream: #F2E4C4;
+  --paper: #FBF2DE;
+  --ink: #241811;
+  --mustard: #E8B923;
+  --burnt: #C1442D;
+  --avocado: #5C7A3D;
+  --teal: #2E7D74;
+  --magenta: #B5384C;
+  --gold: #E8B923;
+  --sun: #FCEFCF;
+  --piggy: #E893A0;
+  --piggy-oreja: #C9596B;
+  --astro: var(--gold);
+}
 
-  /* Tamaños tipográficos */
-  --text-display-xl:      clamp(2.5rem, 6vw, 4rem);
-  --text-display-lg:      clamp(1.8rem, 4vw, 2.5rem);
-  --text-display-md:      clamp(1.2rem, 3vw, 1.8rem);
-  --text-heading:         1.1rem;
-  --text-body-lg:         1.15rem;
-  --text-body:            1rem;
-  --text-body-sm:         0.875rem;
-  --text-mono-lg:         1.5rem;
-  --text-mono:            1rem;
-  --text-mono-sm:         0.8rem;
-  --text-label:           0.75rem;
-  --text-badge:           0.7rem;
-
-  /* ----------------------------------------------------------
-     8. ESPACIADO (base 8px)
-     ---------------------------------------------------------- */
-  --space-xs:             4px;
-  --space-sm:             8px;
-  --space-md:             16px;
-  --space-lg:             24px;
-  --space-xl:             32px;
-  --space-2xl:            48px;
-  --space-3xl:            64px;
-
-  /* ----------------------------------------------------------
-     9. RADIOS
-     ---------------------------------------------------------- */
-  --radius-sm:            4px;
-  --radius-md:            8px;
-  --radius-lg:            16px;
-  --radius-xl:            24px;
-  --radius-pill:          9999px;
-  --radius-wobbly:        255px 15px 225px 15px / 15px 225px 15px 255px;
-
-  /* ----------------------------------------------------------
-     10. TRANSICIONES Y ANIMACIONES
-     ---------------------------------------------------------- */
-  --transition-bounce:    cubic-bezier(0.34, 1.56, 0.64, 1);
-  --transition-smooth:    cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-fast:        150ms;
-  --duration-normal:      300ms;
-  --duration-slow:        500ms;
-
-  /* ----------------------------------------------------------
-     11. Z-INDEX ESCALADO
-     ---------------------------------------------------------- */
-  --z-base:               0;
-  --z-dropdown:           100;
-  --z-sticky:             200;
-  --z-modal-backdrop:     300;
-  --z-modal:              400;
-  --z-toast:              500;
-  --z-splash:             600;
+/* ---------- MODO NOCHE (paleta propia) ---------- */
+.app-root.tema-noche {
+  --cream: #1B1830;
+  --paper: #241F3D;
+  --ink: #F2E4C4;
+  --mustard: #E3B23C;
+  --burnt: #E0704F;
+  --avocado: #7FA85C;
+  --teal: #4FB3A6;
+  --magenta: #E06B87;
+  --gold: #E3B23C;
+  --sun: #2A2650;
+  --piggy: #D98AA0;
+  --piggy-oreja: #E0704F;
+  --astro: #C9CBEA;
 }
