@@ -1,159 +1,258 @@
 // components/HomeSummary.jsx
-// Traduce el saldo neto REAL del usuario actual a una de 5 "zonas" visuales,
-// cada una con su propio fondo a pantalla completa. Las tarjetas de encima
-// ahora son semitransparentes (.tarjeta-flotante) para que el fondo se siga
-// viendo, y la cuerda ya NO usa una flecha/brújula superpuesta: el balance
-// se lee directo en el tironeo de la soga (inclinación + desplazamiento) y
-// en el número de arriba.
+// Pestaña Inicio: saldo neto, cuerda con dos cerditos, y mini-resumen.
 //
-// Etapa 3 (rediseño): la escena ahora se lee en dos golpes de vista, como
-// pide el brief: una etiqueta de estado bien grande ("TE DEBEN" / "DEBÉS"
-// / "ESTÁN A MANO") y, debajo, el monto en el mismo color. El cálculo del
-// saldo (calcularSaldosNetos) no se tocó: sólo cambió cómo se muestra.
+// Rediseño integral: dos cerditos varones
+//   - Cerdito 1 (derecha): rico, arrogante, traje, sombrero de copa
+//   - Cerdito 2 (izquierda): humilde, alegre, chaleco, gorra plana
+// La cuerda se inclina según el saldo: hacia la derecha = saldo positivo
+// (el rico "gana"), hacia la izquierda = saldo negativo (el humilde "pierde").
 
 import { useMemo } from "react";
-import { calcularSaldosNetos } from "../services/settlementService";
 import { backgroundAssets, spriteAssets } from "../assets";
 import { formatoARS } from "../utils/format";
+import Chanchito from "./Chanchito";
 
 const UMBRAL_NEUTRO = 500;
-const UMBRAL_ALTO = 10000;
+const UMBRAL_ALTO = 5000;
 
-function calcularZona(saldo) {
-  if (saldo <= -UMBRAL_ALTO) return "muy-debe";
-  if (saldo < -UMBRAL_NEUTRO) return "debe";
-  if (saldo <= UMBRAL_NEUTRO) return "neutral";
-  if (saldo < UMBRAL_ALTO) return "le-deben";
-  return "le-deben-mucho";
-}
-
-// offsetX: cuánto se corre el nudo de la soga hacia el lado que "gana".
-// angulo: inclinación de la soga (reemplaza a la vieja flecha/brújula).
-// etiqueta: título grande de la escena. color: mismo color para etiqueta,
-// monto y matiz de la soga, así todo el bloque "cuenta" el mismo estado.
-const DATOS_ZONA = {
-  "muy-debe": { etiqueta: "DEBÉS", subtitulo: "Bastante", color: "var(--burnt)", offsetX: -46, angulo: -10 },
-  debe: { etiqueta: "DEBÉS", subtitulo: "Un poco", color: "var(--burnt)", offsetX: -22, angulo: -5 },
-  neutral: { etiqueta: "ESTÁN A MANO", subtitulo: null, color: "var(--ink)", offsetX: 0, angulo: 0 },
-  "le-deben": { etiqueta: "TE DEBEN", subtitulo: "Un poco", color: "var(--teal)", offsetX: 22, angulo: 5 },
-  "le-deben-mucho": { etiqueta: "TE DEBEN", subtitulo: "Bastante", color: "var(--teal)", offsetX: 46, angulo: 10 },
-};
-
-const SPRITE_ANCHO = 118;
-const SPRITE_ALTO = 150;
-const SPRITE_BOTTOM = 6;
-const SOGA_TOP = SPRITE_BOTTOM + SPRITE_ALTO * 0.42;
-
-export default function HomeSummary({ grupo, gastos, miembros, uidActual }) {
-  const saldoActual = useMemo(() => {
-    const saldos = calcularSaldosNetos(gastos);
-    return saldos[uidActual] ?? 0;
+/**
+ * @param {object} props
+ * @param {string} props.uidActual
+ * @param {Array<{uid: string, nombre: string}>} props.miembros
+ * @param {Array} props.gastos
+ * @param {string} props.nombreGrupo
+ */
+export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }) {
+  const saldo = useMemo(() => {
+    let s = 0;
+    for (const g of gastos) {
+      const partes = g.participantes?.length || 1;
+      const miParte = g.monto / partes;
+      if (g.pagadoPor === uidActual) s += g.monto - miParte;
+      else if ((g.participantes || []).includes(uidActual)) s -= miParte;
+    }
+    return s;
   }, [gastos, uidActual]);
 
-  const zona = calcularZona(saldoActual);
-  const d = DATOS_ZONA[zona];
-  const fondoZona = backgroundAssets.nivel[zona];
+  const totalGastado = useMemo(
+    () => gastos.reduce((a, g) => a + g.monto, 0),
+    [gastos]
+  );
+
+  const nivel = useMemo(() => {
+    if (saldo <= -UMBRAL_ALTO) return "muy-debe";
+    if (saldo <= -UMBRAL_NEUTRO) return "debe";
+    if (saldo >= UMBRAL_ALTO) return "le-deben-mucho";
+    if (saldo >= UMBRAL_NEUTRO) return "le-deben";
+    return "neutral";
+  }, [saldo]);
+
+  const fondo = backgroundAssets.nivel[nivel];
+
+  const { texto, sub } = useMemo(() => {
+    if (saldo >= UMBRAL_ALTO)
+      return { texto: "¡Te deben un montón!", sub: "Sos el rey de la finanza" };
+    if (saldo >= UMBRAL_NEUTRO)
+      return { texto: "Te deben plata", sub: "Estás en números azules" };
+    if (saldo <= -UMBRAL_ALTO)
+      return { texto: "¡Debés un montón!", sub: "Hay que ajustar el cinturón" };
+    if (saldo <= -UMBRAL_NEUTRO)
+      return { texto: "Debés plata", sub: "Falta equilibrar un poco" };
+    return { texto: "Estamos a mano", sub: "Ni debe ni le deben" };
+  }, [saldo]);
+
+  const offsetX = useMemo(() => {
+    if (nivel === "muy-debe") return -46;
+    if (nivel === "debe") return -24;
+    if (nivel === "neutral") return 0;
+    if (nivel === "le-deben") return 24;
+    return 46;
+  }, [nivel]);
 
   return (
     <div
+      className="tarjeta"
       style={{
-        margin: "-18px -16px 0",
-        minHeight: "calc(100vh - 100px)",
-        padding: "18px 16px 24px",
-        backgroundImage: `url(${fondoZona})`,
+        position: "relative",
+        overflow: "hidden",
+        backgroundImage: `url(${fondo})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        transition: "background-image 0.4s ease",
-        display: "flex",
-        flexDirection: "column",
       }}
     >
-      {/* Tarjetas chicas y semitransparentes arriba, para no tapar el fondo.
-          Se lee de arriba a abajo: "TE DEBEN" / "$8.450" — la etiqueta dice
-          la dirección de la deuda, el número ya no necesita el signo +/-. */}
-      <div className="tarjeta-flotante">
-        <span className="etiqueta">Resumen</span>
-        <p className="estado-etiqueta" style={{ color: d.color }}>{d.etiqueta}</p>
-        {zona !== "neutral" && (
-          <p className="estado-monto" style={{ color: d.color }}>{formatoARS.format(Math.abs(saldoActual))}</p>
-        )}
-        {d.subtitulo && <p className="estado-subtitulo">{d.subtitulo}</p>}
-      </div>
-
-      {/* La cuerda queda libre en el medio, sobre el fondo, sin tarjeta encima */}
-      <div style={{ flex: 1, display: "flex", alignItems: "center", minHeight: 190 }}>
-        <CuerdaAnimada offsetX={d.offsetX} angulo={d.angulo} />
-      </div>
-
-      <div className="tarjeta-flotante" style={{ marginBottom: 0 }}>
-        <span className="etiqueta">Grupo</span>
-        <h2 style={{ margin: 0 }}>{grupo?.nombre ?? "Tu grupo"}</h2>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-          {miembros.length} integrante{miembros.length === 1 ? "" : "s"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Cuerda con los sprites reales: pig-boy a la izquierda, pig-girl a la
- * derecha. El balance se transmite con la inclinación y el desplazamiento
- * de la soga misma — ya no hay una flecha/brújula superpuesta.
- */
-function CuerdaAnimada({ offsetX, angulo }) {
-  return (
-    <div style={{ position: "relative", height: 190, width: "100%" }}>
-      <style>{`
-        @keyframes tironIzq { from { transform: rotate(-5deg); } to { transform: rotate(3deg); } }
-        @keyframes tironDer { from { transform: rotate(5deg); } to { transform: rotate(-3deg); } }
-        .pig-boy-sprite { animation: tironIzq 1.1s ease-in-out infinite alternate; transform-origin: bottom center; }
-        .pig-girl-sprite { animation: tironDer 1.1s ease-in-out infinite alternate; transform-origin: bottom center; }
-      `}</style>
-
-      <img
-        src={spriteAssets.pigBoy}
-        alt="Chanchito tironeando desde la izquierda"
-        className="pig-boy-sprite"
-        style={{
-          position: "absolute",
-          left: 4,
-          bottom: SPRITE_BOTTOM,
-          width: SPRITE_ANCHO,
-          height: SPRITE_ALTO,
-          objectFit: "contain",
-        }}
-      />
-      <img
-        src={spriteAssets.pigGirl}
-        alt="Chanchita tironeando desde la derecha"
-        className="pig-girl-sprite"
-        style={{
-          position: "absolute",
-          right: 4,
-          bottom: SPRITE_BOTTOM,
-          width: SPRITE_ANCHO,
-          height: SPRITE_ALTO,
-          objectFit: "contain",
-        }}
-      />
-
-      {/* Soga: una línea gruesa con contorno tipo caricatura, que se inclina
-          y se corre según el balance. Sin flecha superpuesta. */}
       <div
         style={{
-          position: "absolute",
-          left: "50%",
-          top: SOGA_TOP,
-          width: 210,
-          height: 10,
-          background: "var(--burnt)",
-          border: "3px solid var(--ink)",
-          borderRadius: 8,
-          transform: `translateX(calc(-50% + ${offsetX}px)) rotate(${angulo}deg)`,
-          transition: "transform 0.6s ease",
+          position: "relative",
+          zIndex: 2,
+          textAlign: "center",
+          padding: "18px 0 10px",
         }}
-      />
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            letterSpacing: 0.5,
+            margin: "2px 0 0",
+            lineHeight: 1.05,
+          }}
+        >
+          {texto}
+        </p>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 36,
+            margin: "2px 0 0",
+            lineHeight: 1,
+          }}
+        >
+          {formatoARS.format(Math.abs(saldo))}
+        </p>
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--ink)",
+            opacity: 0.7,
+            margin: "3px 0 0",
+          }}
+        >
+          {sub}
+        </p>
+      </div>
+
+      {/* Escena de la cuerda */}
+      <div
+        style={{
+          position: "relative",
+          height: 140,
+          margin: "10px 0",
+        }}
+      >
+        {/* Cerdito 2 — humilde, alegre, izquierda, tira hacia la izquierda */}
+        <img
+          src={spriteAssets.cerdito2}
+          alt="Cerdito humilde tironeando"
+          className="cerdito2-sprite"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 4,
+            height: 120,
+            zIndex: 3,
+          }}
+        />
+
+        {/* Cerdito 1 — rico, arrogante, derecha, tira hacia la derecha */}
+        <img
+          src={spriteAssets.cerdito1}
+          alt="Cerdito rico tironeando"
+          className="cerdito1-sprite"
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 4,
+            height: 120,
+            zIndex: 3,
+          }}
+        />
+
+        {/* Cuerda */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            width: 200,
+            height: 4,
+            background: "var(--ink)",
+            borderRadius: 2,
+            transform: `translate(-50%, -50%) translateX(${offsetX}px) rotate(${
+              offsetX * 0.15
+            }deg)`,
+            transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            zIndex: 2,
+          }}
+        />
+
+        {/* Indicador central */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            width: 24,
+            height: 24,
+            background: "var(--gold)",
+            border: "2px solid var(--ink)",
+            borderRadius: "50%",
+            transform: `translate(-50%, -50%) translateX(${offsetX}px)`,
+            transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            zIndex: 4,
+          }}
+        />
+      </div>
+
+      <div style={{ position: "relative", zIndex: 2 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            marginTop: 10,
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              textAlign: "center",
+              border: "2px solid var(--ink)",
+              borderRadius: 10,
+              padding: "8px 4px",
+              background: "var(--paper)",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
+              Total gastado
+            </p>
+            <p
+              style={{
+                margin: "2px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 18,
+              }}
+            >
+              {formatoARS.format(totalGastado)}
+            </p>
+          </div>
+          <div
+            style={{
+              flex: 1,
+              textAlign: "center",
+              border: "2px solid var(--ink)",
+              borderRadius: 10,
+              padding: "8px 4px",
+              background: "var(--paper)",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
+              Miembros
+            </p>
+            <p
+              style={{
+                margin: "2px 0 0",
+                fontFamily: "var(--font-mono)",
+                fontSize: 18,
+              }}
+            >
+              {miembros.length}
+            </p>
+          </div>
+        </div>
+
+        <Chanchito nivel={nivel} />
+      </div>
     </div>
   );
 }

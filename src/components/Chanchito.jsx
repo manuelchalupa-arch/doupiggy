@@ -1,63 +1,103 @@
 // components/Chanchito.jsx
-// Sistema reutilizable de personaje (etapa 8): los mismos dos chanchitos
-// (spriteAssets.pigBoy / pigGirl) evolucionando con distintos estados de
-// animación en cada pantalla, en vez de un dibujo nuevo por lugar.
-//
-// Hoy sólo existe UN sprite por personaje (la pose de tironeo de Inicio),
-// así que los estados se logran con animación CSS reutilizable (etapa 12)
-// sobre esa misma imagen. El día que haya arte específico por estado
-// (ej: pig-boy-happy.png), alcanza con:
-//   1. importarlo en src/assets/index.js dentro de spriteAssets
-//   2. agregar la entrada correspondiente en SPRITE_POR_ESTADO más abajo
-// Ningún lugar que use <Chanchito /> necesita cambiar.
-//
-// Estados soportados: idle, happy, sad, angry, pulling, money, celebrate.
+// Mascota reactiva que comenta el estado financiero del grupo.
+// Ahora con dos cerditos varones: Cerdito 1 (rico) y Cerdito 2 (humilde).
 
 import { spriteAssets } from "../assets";
 
-const SPRITE_POR_PERSONAJE = { boy: spriteAssets.pigBoy, girl: spriteAssets.pigGirl };
-
-// Mapeo estado -> clase de animación reutilizable (definidas en theme.css).
-const CLASE_POR_ESTADO = {
-  idle: "",
-  happy: "anim-bounce",
-  sad: "anim-wiggle-lento",
-  angry: "anim-shake",
-  pulling: "anim-pull",
-  money: "anim-pop",
-  celebrate: "anim-celebrate",
+const FRASES = {
+  "muy-debe": [
+    "¡Estamos en la lona! Hay que hablar seriamente.",
+    "La cabaña se está quemando, amigo...",
+    "Esto es un desastre. ¿Quién pagó esto?",
+    "¡Alerta roja! Necesitamos un plan de rescate.",
+  ],
+  debe: [
+    "Hay nubes en el horizonte, pero no todo está perdido.",
+    "Cuidado, se viene tormenta si seguimos así.",
+    "Un poco de ajuste y volvemos al equilibrio.",
+    "No está mal, pero podría estar mejor.",
+  ],
+  neutral: [
+    "¡Perfecto! Ni debe ni le deben. Paz total.",
+    "Todo en orden. Sigan así.",
+    "Equilibrio financiero. Qué lindo es estar a mano.",
+    "Nada que reclamar, nada que pagar. ¡Ideal!",
+  ],
+  "le-deben": [
+    "¡Bien! Estamos en números azules.",
+    "El sol brilla y las cuentas cuadran.",
+    "¡Felicitaciones! Te deben plata.",
+    "Todo va viento en popa.",
+  ],
+  "le-deben-mucho": [
+    "¡Sos el rey del prado! Te deben un montón.",
+    "¡Paraíso financiero! Disfrutá el arcoíris.",
+    "¡Increíble! Estás nadando en monedas de oro.",
+    "¡El cerdito rico estaría orgulloso!",
+  ],
 };
+
+function fraseAleatoria(nivel) {
+  const lista = FRASES[nivel] || FRASES.neutral;
+  return lista[Math.floor(Math.random() * lista.length)];
+}
 
 /**
  * @param {object} props
- * @param {"boy"|"girl"} props.personaje
- * @param {"idle"|"happy"|"sad"|"angry"|"pulling"|"money"|"celebrate"} [props.estado]
- * @param {number} [props.size] - alto en px (el ancho se ajusta solo)
- * @param {string} [props.className]
- * @param {object} [props.style]
+ * @param {string} props.nivel — "muy-debe" | "debe" | "neutral" | "le-deben" | "le-deben-mucho"
  */
-export default function Chanchito({ personaje, estado = "idle", size = 96, className = "", style = {} }) {
-  const src = SPRITE_POR_PERSONAJE[personaje];
-  const claseAnimacion = CLASE_POR_ESTADO[estado] ?? "";
-  // "sad" y "angry" además tiñen levemente el sprite: no hay arte propio
-  // todavía, así que la emoción se apoya en color + movimiento.
-  const filtro =
-    estado === "sad" ? { filter: "grayscale(0.35) brightness(0.9)" } : estado === "angry" ? { filter: "saturate(1.4)" } : null;
+export default function Chanchito({ nivel }) {
+  const cara =
+    nivel === "muy-debe"
+      ? "sad"
+      : nivel === "debe"
+      ? "worried"
+      : nivel === "neutral"
+      ? "normal"
+      : nivel === "le-deben"
+      ? "happy"
+      : "excited";
+
+  // Cerdito 1 (rico, arrogante) para estados positivos
+  // Cerdito 2 (humilde, alegre) para estados negativos o neutrales
+  const sprite =
+    nivel === "le-deben-mucho" || nivel === "le-deben"
+      ? spriteAssets.cerdito1
+      : spriteAssets.cerdito2;
 
   return (
-    <img
-      src={src}
-      alt=""
-      className={`chanchito ${claseAnimacion} ${className}`.trim()}
+    <div
       style={{
-        height: size,
-        width: "auto",
-        objectFit: "contain",
-        transformOrigin: "bottom center",
-        display: "block",
-        ...filtro,
-        ...style,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 12,
+        padding: "8px 10px",
+        border: "2px dashed var(--ink)",
+        borderRadius: 12,
+        background: "var(--cream)",
       }}
-    />
+    >
+      <img
+        src={sprite}
+        alt={`Cerdito ${cara}`}
+        style={{
+          width: 48,
+          height: 48,
+          objectFit: "contain",
+          flex: "none",
+        }}
+      />
+      <p
+        style={{
+          margin: 0,
+          fontSize: 12,
+          fontWeight: 700,
+          lineHeight: 1.35,
+        }}
+      >
+        {fraseAleatoria(nivel)}
+      </p>
+    </div>
   );
 }
