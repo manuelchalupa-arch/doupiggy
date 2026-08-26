@@ -1,0 +1,30 @@
+/* styles/base.css
+   Estilos base: body, headings, y el contenedor raíz .app-root (fondo,
+   textura de "papel de cine" vintage, paleta activa día/noche).
+*/
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--ink);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+}
+
+/* ---------- contenedor raíz: acá vive la paleta activa ---------- */
+.app-root {
+  min-height: 100vh;
+  background: var(--cream);
+  color: var(--ink);
+  transition: background-color 0.4s ease, color 0.4s ease;
+  /* textura sutil de "papel de cine" vintage, funciona en ambas paletas */
+  background-image: radial-gradient(var(--ink) 0.6px, transparent 0.6px);
+  background-size: 14px 14px;
+  background-blend-mode: overlay;
+  background-color: var(--cream);
+}
+.app-root.tema-noche { background-blend-mode: soft-light; }

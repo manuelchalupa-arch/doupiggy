@@ -1,0 +1,6 @@
+/* styles/reset.css
+   Reset mínimo: box-sizing consistente en toda la app. Se importa
+   PRIMERO (después de tokens.css) desde theme.css.
+*/
+
+*, *::before, *::after { box-sizing: border-box; }
