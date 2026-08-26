@@ -30,13 +30,10 @@
 }
 
 /* ---------- Header "cartel" ---------- */
+/* Sin contenido por ahora: es un marco reservado para que más adelante
+   se le agregue una imagen. min-height evita que colapse a 0. */
 .cartel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 18px 12px;
-  padding-top: max(10px, env(safe-area-inset-top));
+  min-height: 64px;
   background: var(--paper);
   border-bottom: var(--border-thick);
   position: relative;
@@ -58,51 +55,20 @@
 .cartel-header::before { left: 16px; }
 .cartel-header::after { right: 16px; }
 
-.cartel-marca {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.cartel-marca img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  flex: none;
-}
-
-.cartel-marca span {
-  font-family: var(--font-display);
-  font-size: 20px;
-  color: var(--ink);
-  letter-spacing: 0.4px;
-  white-space: nowrap;
-}
-
-.cartel-contexto { text-align: right; min-width: 0; }
-
-.cartel-contexto .contexto-titulo {
-  font-family: var(--font-display);
-  font-size: 15px;
-  color: var(--burnt);
-  line-height: 1.1;
-  margin: 0;
-}
-
-.cartel-contexto .contexto-grupo {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink);
-  opacity: 0.75;
-  margin: 2px 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 46vw;
-}
-
 /* ---------- Tabbar ---------- */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: row;
+  background: var(--paper);
+  border-top: var(--border-thick);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 .tab-btn {
   flex: 1;
   display: flex;
