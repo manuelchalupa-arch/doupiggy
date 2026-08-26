@@ -1,9 +1,10 @@
-# DuoPiggy — proyecto completo (lógica + diseño visual + assets)
+# DouPiggy
 
 App de gastos compartidos en pesos argentinos, React + Firebase, offline-first,
-con identidad visual de dibujos animados de los años 70 y mascota propia (el
-chanchito de DouPiggy). Bloques 0 a 5 resueltos, capa de diseño aplicada a
-toda la interfaz, y assets de imagen reales conectados en cada pantalla.
+con identidad visual de dibujos animados de los años 30 (estilo rubber-hose)
+y mascota propia. Sign-in con Google para quien crea el grupo, acceso anónimo
+vía invitación para invitados, cálculo de saldos y liquidación de deudas,
+alta de gastos con división igualitaria, e informes exportables.
 
 ## Cómo correrlo
 
@@ -12,9 +13,11 @@ npm install
 npm run dev
 ```
 
-Necesitás las variables de entorno de Firebase (`VITE_FIREBASE_*` — ajustá
-`src/firebase/firebaseConfig.js` si preferís otro prefijo de env vars según
-tu configuración de Vite) para que la autenticación y Firestore funcionen.
+Necesitás las variables de entorno de Firebase con el prefijo `VITE_FIREBASE_*`
+(`VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`,
+`VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`,
+`VITE_FIREBASE_APP_ID`) para que la autenticación y Firestore funcionen. En
+Netlify se configuran en Site settings → Environment variables.
 
 ## Estructura
 
@@ -25,112 +28,101 @@ package.json
 
 src/
   main.jsx                  Punto de montaje de React
-  App.jsx                   Orquestación: splash -> auth -> AppShell
+  App.jsx                   Orquestación: splash -> auth -> grupo -> AppShell
 
   assets/
     index.js                 Único punto de importación de imágenes
-    branding/                 logo.png, splash.png, favicon.ico
-    backgrounds/               bg-level1..5.png, bg-form.png, bg-report.png
-    sprites/                    pig-boy.png, pig-girl.png, rope-arrow.png
-    icons/                       trash.png, calendar.png, pdf.png, excel.png
+    branding/                 logo.webp, splash.webp, favicon.ico
+    backgrounds/               bg-level1..5.webp, bg-form.webp, bg-report.webp
+    sprites/                    pig-boy.png, pig-girl.png (ver nota abajo)
 
   firebase/
     firebaseConfig.js         Inicialización Firestore (offline-first) + Auth
 
   services/                   Lógica de negocio pura, sin JSX
-    authService.js             Bloque 2: Google + anónimo vía invitación
+    authService.js             Google + anónimo vía invitación
     invitationService.js       Enlaces temporales de invitación
     groupService.js            CRUD de grupos y membresía
-    expenseService.js          Bloque 3: alta de gastos + división igualitaria
-    settlementService.js       Bloque 4: saldos netos + simplificación de deudas
-    loanService.js             Bloque 5: préstamos directos + cuotas
-    profileService.js          Perfil: nombre, correo, CBU/alias obligatorios
+    expenseService.js          Alta de gastos + división igualitaria (centavos enteros)
+    settlementService.js       Saldos netos + simplificación de deudas
+    profileService.js          Perfil: nombre, correo, CBU/alias (uno de los dos)
     reportService.js           Informes: filtro por rango + exportación Excel/PDF
 
   hooks/                      Adaptadores de los servicios al ciclo de vida de React
     useAuthState.js
     useExpenses.js
-    useLoans.js
 
   context/
-    ThemeContext.jsx           Modo claro/oscuro (el oscuro SOLO ajusta brillo)
+    ThemeContext.jsx           Modo día/noche: dos paletas de color reales
+                                (no un filtro de brillo), persistido en localStorage
 
-  styles/
-    theme.css                  Tokens visuales + clases reutilizables
+  styles/                     Design system modular, importado desde theme.css
+    theme.css                  Punto de entrada: importa los 7 módulos de abajo
+    tokens.css                  Colores (paleta día/noche), tipografía, espaciado, sombras
+    reset.css                   box-sizing consistente
+    base.css                    body, headings, .app-root (fondo + textura)
+    layout.css                  Tarjetas, contenedores, grids, responsive
+    components.css              Botones, inputs, badges, calendario, historial, etc.
+    animations.css               Vocabulario de animación cartoon (respeta prefers-reduced-motion)
+    accessibility.css            Foco visible por teclado, utilidades screen-reader
 
   components/
-    SplashScreen.jsx            Pantalla de carga con logo.png + splash.png
-    AppShell.jsx                Header dinámico + navegación por pestañas
-    HomeSummary.jsx              Inicio: cuerda animada (sprites reales) + 5 fondos
-    ExpenseForm.jsx               Gastos: alta compacta + historial (4, scroll, borrado)
-    SettlementPanel.jsx           Saldos y transacciones sugeridas
-    LoanManager.jsx                Préstamos, cuotas y borrado
-    InfoProfile.jsx                 Info: perfil, CBU/alias, informes, modo oscuro
-    CalendarioRango.jsx             Selector de rango de fechas para informes
+    SplashScreen.jsx            Pantalla de carga con logo + splash de fondo
+    AppShell.jsx                 Header "cartel" + navegación por pestañas
+    AppHeader.jsx                  Header persistente (marca + contexto de pantalla)
+    HomeSummary.jsx                Inicio: saldo neto + cuerda animada + 5 fondos por zona
+    Chanchito.jsx                   Sistema reutilizable de personajes (estados de animación)
+    ExpenseForm.jsx                  Gastos: alta ("hoja contable") + historial + informes
+    SettlementPanel.jsx               Liquidación: quién le debe a quién
+    InfoProfile.jsx                    Cuenta: perfil, grupos, informes, configuración
+    CalendarioRango.jsx                 Selector de rango de fechas para informes
+    IconoTab.jsx / IconoAstro.jsx        Íconos SVG de navegación y sol/luna
+    IconosRaster.jsx                      Íconos SVG inline (trash, calendar, pdf, excel)
+    CrearGrupoScreen.jsx                   Alta del primer grupo
+    InvitarGrupo.jsx / InvitarTrasCrear.jsx Flujo de invitación por enlace
 
   utils/
-    offlineSync.js              Helpers de conectividad para el modo offline-first
+    format.js                   formatoARS (formato de moneda) — no redeclarar en otro lado
+    offlineSync.js               Helpers de conectividad para el modo offline-first
 
 firebase/
-  firestore.rules              Reglas de seguridad: aislamiento por grupo/usuario
-  ESTRUCTURA_DB.md              Diseño de colecciones (Bloque 1)
+  firestore.rules              Reglas de seguridad: aislamiento por grupo/usuario.
+                                Este archivo es SOLO documentación/backup — las reglas
+                                reales se publican a mano en Firebase Console → Firestore
+                                Database → Rules. Mantenerlos sincronizados es manual.
+  ESTRUCTURA_DB.md              Diseño de colecciones
 
-diseno/
-  prototipo-visual.html        Prototipo HTML autocontenido usado para validar
-                                el look & feel antes de integrarlo a React
-
-ASSETS.md                      Especificación de cada imagen (tamaño, formato,
-                                dónde se usa) para reemplazar los placeholders
+ASSETS.md                      Especificación de cada imagen (tamaño, formato, dónde se usa)
+GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub + Firebase + Netlify)
 ```
 
 ## Identidad visual
 
-- **Marca**: DouPiggy, con un chanchito-alcancía retro como mascota
-  (`src/assets/branding/logo.png`), presente en el splash y en el header
-  de la pestaña Información.
-- **Paleta**: crema/papel de fondo, mostaza, naranja quemado, verde palta,
-  turquesa y magenta, más un rosa "piggy" de marca reservado para el avatar
-  de perfil, con tinta marrón oscuro para los contornos gruesos tipo sticker
-  (`src/styles/theme.css`, sección de variables `:root`).
-- **Tipografía**: Bungee (títulos) + Baloo 2 (cuerpo).
-- **Splash**: `SplashScreen.jsx` — `splash.png` de fondo y `logo.png` en el
-  aro central con un "pop" elástico. Se muestra 2,2 segundos y pasa el
-  control a `App.jsx`.
-- **Inicio**: `HomeSummary.jsx` calcula el saldo neto real del usuario
-  actual con `settlementService.calcularSaldosNetos` y lo traduce a una de
-  5 zonas (`bg-level1.png` a `bg-level5.png` como fondo de pantalla), animando
-  `pig-boy.png` / `pig-girl.png` en la cuerda y desplazando `rope-arrow.png`
-  hacia el lado que "gana" el tironeo. Los umbrales (`UMBRAL_NEUTRO`,
-  `UMBRAL_ALTO`) están al tope del archivo para ajustarlos fácilmente.
-- **Gastos**: `ExpenseForm.jsx` combina el alta compacta con un historial de
-  los últimos 4 gastos, scroll propio, `bg-form.png` como ilustración
-  decorativa de esquina y `trash.png` como botón de borrado (llama a
-  `expenseService.eliminarGasto`).
-- **Préstamos**: `LoanManager.jsx` ahora también usa `trash.png` para borrar
-  un préstamo completo (`loanService.eliminarPrestamo`, antes sin conectar a la UI).
-- **Información**: `InfoProfile.jsx` valida CBU (22 dígitos) y alias como
-  obligatorios, genera informes con `CalendarioRango.jsx` en dos formatos —
-  Excel/CSV (`reportService.generarInformeExcel`) o PDF vía el diálogo de
-  impresión del navegador (`reportService.generarInformePdf`) — cada uno con
-  su ícono (`excel.png` / `pdf.png`), y expone el switch de modo oscuro.
-- **Modo oscuro**: `ThemeContext.jsx` aplica la clase `.modo-oscuro` al
-  contenedor raíz, que en `theme.css` solo hace
-  `filter: brightness(0.55) contrast(1.05)` — nunca cambia variables de color.
-  Se persiste en `localStorage`.
+- **Paleta**: día y noche son dos paletas de color reales definidas como variables
+  CSS en `src/styles/tokens.css` (no un filtro de brillo). Marfil/papel, tinta,
+  mostaza, rojo ladrillo, verde apagado, azul petróleo y un rosa "piggy" de marca.
+- **Tipografía**: Fredericka the Great (títulos) + Arvo (cuerpo) + Courier Prime (montos).
+- **Personajes**: `Chanchito.jsx` es el sistema reutilizable de los dos chanchitos
+  (`spriteAssets.cerdito1` / `cerdito2`, ver nota de assets abajo) con 7 estados de
+  animación (`idle/happy/sad/angry/pulling/money/celebrate`) definidos en `animations.css`.
+- **Inicio**: `HomeSummary.jsx` calcula el saldo neto real con
+  `settlementService.calcularSaldosNetos` y lo traduce a una de 5 zonas
+  (`backgroundAssets.nivel`), con los dos chanchitos tironeando de una cuerda
+  dibujada en CSS (sin imagen de flecha superpuesta).
+- **Modo oscuro**: `ThemeContext.jsx` aplica la clase `.tema-noche` al contenedor
+  raíz (`.app-root`), que redefine las variables de color en `tokens.css`.
+
+## ⚠️ Nota sobre los sprites de los chanchitos
+
+`assets/index.js` usa temporalmente `pig-boy.png` / `pig-girl.png` (los sprites
+viejos) como reemplazo de `cerdito1` / `cerdito2` (el diseño nuevo: uno rico y
+arrogante, otro humilde y alegre), porque esos dos archivos de arte definitivo
+todavía no existen en el repo. En cuanto subas `cerdito1.png` y `cerdito2.png`
+a `src/assets/sprites/`, solo hay que cambiar 2 líneas de import en
+`assets/index.js` — el resto del código no depende del nombre del archivo.
 
 ## Sobre los assets
 
-Todas las imágenes se generaron como **placeholders con la paleta de marca**
-(no son arte final) para que el proyecto compile y se vea completo desde el
-primer `npm run dev`. Reemplazá cada archivo por tu diseño final respetando
-el nombre exacto — el mapeo completo, tamaños sugeridos y dónde se usa cada
-uno está en `ASSETS.md`.
-
-## Próximos pasos sugeridos (fuera de este alcance)
-
-- Cloud Function `onCall` para agregar miembros vía invitación con
-  privilegios elevados.
-- Pantalla de selección/creación de grupo (hoy se toma el primero de la lista).
-- Tests unitarios de `settlementService.js`, `expenseService.js` y
-  `profileService.js` (funciones puras, fáciles de testear sin mockear Firebase).
-- Reemplazar los placeholders de `src/assets/` por el arte final.
+Backgrounds y branding están en `.webp` (más liviano). Los sprites siguen en
+`.png` por ahora. El mapeo completo, tamaños sugeridos y dónde se usa cada
+archivo está en `ASSETS.md`.

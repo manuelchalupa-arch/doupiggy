@@ -12,24 +12,24 @@ completo mientras llega el arte definitivo. Reemplazalos 1 a 1.
 
 | Archivo | Tamaño sugerido | Formato | Dónde se usa |
 |---|---|---|---|
-| `logo.png` | 512×512, fondo transparente | PNG | Splash (aro central) e ícono de marca en Información |
-| `splash.png` | 750×1334 (proporción de pantalla de celular) | PNG | Fondo de pantalla completa del splash |
+| `logo.webp` | 512×512, fondo transparente | WEBP | Splash (aro central) e ícono de marca en Información |
+| `splash.webp` | 750×1334 (proporción de pantalla de celular) | WEBP | Fondo de pantalla completa del splash |
 | `favicon.ico` | 16/32/48/64 multi-tamaño | ICO | Pestaña del navegador (`index.html`) |
 
 ## `backgrounds/`
 
 | Archivo | Tamaño sugerido | Dónde se usa |
 |---|---|---|
-| `bg-level1.png` | 750×1334 | Fondo de Inicio — saldo "debe bastante" |
-| `bg-level2.png` | 750×1334 | Fondo de Inicio — saldo "debe un poco" |
-| `bg-level3.png` | 750×1334 | Fondo de Inicio — saldo "a mano" |
-| `bg-level4.png` | 750×1334 | Fondo de Inicio — saldo "le deben un poco" |
-| `bg-level5.png` | 750×1334 | Fondo de Inicio — saldo "le deben bastante" |
-| `bg-form.png` | 600×400 | Ilustración decorativa (esquina superior derecha) de la tarjeta "Nuevo gasto" |
-| `bg-report.png` | 600×400 | Ilustración decorativa (esquina inferior) del modal de informes |
+| `bg-level1.webp` | 750×1334 | Fondo de Inicio — saldo "debe bastante" |
+| `bg-level2.webp` | 750×1334 | Fondo de Inicio — saldo "debe un poco" |
+| `bg-level3.webp` | 750×1334 | Fondo de Inicio — saldo "a mano" |
+| `bg-level4.webp` | 750×1334 | Fondo de Inicio — saldo "le deben un poco" |
+| `bg-level5.webp` | 750×1334 | Fondo de Inicio — saldo "le deben bastante" |
+| `bg-form.webp` | 600×400 | Ilustración decorativa (esquina superior derecha) de la tarjeta "Nuevo gasto" |
+| `bg-report.webp` | 600×400 | Ilustración decorativa (esquina inferior) del modal de informes |
 
 Los fondos de nivel se muestran a pantalla completa (`background-size: cover`);
-`bg-form.png` y `bg-report.png` se usan más chicos, como ilustración de
+`bg-form.webp` y `bg-report.webp` se usan más chicos, como ilustración de
 esquina con `background-blend-mode: luminosity`, así el texto siempre queda
 legible sin importar cuán cargada esté la imagen.
 
@@ -37,24 +37,20 @@ legible sin importar cuán cargada esté la imagen.
 
 | Archivo | Tamaño sugerido | Dónde se usa |
 |---|---|---|
-| `pig-boy.png` | 220×280, fondo transparente | Cuerda animada de Inicio, lado izquierdo |
-| `pig-girl.png` | 220×280, fondo transparente | Cuerda animada de Inicio, lado derecho |
-| `rope-arrow.png` | 320×80, fondo transparente | Cuerda + flecha central; se rota y desplaza por JS según el saldo |
+| `pig-boy.png` | 220×280, fondo transparente | Reemplazo temporal de `cerdito1` (ver README) |
+| `pig-girl.png` | 220×280, fondo transparente | Reemplazo temporal de `cerdito2` (ver README) |
+| `cerdito1.png` *(falta subir)* | 220×280, fondo transparente | Cerdito rico y arrogante — cuerda animada de Inicio |
+| `cerdito2.png` *(falta subir)* | 220×280, fondo transparente | Cerdito humilde y alegre — cuerda animada de Inicio |
 
-`pig-boy` y `pig-girl` deben quedar recortados a la silueta (sin fondo) para
-que el CSS los pueda animar como capas independientes sobre el fondo del nivel.
+Los sprites deben quedar recortados a la silueta (sin fondo) para que el CSS
+los pueda animar como capas independientes sobre el fondo del nivel.
 
-## `icons/`
+## Íconos funcionales
 
-| Archivo | Tamaño sugerido | Dónde se usa |
-|---|---|---|
-| `trash.png` | 64×64, fondo transparente | Botón de borrar gasto y borrar préstamo |
-| `calendar.png` | 64×64, fondo transparente | Botón "Generar informe" |
-| `pdf.png` | 64×64, fondo transparente | Botón de exportar informe en PDF |
-| `excel.png` | 64×64, fondo transparente | Botón de exportar informe en Excel/CSV |
-
-Los íconos se renderizan a 14–16px dentro de botones, así que conviene que
-el trazo sea simple y grueso (van a perder detalle fino a ese tamaño).
+Los íconos de trash/calendar/pdf/excel **no son archivos de imagen**: son SVG
+inline definidos directamente en `src/components/IconosRaster.jsx`. No hace
+falta (ni corresponde) subir un `trash.png` ni similares — para cambiar su
+diseño, se edita ese componente.
 
 ## Cómo se importan
 
