@@ -34,7 +34,7 @@ src/
     index.js                 Único punto de importación de imágenes
     branding/                 logo.webp, splash.webp, favicon.ico
     backgrounds/               bg-level1..5.webp, bg-form.webp, bg-report.webp
-    sprites/                    pig-boy.png, pig-girl.png (ver nota abajo)
+    sprites/                    cerdito1.png, cerdito2.png
 
   firebase/
     firebaseConfig.js         Inicialización Firestore (offline-first) + Auth
@@ -114,12 +114,10 @@ GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub 
 
 ## ⚠️ Nota sobre los sprites de los chanchitos
 
-`assets/index.js` usa temporalmente `pig-boy.png` / `pig-girl.png` (los sprites
-viejos) como reemplazo de `cerdito1` / `cerdito2` (el diseño nuevo: uno rico y
-arrogante, otro humilde y alegre), porque esos dos archivos de arte definitivo
-todavía no existen en el repo. En cuanto subas `cerdito1.png` y `cerdito2.png`
-a `src/assets/sprites/`, solo hay que cambiar 2 líneas de import en
-`assets/index.js` — el resto del código no depende del nombre del archivo.
+Ya están conectados: `cerdito1.png` (rico y arrogante) y `cerdito2.png`
+(humilde y alegre) viven en `src/assets/sprites/` y `assets/index.js` los
+importa directamente. Los sprites viejos (`pig-boy.png`/`pig-girl.png`) ya
+no se usan.
 
 ## Sobre los assets
 

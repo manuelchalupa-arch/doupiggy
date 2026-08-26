@@ -37,10 +37,8 @@ legible sin importar cuán cargada esté la imagen.
 
 | Archivo | Tamaño sugerido | Dónde se usa |
 |---|---|---|
-| `pig-boy.png` | 220×280, fondo transparente | Reemplazo temporal de `cerdito1` (ver README) |
-| `pig-girl.png` | 220×280, fondo transparente | Reemplazo temporal de `cerdito2` (ver README) |
-| `cerdito1.png` *(falta subir)* | 220×280, fondo transparente | Cerdito rico y arrogante — cuerda animada de Inicio |
-| `cerdito2.png` *(falta subir)* | 220×280, fondo transparente | Cerdito humilde y alegre — cuerda animada de Inicio |
+| `cerdito1.png` | 220×280, fondo transparente | Cerdito rico y arrogante — cuerda animada de Inicio, lado derecho |
+| `cerdito2.png` | 220×280, fondo transparente | Cerdito humilde y alegre — cuerda animada de Inicio, lado izquierdo |
 
 Los sprites deben quedar recortados a la silueta (sin fondo) para que el CSS
 los pueda animar como capas independientes sobre el fondo del nivel.
