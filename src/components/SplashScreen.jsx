@@ -22,20 +22,13 @@ const estilos = {
     backgroundPosition: "center",
     zIndex: 100,
   },
-  aro: {
-    width: 168,
-    height: 168,
-    borderRadius: "50%",
-    background: "var(--cream)",
-    border: "6px solid var(--ink)",
-    boxShadow: "0 0 0 4px var(--gold)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+  logo: {
+    width: "min(70vw, 320px)",
+    height: "auto",
+    objectFit: "contain",
+    filter: "drop-shadow(4px 4px 0 var(--ink))",
     animation: "splashPop 0.6s cubic-bezier(.34,1.56,.64,1)",
   },
-  logoImg: { width: "78%", height: "78%", objectFit: "contain" },
   nombre: {
     marginTop: 18,
     fontFamily: "var(--font-display)",
@@ -88,9 +81,7 @@ export default function SplashScreen({ onFinish }) {
         .splash-puntos span:nth-child(3) { animation-delay: 0.36s; }
       `}</style>
 
-      <div style={estilos.aro}>
-        <img src={brandingAssets.logo} alt="DouPiggy" style={estilos.logoImg} />
-      </div>
+      <img src={brandingAssets.logo} alt="DouPiggy" style={estilos.logo} />
 
       <div style={estilos.nombre}>DouPiggy</div>
 

@@ -130,35 +130,65 @@ export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }
           margin: "10px 0",
         }}
       >
-        {/* Cerdito 2 — humilde, alegre, izquierda, tira hacia la izquierda */}
-        <img
-          src={spriteAssets.cerdito2}
-          alt="Cerdito humilde tironeando"
-          className="cerdito2-sprite"
+        {/* Cerdito 2 — humilde, alegre, izquierda, tira hacia la izquierda.
+            El PNG original trae un lienzo de 1408x768 con mucho espacio
+            transparente reservado para la soga; lo recortamos acá con
+            overflow:hidden + un offset negativo para mostrar solo el
+            personaje (sin tocar el archivo). La soga visible es la línea
+            de abajo, no la que trae dibujada el PNG. */}
+        <div
           style={{
             position: "absolute",
             bottom: 0,
             left: 4,
-            height: 120,
+            width: 123,
+            height: 128,
+            overflow: "hidden",
             zIndex: 3,
           }}
-        />
+        >
+          <img
+            src={spriteAssets.cerdito2}
+            alt="Cerdito humilde tironeando"
+            className="cerdito2-sprite"
+            style={{
+              position: "absolute",
+              left: -78,
+              top: -3,
+              width: 242,
+              height: "auto",
+            }}
+          />
+        </div>
 
-        {/* Cerdito 1 — rico, arrogante, derecha, tira hacia la derecha */}
-        <img
-          src={spriteAssets.cerdito1}
-          alt="Cerdito rico tironeando"
-          className="cerdito1-sprite"
+        {/* Cerdito 1 — rico, arrogante, derecha, tira hacia la derecha.
+            Mismo recorte por CSS que el cerdito 2. */}
+        <div
           style={{
             position: "absolute",
             bottom: 0,
             right: 4,
-            height: 120,
+            width: 161,
+            height: 128,
+            overflow: "hidden",
             zIndex: 3,
           }}
-        />
+        >
+          <img
+            src={spriteAssets.cerdito1}
+            alt="Cerdito rico tironeando"
+            className="cerdito1-sprite"
+            style={{
+              position: "absolute",
+              left: -30,
+              top: -2,
+              width: 240,
+              height: "auto",
+            }}
+          />
+        </div>
 
-        {/* Cuerda */}
+        {/* Cuerda (única — ya no se ve la que traía cada PNG, quedó recortada) */}
         <div
           style={{
             position: "absolute",

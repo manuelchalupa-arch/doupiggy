@@ -15,13 +15,6 @@ import SettlementPanel from "./SettlementPanel";
 import InfoProfile from "./InfoProfile";
 import { IconoTabInicio, IconoTabGastos, IconoTabLiquidacion, IconoTabInfo } from "./IconoTab";
 
-const CONTEXTO_TAB = {
-  inicio: "Inicio",
-  gastos: "Gastos",
-  liquidacion: "Liquidación",
-  info: "Tu cuenta",
-};
-
 /**
  * @param {object} props
  * @param {string} props.grupoId
@@ -45,9 +38,9 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
 
   return (
     <div>
-      <AppHeader contexto={CONTEXTO_TAB[tab]} grupoNombre={grupo?.nombre} />
+      <AppHeader />
 
-      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px" }}>
+      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px", paddingBottom: tab === "inicio" ? 100 : undefined }}>
         {tab === "inicio" && (
           <HomeSummary grupo={grupo} gastos={gastos} miembros={miembros} uidActual={uidActual} />
         )}

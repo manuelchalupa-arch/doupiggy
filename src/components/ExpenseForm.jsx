@@ -253,9 +253,9 @@ function GeneradorInformes({ gastos, miembros, uidActual }) {
         position: "relative",
         overflow: "hidden",
         backgroundImage: `url(${backgroundAssets.report})`,
-        backgroundSize: "150px",
+        backgroundSize: "130px",
         backgroundRepeat: "no-repeat",
-        backgroundPosition: "bottom right",
+        backgroundPosition: "top right",
         backgroundBlendMode: "luminosity",
       }}
     >
