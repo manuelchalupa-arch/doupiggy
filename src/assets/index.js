@@ -19,15 +19,8 @@ import bgReport from "./backgrounds/bg-report.webp";
 // ---------- sprites (animación de la cuerda en Inicio) ----------
 // Cerdito 1: rico, arrogante, traje, sombrero de copa, monocle
 // Cerdito 2: humilde, alegre, chaleco, gorra plana, tiradores
-//
-// TEMPORAL: cerdito1.png / cerdito2.png (el arte definitivo) todavía no
-// están subidos. Mientras tanto reusamos los sprites viejos (pig-boy.png /
-// pig-girl.png, que sí existen en el repo) para que la app compile y se
-// vea completa. Apenas subas los 2 archivos definitivos a esta carpeta,
-// solo hay que cambiar estas 2 líneas de import — nada más en el código
-// depende del nombre de archivo.
-import cerdito1 from "./sprites/pig-boy.png";
-import cerdito2 from "./sprites/pig-girl.png";
+import cerdito1 from "./sprites/cerdito1.png";
+import cerdito2 from "./sprites/cerdito2.png";
 
 export const brandingAssets = { logo, splash };
 
