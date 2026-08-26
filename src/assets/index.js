@@ -4,17 +4,17 @@
 // SVG inline en components/IconosRaster.jsx.
 
 // ---------- branding ----------
-import logo from "./branding/logo.png";
-import splash from "./branding/splash.png";
+import logo from "./branding/logo.webp";
+import splash from "./branding/splash.webp";
 
 // ---------- backgrounds (5 estados de saldo + 2 fondos de sección) ----------
-import bgLevel1 from "./backgrounds/bg-level1.png";
-import bgLevel2 from "./backgrounds/bg-level2.png";
-import bgLevel3 from "./backgrounds/bg-level3.png";
-import bgLevel4 from "./backgrounds/bg-level4.png";
-import bgLevel5 from "./backgrounds/bg-level5.png";
-import bgForm from "./backgrounds/bg-form.png";
-import bgReport from "./backgrounds/bg-report.png";
+import bgLevel1 from "./backgrounds/bg-level1.webp";
+import bgLevel2 from "./backgrounds/bg-level2.webp";
+import bgLevel3 from "./backgrounds/bg-level3.webp";
+import bgLevel4 from "./backgrounds/bg-level4.webp";
+import bgLevel5 from "./backgrounds/bg-level5.webp";
+import bgForm from "./backgrounds/bg-form..webp";
+import bgReport from "./backgrounds/bg-report.webp";
 
 // ---------- sprites (animación de la cuerda en Inicio) ----------
 // Cerdito 1: rico, arrogante, traje, sombrero de copa, monocle
