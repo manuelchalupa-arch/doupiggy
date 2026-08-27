@@ -1,14 +1,15 @@
 // components/InvitarGrupo.jsx
-// Botón "Invitar" reutilizable: genera un token con invitationService y
-// muestra un link copiable. Se usa inmediatamente después de crear un
-// grupo (CrearGrupoScreen, InfoProfile) y también podría reutilizarse
-// desde cualquier otro punto que tenga un grupoId a mano.
+// Botón "Invitar" reutilizable: genera un token con invitationService,
+// muestra un link copiable y un acceso directo para compartirlo por
+// WhatsApp. Se usa inmediatamente después de crear un grupo
+// (CrearGrupoScreen, InfoProfile) y también podría reutilizarse desde
+// cualquier otro punto que tenga un grupoId a mano.
 //
-// LIMITACIÓN CONOCIDA: el link generado (?invite=TOKEN) todavía no tiene
-// una pantalla del lado de quien lo recibe que lea ese parámetro y llame a
-// authService.unirseComoInvitado — eso es un desarrollo aparte (Bloque 2
-// ya tiene la lógica de invitationService/authService lista, falta la
-// ruta de aceptación en App.jsx).
+// Quien recibe el enlace entra a la app con ?invite=TOKEN, App.jsx lo lee
+// (ver leerYLimpiarTokenDeInvitacion) y muestra la pantalla de aceptación,
+// que pide iniciar sesión con Google y llama a
+// authService.unirseComoInvitado — ese usuario queda agregado a ESTE
+// grupo puntual, sin perder la posibilidad de tener otros grupos propios.
 
 import { useState } from "react";
 import { crearInvitacion } from "../services/invitationService";
@@ -38,6 +39,13 @@ export default function InvitarGrupo({ grupoId, uidActual }) {
     setTimeout(() => setCopiado(false), 1500);
   }
 
+  function compartirPorWhatsapp() {
+    const texto = encodeURIComponent(
+      `¡Te invito a nuestro grupo de gastos compartidos en DouPiggy! Entrá acá: ${link}`
+    );
+    window.open(`https://wa.me/?text=${texto}`, "_blank", "noopener,noreferrer");
+  }
+
   if (!link) {
     return (
       <button type="button" className="btn bloque" onClick={generarLink} disabled={generando}>
@@ -49,9 +57,19 @@ export default function InvitarGrupo({ grupoId, uidActual }) {
   return (
     <div>
       <input type="text" readOnly value={link} onFocus={(e) => e.target.select()} />
-      <button type="button" className="btn chico bloque" style={{ marginTop: 8 }} onClick={copiarLink}>
-        {copiado ? "¡Copiado!" : "Copiar enlace"}
-      </button>
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button type="button" className="btn chico" style={{ flex: 1 }} onClick={copiarLink}>
+          {copiado ? "¡Copiado!" : "Copiar enlace"}
+        </button>
+        <button
+          type="button"
+          className="btn chico"
+          style={{ flex: 1, background: "#25D366", borderColor: "var(--ink)" }}
+          onClick={compartirPorWhatsapp}
+        >
+          Enviar por WhatsApp
+        </button>
+      </div>
       {error && <p className="ayuda-error">{error}</p>}
     </div>
   );

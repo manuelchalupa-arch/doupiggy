@@ -6,6 +6,11 @@
 //   - Cerdito 2 (izquierda): humilde, alegre, chaleco, gorra plana
 // La cuerda se inclina según el saldo: hacia la derecha = saldo positivo
 // (el rico "gana"), hacia la izquierda = saldo negativo (el humilde "pierde").
+//
+// El fondo (uno de los 5 escenarios que ya existen, elegido según el saldo)
+// ocupa TODA el área visible de la pantalla —no está recortado dentro de
+// una tarjeta—, tanto en mobile como en escritorio. El contenido (saldo,
+// cuerda, stats) flota encima en tarjetas semitransparentes.
 
 import { useMemo } from "react";
 import { backgroundAssets, spriteAssets } from "../assets";
@@ -71,21 +76,24 @@ export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }
 
   return (
     <div
-      className="tarjeta"
       style={{
         position: "relative",
-        overflow: "hidden",
+        minHeight: "calc(100dvh - 64px)",
         backgroundImage: `url(${fondo})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        transition: "background-image 0.4s ease",
       }}
     >
+      {/* El fondo va edge-to-edge (arriba); el contenido sí se acota en
+          ancho para que en escritorio no quede estirado de punta a punta. */}
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 16px 90px" }}>
       <div
+        className="tarjeta-flotante"
         style={{
-          position: "relative",
-          zIndex: 2,
           textAlign: "center",
-          padding: "18px 0 10px",
+          padding: "16px 12px 12px",
         }}
       >
         <p
@@ -127,7 +135,7 @@ export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }
         style={{
           position: "relative",
           height: 140,
-          margin: "10px 0",
+          margin: "16px 0",
         }}
       >
         {/* Cerdito 2 — humilde, alegre, izquierda, tira hacia la izquierda.
@@ -224,64 +232,51 @@ export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }
         />
       </div>
 
-      <div style={{ position: "relative", zIndex: 2 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 10,
+          marginTop: 6,
+        }}
+      >
         <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 10,
-            marginTop: 10,
-          }}
+          className="tarjeta-flotante"
+          style={{ flex: 1, textAlign: "center", padding: "8px 4px", marginBottom: 0 }}
         >
-          <div
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
+            Total gastado
+          </p>
+          <p
             style={{
-              flex: 1,
-              textAlign: "center",
-              border: "2px solid var(--ink)",
-              borderRadius: 10,
-              padding: "8px 4px",
-              background: "var(--paper)",
+              margin: "2px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 18,
             }}
           >
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
-              Total gastado
-            </p>
-            <p
-              style={{
-                margin: "2px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 18,
-              }}
-            >
-              {formatoARS.format(totalGastado)}
-            </p>
-          </div>
-          <div
-            style={{
-              flex: 1,
-              textAlign: "center",
-              border: "2px solid var(--ink)",
-              borderRadius: 10,
-              padding: "8px 4px",
-              background: "var(--paper)",
-            }}
-          >
-            <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
-              Miembros
-            </p>
-            <p
-              style={{
-                margin: "2px 0 0",
-                fontFamily: "var(--font-mono)",
-                fontSize: 18,
-              }}
-            >
-              {miembros.length}
-            </p>
-          </div>
+            {formatoARS.format(totalGastado)}
+          </p>
         </div>
+        <div
+          className="tarjeta-flotante"
+          style={{ flex: 1, textAlign: "center", padding: "8px 4px", marginBottom: 0 }}
+        >
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
+            Miembros
+          </p>
+          <p
+            style={{
+              margin: "2px 0 0",
+              fontFamily: "var(--font-mono)",
+              fontSize: 18,
+            }}
+          >
+            {miembros.length}
+          </p>
+        </div>
+      </div>
 
-        <Chanchito nivel={nivel} />
+      <Chanchito nivel={nivel} />
       </div>
     </div>
   );

@@ -40,7 +40,7 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
     <div>
       <AppHeader />
 
-      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px", paddingBottom: tab === "inicio" ? 100 : undefined }}>
+      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px" }}>
         {tab === "inicio" && (
           <HomeSummary grupo={grupo} gastos={gastos} miembros={miembros} uidActual={uidActual} />
         )}
