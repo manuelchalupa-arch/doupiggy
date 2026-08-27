@@ -5,7 +5,6 @@
 import {
   GoogleAuthProvider,
   signInWithPopup,
-  signInAnonymously,
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
@@ -22,7 +21,8 @@ import { validarInvitacion, consumirInvitacion } from "./invitationService";
 const googleProvider = new GoogleAuthProvider();
 
 /**
- * Login con Google, reservado para creadores de grupo.
+ * Login con Google. Lo usan tanto quien crea un grupo como quien entra
+ * por un enlace de invitación (ver unirseComoInvitado más abajo).
  * Crea (o actualiza) el documento en /usuarios.
  */
 export async function iniciarSesionConGoogle() {
@@ -41,31 +41,36 @@ export async function iniciarSesionConGoogle() {
 }
 
 /**
- * Acceso anónimo para invitados a través de un token de invitación temporal.
- * Valida el token, crea sesión anónima, crea el perfil y agrega al usuario
- * al grupo correspondiente.
+ * Alta de un invitado a través de un token de invitación temporal.
+ * El invitado se identifica con SU PROPIA cuenta de Google (ya no hay
+ * acceso anónimo): abre sesión con Google igual que el creador del
+ * grupo, y si el token es válido queda agregado a ese grupo puntual sin
+ * perder la posibilidad de crear o pertenecer a otros grupos propios.
  *
  * @param {string} token - token de /invitaciones/{token}
- * @param {string} nombreInvitado - nombre visible que elige el invitado
  */
-export async function unirseComoInvitado(token, nombreInvitado) {
+export async function unirseComoInvitado(token) {
   const invitacion = await validarInvitacion(token);
   if (!invitacion.valida) {
     throw new Error(invitacion.motivo ?? "Invitación inválida o expirada");
   }
 
-  const credencial = await signInAnonymously(auth);
-  const { uid } = credencial.user;
+  const credencial = await signInWithPopup(auth, googleProvider);
+  const { uid, displayName, email, photoURL } = credencial.user;
 
   await upsertPerfilUsuario({
     uid,
-    nombre: nombreInvitado || "Invitado",
-    email: null,
-    foto: null,
-    esAnonimo: true,
+    nombre: displayName ?? "Usuario",
+    email,
+    foto: photoURL,
+    esAnonimo: false,
   });
 
-  await consumirInvitacion(token, uid, invitacion.grupoId);
+  // Si ya era miembro de este grupo (ej. abrió el enlace de nuevo), no
+  // hace falta gastar un uso de la invitación.
+  if (!invitacion.miembrosActuales?.includes(uid)) {
+    await consumirInvitacion(token, uid, invitacion.grupoId);
+  }
 
   return { user: credencial.user, grupoId: invitacion.grupoId };
 }

@@ -64,13 +64,24 @@ export async function validarInvitacion(token) {
     return { valida: false, motivo: "El enlace alcanzó su límite de usos." };
   }
 
-  return { valida: true, grupoId: datos.grupoId };
+  const grupoSnap = await getDoc(doc(db, "grupos", datos.grupoId));
+  const miembrosActuales = grupoSnap.exists() ? grupoSnap.data().miembros ?? [] : [];
+
+  return { valida: true, grupoId: datos.grupoId, miembrosActuales };
 }
 
 /**
  * Consume un uso de la invitación y agrega al usuario al grupo de forma atómica.
  * Se usa una transacción para evitar condiciones de carrera si dos invitados
  * usan el mismo enlace al mismo tiempo cerca del límite de usos.
+ *
+ * El update al grupo incluye `ultimaInvitacionToken` (el token usado). Es lo
+ * que le permite a las reglas de seguridad (firebase/firestore.rules)
+ * verificar, con un get() a /invitaciones/{token}, que quien se está
+ * agregando a sí mismo lo hace citando una invitación real y vigente para
+ * ESE grupo puntual — sin eso, un usuario no-miembro no podría escribir en
+ * /grupos/{grupoId} en absoluto (ver función esAltaPorInvitacionValida en
+ * las reglas).
  */
 export async function consumirInvitacion(token, uidNuevoMiembro, grupoId) {
   const invitacionRef = doc(db, "invitaciones", token);
@@ -103,6 +114,7 @@ export async function consumirInvitacion(token, uidNuevoMiembro, grupoId) {
       miembros: arrayUnion(uidNuevoMiembro),
       [`miembrosInfo.${uidNuevoMiembro}`]: { nombre: nombreInvitado, foto: null, activo: true },
       actualizadoEn: serverTimestamp(),
+      ultimaInvitacionToken: token,
     });
 
     tx.update(usuarioRef, { gruposIds: arrayUnion(grupoId) });
