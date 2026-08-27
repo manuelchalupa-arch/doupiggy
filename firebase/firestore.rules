@@ -17,6 +17,26 @@ service cloud.firestore {
         get(/databases/$(database)/documents/grupos/$(grupoId)).data.creadoPor == request.auth.uid;
     }
 
+    // Alta por invitación (sin Cloud Function): un usuario que TODAVÍA NO
+    // es miembro puede escribir en /grupos/{grupoId} únicamente para
+    // agregarse a sí mismo, y solo si cita (en el propio update, campo
+    // ultimaInvitacionToken) una invitación real, vigente y con cupo para
+    // ESE grupo puntual. `miembros.size() == +1` asegura que la escritura
+    // agrega exactamente un integrante (a los ya existentes, que se
+    // conservan intactos vía hasAll) y no borra ni reemplaza a nadie más.
+    function esAltaPorInvitacionValida(grupoId, miembrosAntes) {
+      let token = request.resource.data.ultimaInvitacionToken;
+      let invitacion = get(/databases/$(database)/documents/invitaciones/$(token)).data;
+      return estaAutenticado() &&
+        !(request.auth.uid in miembrosAntes) &&
+        request.auth.uid in request.resource.data.miembros &&
+        request.resource.data.miembros.size() == miembrosAntes.size() + 1 &&
+        request.resource.data.miembros.hasAll(miembrosAntes) &&
+        invitacion.grupoId == grupoId &&
+        invitacion.expiraEn > request.time &&
+        (invitacion.usosMaximos == null || invitacion.usosActuales < invitacion.usosMaximos);
+    }
+
     // --- usuarios ---
     // Cada usuario solo puede leer y escribir su propio perfil.
     match /usuarios/{uid} {
@@ -41,9 +61,13 @@ service cloud.firestore {
       allow create: if estaAutenticado() &&
         request.auth.uid == request.resource.data.creadoPor &&
         request.auth.uid in request.resource.data.miembros;
-      // Solo un miembro puede actualizar (ej. agregar a otro miembro vía invitación
-      // se hace con una Cloud Function con privilegios elevados, ver Bloque 2).
-      allow update: if estaAutenticado() && request.auth.uid in resource.data.miembros;
+      // Un miembro puede actualizar libremente. Alguien que TODAVÍA NO es
+      // miembro solo puede escribir para agregarse a sí mismo citando una
+      // invitación válida (ver esAltaPorInvitacionValida arriba).
+      allow update: if estaAutenticado() && (
+        request.auth.uid in resource.data.miembros ||
+        esAltaPorInvitacionValida(grupoId, resource.data.miembros)
+      );
       allow delete: if estaAutenticado() && resource.data.creadoPor == request.auth.uid;
 
       // --- gastos (subcolección) ---
@@ -75,9 +99,16 @@ service cloud.firestore {
       allow get: if estaAutenticado();
       allow list: if false;
       allow create: if esCreadorDelGrupo(request.resource.data.grupoId);
-      // La actualización de usosActuales se hace vía Cloud Function (transacción
-      // atómica) para evitar condiciones de carrera; el cliente no escribe directo.
-      allow update: if false;
+      // Cualquier autenticado puede incrementar usosActuales EN EXACTAMENTE
+      // 1 (y solo ese campo), siempre que la invitación no esté vencida ni
+      // agotada — es el paso que consumirInvitacion() hace al aceptar una
+      // invitación. No puede tocar ningún otro campo (grupoId, creadoPor,
+      // expiraEn, usosMaximos quedan protegidos).
+      allow update: if estaAutenticado() &&
+        resource.data.expiraEn > request.time &&
+        (resource.data.usosMaximos == null || resource.data.usosActuales < resource.data.usosMaximos) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["usosActuales"]) &&
+        request.resource.data.usosActuales == resource.data.usosActuales + 1;
       allow delete: if esCreadorDelGrupo(resource.data.grupoId);
     }
   }
