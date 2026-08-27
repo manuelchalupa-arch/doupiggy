@@ -1,6 +1,7 @@
 // App.jsx
-// Punto de entrada visual. Orquesta: splash -> estado de auth real ->
-// grupo (crear si no tiene ninguno / elegir si tiene varios) -> AppShell.
+// Punto de entrada visual. Orquesta: splash -> ¿hay un token de invitación
+// en la URL? -> estado de auth real -> grupo (crear si no tiene ninguno /
+// elegir si tiene varios) -> AppShell.
 // Sin lógica de negocio propia: todo se delega a los hooks/servicios ya
 // construidos en los Bloques 1-5.
 
@@ -13,10 +14,29 @@ import CrearGrupoScreen from "./components/CrearGrupoScreen";
 import InvitarTrasCrear from "./components/InvitarTrasCrear";
 import { useAuthState } from "./hooks/useAuthState";
 import { suscribirseAGruposDeUsuario } from "./services/groupService";
-import { iniciarSesionConGoogle } from "./services/authService";
+import { iniciarSesionConGoogle, unirseComoInvitado } from "./services/authService";
+
+// Se lee una sola vez al cargar el módulo: si hay ?invite=TOKEN en la URL,
+// se guarda acá y se limpia de la barra de direcciones inmediatamente
+// (para que un refresh de página no dispare la aceptación de nuevo).
+function leerYLimpiarTokenDeInvitacion() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("invite");
+  if (token) {
+    params.delete("invite");
+    const resto = params.toString();
+    window.history.replaceState({}, "", window.location.pathname + (resto ? `?${resto}` : ""));
+  }
+  return token;
+}
 
 export default function App() {
   const [mostrarSplash, setMostrarSplash] = useState(true);
+  const [tokenInvitacion] = useState(leerYLimpiarTokenDeInvitacion);
+  const [aceptandoInvitacion, setAceptandoInvitacion] = useState(!!tokenInvitacion);
+  const [errorInvitacion, setErrorInvitacion] = useState(null);
+  const [grupoDeInvitacionId, setGrupoDeInvitacionId] = useState(null);
+
   const { usuario, perfil, estaAutenticado, cargando } = useAuthState();
   const [grupos, setGrupos] = useState([]);
   const [cargandoGrupos, setCargandoGrupos] = useState(true);
@@ -39,23 +59,52 @@ export default function App() {
         setErrorGrupos(null);
         setGrupos(lista);
         setCargandoGrupos(false);
-        // Si el grupo seleccionado ya no está en la lista (o todavía no hay
-        // ninguno elegido), se elige el primero disponible automáticamente.
-        setGrupoSeleccionadoId((actual) =>
-          lista.some((g) => g.id === actual) ? actual : lista[0]?.id ?? null
-        );
+        // Si venimos de aceptar una invitación, priorizar ESE grupo aunque
+        // no sea el primero de la lista.
+        setGrupoSeleccionadoId((actual) => {
+          if (grupoDeInvitacionId && lista.some((g) => g.id === grupoDeInvitacionId)) {
+            return grupoDeInvitacionId;
+          }
+          return lista.some((g) => g.id === actual) ? actual : lista[0]?.id ?? null;
+        });
       },
       (error) => {
         setCargandoGrupos(false);
         setErrorGrupos(error);
       }
     );
-  }, [estaAutenticado, usuario]);
+  }, [estaAutenticado, usuario, grupoDeInvitacionId]);
 
   const grupoSeleccionado = grupos.find((g) => g.id === grupoSeleccionadoId) ?? null;
 
+  async function manejarAceptarInvitacion() {
+    setErrorInvitacion(null);
+    try {
+      const { grupoId } = await unirseComoInvitado(tokenInvitacion);
+      setGrupoDeInvitacionId(grupoId);
+      setAceptandoInvitacion(false);
+    } catch (err) {
+      setErrorInvitacion(err.message);
+    }
+  }
+
   if (mostrarSplash) {
     return <SplashScreen onFinish={() => setMostrarSplash(false)} />;
+  }
+
+  // Pantalla de aceptación de invitación: tiene prioridad sobre todo lo
+  // demás mientras haya un token pendiente y el usuario no haya decidido
+  // "continuar sin unirme".
+  if (aceptandoInvitacion && tokenInvitacion) {
+    return (
+      <ThemeProvider>
+        <PantallaInvitacion
+          onAceptar={manejarAceptarInvitacion}
+          onOmitir={() => setAceptandoInvitacion(false)}
+          error={errorInvitacion}
+        />
+      </ThemeProvider>
+    );
   }
 
   return (
@@ -94,6 +143,42 @@ export default function App() {
         />
       )}
     </ThemeProvider>
+  );
+}
+
+/**
+ * Pantalla que se muestra cuando la URL trae ?invite=TOKEN. Funciona tanto
+ * si la persona ya tenía sesión iniciada (con OTRA cuenta de Google, se le
+ * suma este grupo a los suyos) como si es la primera vez que entra.
+ */
+function PantallaInvitacion({ onAceptar, onOmitir, error }) {
+  const [procesando, setProcesando] = useState(false);
+
+  async function manejarClick() {
+    setProcesando(true);
+    await onAceptar();
+    setProcesando(false);
+  }
+
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
+      <div className="tarjeta" style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
+        <span className="etiqueta">Invitación</span>
+        <h2>Te invitaron a un grupo de DouPiggy</h2>
+        <p style={{ margin: "0 0 14px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
+          Ingresá con tu cuenta de Google para sumarte. Vas a poder seguir usando
+          o creando tus propios grupos sin problema — este se agrega a los tuyos,
+          no lo reemplaza.
+        </p>
+        <button type="button" className="btn bloque" onClick={manejarClick} disabled={procesando}>
+          {procesando ? "Uniéndote..." : "Ingresar con Google y unirme"}
+        </button>
+        {error && <p className="ayuda-error" style={{ marginTop: 10 }}>{error}</p>}
+        <button type="button" className="btn secundario bloque" style={{ marginTop: 10 }} onClick={onOmitir}>
+          Ahora no
+        </button>
+      </div>
+    </div>
   );
 }
 
