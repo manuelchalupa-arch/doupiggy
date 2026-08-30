@@ -3,19 +3,6 @@
    modales, calendario, historial, switches, estados financieros.
 */
 
-/* ---------- Etiquetas / Badges ---------- */
-.etiqueta {
-  display: inline-block;
-  font-family: var(--font-display);
-  font-size: 12px;
-  background: var(--gold);
-  color: var(--ink);
-  border: var(--border-thin);
-  border-radius: 20px;
-  padding: 3px 10px;
-  margin-bottom: 8px;
-}
-
 /* ---------- Botones ---------- */
 .btn {
   font-family: var(--font-display);
@@ -184,36 +171,182 @@ input.invalido {
 }
 
 /* ---------- Liquidación ---------- */
-.tarjeta-liquidacion {
+
+/* Resumen por miembro (chips) */
+.grid-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.chip-resumen {
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+.chip-resumen .chip-nombre {
+  display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--paper);
-  border: var(--border-medium);
-  border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  box-shadow: var(--shadow-hard);
-}
-
-.chanchito-nombre {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-}
-
-.chanchito-nombre span {
   font-size: 12px;
   font-weight: 700;
+  min-width: 0;
+}
+
+.chip-resumen .chip-nombre span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-resumen .chip-monto {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chip-resumen .pos { color: var(--avocado); }
+.chip-resumen .neg { color: var(--burnt); }
+.chip-resumen .neutro { color: var(--ink); opacity: 0.6; }
+
+.inicial-circulo {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: var(--border-thin);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex: none;
+}
+
+/* Leyenda de ayudas de liquidación */
+.leyenda-matriz {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+
+/* Pasos para saldar (un pago por par) */
+.lista-pagos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pago-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+}
+
+.pago-fila .quien {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 0;
+}
+
+.pago-fila .quien .nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pago-fila .pago-monto {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--burnt);
+  margin: 0 auto;
+}
+
+/* Tilde circular para marcar/desmarcar un pago como recibido (Liquidación) */
+.pago-check {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  border: var(--border-medium);
+  background: var(--paper);
+  color: transparent;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.pago-check:hover:not(:disabled) { transform: scale(1.1); }
+
+.pago-check:disabled { opacity: 0.6; cursor: default; }
+
+/* Fila cuyo toggle está escribiendo en Firestore */
+.pago-fila.procesando {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.pago-check.recibido {
+  background: var(--mustard);
   color: var(--ink);
 }
 
-.monto-liquidacion {
+/* Columna derecha de cada fila de pago: monto + estado */
+.pago-detalle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.pago-detalle-monto {
   font-family: var(--font-mono);
-  font-size: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pago-estado {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  line-height: 1.6;
+}
+
+.pago-estado.recibido {
+  background: color-mix(in srgb, var(--avocado) 18%, transparent);
+  color: var(--avocado);
+}
+
+.pago-estado.pendiente {
+  background: color-mix(in srgb, var(--burnt) 18%, transparent);
   color: var(--burnt);
-  line-height: 1;
 }
 
 /* ---------- Historial con scroll ---------- */
@@ -345,6 +478,149 @@ input.invalido {
 }
 
 .switch-astro.noche .astro-icono { left: 32px; }
+
+/* ------------------ Configuración (Info) ------------------ */
+.fila-configuracion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.boton-icono {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: var(--border-medium);
+  background: var(--mustard);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+}
+
+/* ------------------ Instalación PWA (Info > Configuración) ------------------ */
+.ayuda-instalar {
+  flex-basis: 100%;
+  margin-top: 6px;
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ---------- Selector de avatar (subir foto / elegir preset) ---------- */
+.avatar-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.avatar-actual img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--border-medium);
+  flex: none;
+}
+
+.avatar-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.avatar-subir-btn {
+  display: inline-block;
+  cursor: pointer;
+  width: fit-content;
+}
+
+/* ---------- Lista de miembros del grupo (reales + locales) ---------- */
+.lista-miembros {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lista-miembros-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.lista-miembros-item:last-child { border-bottom: none; }
+.lista-miembros-nombre { flex: 1; font-size: 14px; font-weight: 700; }
+.badge-miembro {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--avocado) 35%, var(--paper));
+  color: var(--ink);
+  flex: none;
+}
+.badge-miembro.local {
+  background: color-mix(in srgb, var(--mustard) 45%, var(--paper));
+}
+
+/* ---------- Lista desplegable de avatares ---------- */
+.avatar-preset-dropdown { position: relative; }
+.avatar-preset-toggle { width: 100%; }
+/* Grilla fija de 3 columnas: todas las imágenes quedan visibles a la vez
+   (los presets son hasta 6: 2 filas parejas, sin scroll). */
+.avatar-preset-lista {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  min-width: 210px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: var(--paper);
+  border: var(--border-medium);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.avatar-preset-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink);
+}
+.avatar-preset-item:hover,
+.avatar-preset-item.sel { background: color-mix(in srgb, var(--mustard) 30%, transparent); }
+.avatar-preset-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  flex: none;
+}
 
 /* ---------- Modal ---------- */
 .modal-fondo {

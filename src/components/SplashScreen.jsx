@@ -1,13 +1,13 @@
 // components/SplashScreen.jsx
 // Splash mejorado: el logo entra con un efecto de "cortina de cine" (barrido
 // + rebote), y el nombre aparece con una leve demora tipo intertítulo de
-// película muda. Duración más corta e intencional: se siente a animación,
-// no a espera.
+// película muda. Duración deliberadamente cómoda: se alcanza a disfrutar el
+// cartel antes de entrar al grupo.
 
 import { useEffect } from "react";
 import { brandingAssets } from "../assets";
 
-const DURACION_MS = 1700;
+const DURACION_MS = 2600;
 
 const estilos = {
   splash: {
@@ -17,6 +17,7 @@ const estilos = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+    paddingTop: "7vh",
     backgroundImage: `url(${brandingAssets.splash})`,
     backgroundSize: "cover",
     backgroundPosition: "center",

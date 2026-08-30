@@ -19,12 +19,13 @@ export function esAliasValido(alias) {
 }
 
 /**
- * Actualiza nombre, correo (solo visual, no cambia el de auth) y los datos
- * de cobro del usuario. CBU y alias son mutuamente opcionales: alcanza con
- * completar uno de los dos para poder recibir pagos, pero el que se
- * complete tiene que tener un formato válido.
+ * Actualiza nombre, correo (solo visual, no cambia el de auth), los datos
+ * de cobro del usuario y, opcionalmente, la foto de perfil. CBU y alias
+ * son mutuamente opcionales: alcanza con completar uno de los dos para
+ * poder recibir pagos, pero el que se complete tiene que tener un formato
+ * válido. `foto` es opcional: si no se pasa, no se toca el valor guardado.
  */
-export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias }) {
+export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias, foto }) {
   const cbuLimpio = (cbu ?? "").trim();
   const aliasLimpio = (alias ?? "").trim();
 
@@ -38,9 +39,32 @@ export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias
     throw new Error("El alias debe tener al menos 6 caracteres.");
   }
 
-  await updateDoc(doc(db, "usuarios", uid), {
+  const datos = {
     nombre,
     correoContacto,
     datosCobro: { cbu: cbuLimpio || null, alias: aliasLimpio || null },
-  });
+  };
+  if (foto !== undefined) datos.foto = foto;
+
+  await updateDoc(doc(db, "usuarios", uid), datos);
+}
+
+/**
+ * Guarda solo la foto de perfil (avatar preset o imagen propia ya
+ * convertida a un data URL comprimido — ver comprimirImagenComoDataUrl en
+ * InfoProfile.jsx). Separado de actualizarPerfil para poder cambiar el
+ * avatar sin pasar por la validación de CBU/alias del formulario grande.
+ */
+export async function actualizarFotoPerfil(uid, foto) {
+  await updateDoc(doc(db, "usuarios", uid), { foto });
+}
+
+/**
+ * Guarda (o quita, pasando null) el ícono personalizado de UNA pestaña de
+ * navegación. Se guarda dentro de perfil.iconosTab.{clave} (clave =
+ * "inicio" | "gastos" | "liquidacion" | "pagos" | "info") como data URL comprimido,
+ * igual que la foto de perfil — mismo motivo: sin Firebase Storage.
+ */
+export async function actualizarIconoTab(uid, clave, dataUrl) {
+  await updateDoc(doc(db, "usuarios", uid), { [`iconosTab.${clave}`]: dataUrl });
 }

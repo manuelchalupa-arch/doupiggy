@@ -37,11 +37,25 @@ legible sin importar cuán cargada esté la imagen.
 
 | Archivo | Tamaño sugerido | Dónde se usa |
 |---|---|---|
-| `cerdito1.png` | 220×280, fondo transparente | Cerdito rico y arrogante — cuerda animada de Inicio, lado derecho |
-| `cerdito2.png` | 220×280, fondo transparente | Cerdito humilde y alegre — cuerda animada de Inicio, lado izquierdo |
+| `cerdito1.webp` | 1408×768, fondo transparente | Personaje izquierdo de la escena "tira y afloje" (Inicio) |
+| `cerdito2.webp` | 1408×768, fondo transparente | Personaje derecho de la escena "tira y afloje" (Inicio) |
 
-Los sprites deben quedar recortados a la silueta (sin fondo) para que el CSS
-los pueda animar como capas independientes sobre el fondo del nivel.
+> Ojo: hoy estos sprites traen la soga dibujada dentro de la misma imagen.
+> Para la escena nueva se recortan (configuración de recorte y ancla de la
+> mano en `src/components/TugOfWar/configuracion.js`). Cuando llegue el arte
+> final aislado (personaje solo, sin soga, con margen), se actualizan
+> `PERSONAJE_IZQ` / `PERSONAJE_DER` y no hace falta tocar nada más.
+
+## `tugofwar/`
+
+| Archivo | Tamaño sugerido | Dónde se usa |
+|---|---|---|
+| `marcador.png` | ~cuadrado, fondo transparente | Marcador central (moño) que recorre la soga |
+
+El recurso del marcador se reemplaza 1 a 1 desde
+`src/components/TugOfWar/configuracion.js`. `soga.png` (textura) quedó en la
+carpeta pero la soga hoy se dibuja 100% SVG con la paleta de la app
+(`SOGA` en `configuracion.js`).
 
 ## Íconos funcionales
 
@@ -55,10 +69,10 @@ diseño, se edita ese componente.
 Todo pasa por `src/assets/index.js`, que expone cuatro objetos:
 
 ```js
-import { brandingAssets, backgroundAssets, spriteAssets, iconAssets } from "../assets";
+import { brandingAssets, backgroundAssets, spriteAssets, tugOfWarAssets } from "../assets";
 
 brandingAssets.logo
 backgroundAssets.nivel["le-deben-mucho"]  // o .form / .report
-spriteAssets.pigBoy / .pigGirl / .ropeArrow
-iconAssets.trash / .calendar / .pdf / .excel
+spriteAssets.cerdito1 / .cerdito2         // personajes de la escena "tira y afloje"
+tugOfWarAssets.soga / .marcador           // textura de la soga y marcador
 ```

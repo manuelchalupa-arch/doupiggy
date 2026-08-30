@@ -1,5 +1,5 @@
 // components/IconosTab.jsx
-// Los 4 íconos de la barra de pestañas comparten un mismo lenguaje visual:
+// Los 5 íconos de la barra de pestañas comparten un mismo lenguaje visual:
 // un "medallón" circular (anillo de tinta + anillo dorado interior, como
 // una moneda o botón de cartel de los años 30) con un pictograma grueso
 // adentro. La unificación viene del marco compartido, no de repetir el
@@ -62,6 +62,25 @@ export function IconoTabInfo() {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Medallon>
+  );
+}
+
+export function IconoTabPagos() {
+  return (
+    <Medallon>
+      {/* recibo/cheque con la tilde de "pagado" */}
+      <rect x="12" y="11" width="16" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <line x1="15" y1="15" x2="25" y2="15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="15" y1="18" x2="25" y2="18" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path
+        d="M17 23.5 L19.6 26 L23.5 21.5"
+        fill="none"
+        stroke="var(--gold)"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

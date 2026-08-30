@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# variables de entorno (contienen claves de Firebase)
+.env
+
+# archivos locales de Firebase
+.firebase/
+firebase-debug.log
+*.log
+
+# sistema
+.DS_Store
+Thumbs.db

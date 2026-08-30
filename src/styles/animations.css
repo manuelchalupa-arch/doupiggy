@@ -69,25 +69,8 @@
 .anim-pull { animation: anim-pull 1.1s ease-in-out infinite alternate; }
 .anim-celebrate { animation: anim-celebrate 0.8s ease-in-out infinite; }
 
-/* Animaciones de tironeo de cuerda (HomeSummary) */
-@keyframes tironIzq {
-  from { transform: rotate(-5deg); }
-  to { transform: rotate(3deg); }
-}
+/* La escena "tira y afloje" de Inicio (src/components/TugOfWar/TugOfWarScene.jsx)
+   se dibuja en SVG con requestAnimationFrame — ya no usa animaciones CSS:
+   todo el movimiento (resorte del marcador sobre la trayectoria, vaivén de
+   personajes, inclinación) se calcula cuadro a cuadro en JS. */
 
-@keyframes tironDer {
-  from { transform: rotate(5deg); }
-  to { transform: rotate(-3deg); }
-}
-
-/* Cerdito 2 (humilde, izquierda) tira hacia la izquierda */
-.cerdito2-sprite {
-  animation: tironIzq 1.1s ease-in-out infinite alternate;
-  transform-origin: bottom center;
-}
-
-/* Cerdito 1 (rico, derecha) tira hacia la derecha */
-.cerdito1-sprite {
-  animation: tironDer 1.1s ease-in-out infinite alternate;
-  transform-origin: bottom center;
-}

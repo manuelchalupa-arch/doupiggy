@@ -44,13 +44,14 @@ src/
     invitationService.js       Enlaces temporales de invitación
     groupService.js            CRUD de grupos y membresía
     expenseService.js          Alta de gastos + división igualitaria (centavos enteros)
-    settlementService.js       Saldos netos + simplificación de deudas
     profileService.js          Perfil: nombre, correo, CBU/alias (uno de los dos)
     reportService.js           Informes: filtro por rango + exportación Excel/PDF
+    pagoService.js             Liquidación: marcar/desmarcar pagos recibidos + cerrar
 
   hooks/                      Adaptadores de los servicios al ciclo de vida de React
     useAuthState.js
     useExpenses.js
+    usePagos.js
 
   context/
     ThemeContext.jsx           Modo día/noche: dos paletas de color reales
@@ -73,7 +74,8 @@ src/
     HomeSummary.jsx                Inicio: saldo neto + cuerda animada + 5 fondos por zona
     Chanchito.jsx                   Sistema reutilizable de personajes (estados de animación)
     ExpenseForm.jsx                  Gastos: alta ("hoja contable") + historial + informes
-    SettlementPanel.jsx               Liquidación: quién le debe a quién
+    SettlementPanel.jsx               Resumen: quién le debe a quién (con pagos recibidos descontados)
+    LiquidationPanel.jsx              Liquidación: tildar pagos recibidos y cerrarla
     InfoProfile.jsx                    Cuenta: perfil, grupos, informes, configuración
     CalendarioRango.jsx                 Selector de rango de fechas para informes
     IconoTab.jsx / IconoAstro.jsx        Íconos SVG de navegación y sol/luna
@@ -83,6 +85,10 @@ src/
 
   utils/
     format.js                   formatoARS (formato de moneda) — no redeclarar en otro lado
+    division.js                 parteDeGasto: la parte exacta (centavos) de cada participante
+                                de un gasto, única fuente de verdad para todos los saldos
+    nivelSaldo.js               Saldo neto del usuario + zona visual (5 niveles)
+    calcularDeudas.js           Resumen: quién le debe a quién + resumen por miembro
     offlineSync.js               Helpers de conectividad para el modo offline-first
 
 firebase/
@@ -106,9 +112,12 @@ GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub 
   (`spriteAssets.cerdito1` / `cerdito2`, ver nota de assets abajo) con 7 estados de
   animación (`idle/happy/sad/angry/pulling/money/celebrate`) definidos en `animations.css`.
 - **Inicio**: `HomeSummary.jsx` calcula el saldo neto real con
-  `settlementService.calcularSaldosNetos` y lo traduce a una de 5 zonas
-  (`backgroundAssets.nivel`), con los dos chanchitos tironeando de una cuerda
-  dibujada en CSS (sin imagen de flecha superpuesta).
+  `nivelSaldo.calcularSaldoUsuario` (que usa la división exacta guardada en
+  cada gasto, o montos/partes como respaldo) y lo traduce a una de las 5
+  zonas (`backgroundAssets.nivel`), con los dos chanchitos tironeando de una
+  cuerda dibujada en CSS (sin imagen de flecha superpuesta). La pestaña
+  Resumen usa el mismo criterio (`calcularDeudas` / `utils/division.js`), con
+  los pagos confirmados como recibidos ya descontados (pagoService).
 - **Modo oscuro**: `ThemeContext.jsx` aplica la clase `.tema-noche` al contenedor
   raíz (`.app-root`), que redefine las variables de color en `tokens.css`.
 

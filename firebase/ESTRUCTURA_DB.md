@@ -73,6 +73,34 @@ Ver Bloque 5 (`services/loanService.js`) para el detalle de cuotas.
 }
 ```
 
+### `grupos/{grupoId}/pagos/{pagoId}` (subcolección)
+Un registro por pago que el ACREEDOR de un par confirmó como recibido. Lo que
+no está confirmado no se guarda: se deriva de los gastos (`calcularDeudas`).
+```
+{
+  de: string,              // uid del que pagó (deudor del par)
+  para: string,            // uid que cobró (== quien crea el registro)
+  monto: number,
+  confirmadoPor: uid,      // = para (auditoría de quién lo marcó)
+  confirmadoEn: Timestamp | null,
+  creadoEn: Timestamp
+}
+```
+
+### `grupos/{grupoId}/liquidaciones/{liquidacionId}` (subcolección)
+Snapshot inmutable de un cierre de liquidación (una por vez que se cierra).
+```
+{
+  cerradoPor: uid,
+  cerradoEn: Timestamp,
+  creadoEn: Timestamp,
+  total: number,           // total confirmado en ese cierre
+  recibidos: [             // copia de los pagos confirmados al cerrar
+    { de, deNombre, para, monto, confirmadoEn: Timestamp | null }
+  ]
+}
+```
+
 ### `invitaciones/{token}`
 Enlaces temporales para que invitados entren de forma anónima a un grupo
 sin exponer el `grupoId` real en la URL más que a través del token.

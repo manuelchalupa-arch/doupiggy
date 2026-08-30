@@ -53,7 +53,6 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
       <img src={brandingAssets.logo} alt="DouPiggy" style={{ width: 96, height: 96, objectFit: "contain" }} />
 
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
-        <span className="etiqueta">Primeros pasos</span>
         <h2>Creá tu primer grupo</h2>
         <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
           Es el espacio donde van a vivir los gastos compartidos con tu gente.

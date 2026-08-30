@@ -1,19 +1,41 @@
 // components/AppShell.jsx
-// Header tipo "cartel" persistente arriba de las 4 pestañas (no es
-// position:fixed, así nunca compite con la burbuja de día/noche de
-// Cuenta). Debajo sigue el mismo contenido de siempre: Inicio conserva
-// su fondo a pantalla completa, el resto usa la textura de papel del
-// tema. El selector de grupo (si el usuario tiene más de uno) vive en
-// Información. El botón de invitar vive en Gastos.
+// Header "cartel" (logo animado + nombre a la izquierda, cartel de madera
+// con el grupo activo a la derecha) + las 5 pestañas, cada una envuelta en
+// FondoEscena para que el escenario ilustrado correspondiente al saldo se
+// vea en TODAS. El nivel se calcula una sola vez acá (utils/nivelSaldo) y
+// se pasa hacia abajo.
+//
+// Pestañas: Inicio (resumen visual + saldo), Gastos (alta/edición),
+// Resumen (quién le debe a quién, exporta informes), Liquidación (tilde de
+// los pagos que uno recibió y cierre) e Info (grupo, perfil, tema).
+// Lógicamente, "Liquidación" gestiona los pagos confirmados en la base
+// (services/pagoService) y "Resumen" muestra el estado descontado.
+//
+// En pantallas de escritorio (≥900px) la tabbar pasa de barra inferior a
+// barra lateral fija — mismo componente, resuelto por CSS (ver
+// .tabbar en layout.css), sin duplicar marcado.
+//
+// El tema (día/noche) y la instalación PWA viven en su propia pestaña
+// (Info > Configuración), fuera de este armazón.
 
 import { useMemo, useState } from "react";
 import { useExpenses } from "../hooks/useExpenses";
+import { usePagos } from "../hooks/usePagos";
+import { calcularSaldoUsuario, calcularNivel } from "../utils/nivelSaldo";
 import AppHeader from "./AppHeader";
+import FondoEscena from "./FondoEscena";
 import HomeSummary from "./HomeSummary";
 import ExpenseForm from "./ExpenseForm";
 import SettlementPanel from "./SettlementPanel";
+import LiquidationPanel from "./LiquidationPanel";
 import InfoProfile from "./InfoProfile";
-import { IconoTabInicio, IconoTabGastos, IconoTabLiquidacion, IconoTabInfo } from "./IconoTab";
+import {
+  IconoTabInicio,
+  IconoTabGastos,
+  IconoTabLiquidacion,
+  IconoTabPagos,
+  IconoTabInfo,
+} from "./IconoTab";
 
 /**
  * @param {object} props
@@ -27,6 +49,7 @@ import { IconoTabInicio, IconoTabGastos, IconoTabLiquidacion, IconoTabInfo } fro
 export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [], onCambiarGrupo }) {
   const [tab, setTab] = useState("inicio");
   const { gastos } = useExpenses(grupoId);
+  const { pagos } = usePagos(grupoId);
 
   const miembros = useMemo(() => {
     if (!grupo?.miembrosInfo) return [];
@@ -36,44 +59,70 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
     }));
   }, [grupo]);
 
+  const saldo = useMemo(
+    () => calcularSaldoUsuario(gastos, uidActual, pagos),
+    [gastos, uidActual, pagos]
+  );
+  const nivel = useMemo(() => calcularNivel(saldo), [saldo]);
+
+  // Íconos de pestaña personalizados por el usuario (data URL) o null =
+  // usar el medallón SVG de fábrica.
+  const iconosTab = perfil?.iconosTab ?? {};
+
   return (
     <div>
-      <AppHeader />
+      <AppHeader tab={tab} grupoId={grupoId} grupos={grupos} onCambiarGrupo={onCambiarGrupo} />
 
-      <main className={tab === "inicio" ? "" : "contenido-tab"} style={{ paddingTop: tab === "inicio" ? 0 : "18px" }}>
-        {tab === "inicio" && (
-          <HomeSummary grupo={grupo} gastos={gastos} miembros={miembros} uidActual={uidActual} />
-        )}
+      <main>
+        <FondoEscena nivel={nivel}>
+          {tab === "inicio" && (
+            <HomeSummary gastos={gastos} miembros={miembros} uidActual={uidActual} pagos={pagos} />
+          )}
 
-        {tab === "gastos" && (
-          <ExpenseForm grupoId={grupoId} uidActual={uidActual} miembros={miembros} />
-        )}
+          {tab === "gastos" && (
+            <ExpenseForm grupoId={grupoId} uidActual={uidActual} miembros={miembros} />
+          )}
 
-        {tab === "liquidacion" && <SettlementPanel gastos={gastos} miembros={miembros} />}
+          {tab === "liquidacion" && (
+            <SettlementPanel gastos={gastos} miembros={miembros} uidActual={uidActual} pagos={pagos} />
+          )}
 
-        {tab === "info" && (
-          <InfoProfile
-            uidActual={uidActual}
-            perfil={perfil}
-            grupoId={grupoId}
-            grupos={grupos}
-            onCambiarGrupo={onCambiarGrupo}
-            onIrAGastos={() => setTab("gastos")}
-          />
-        )}
+          {tab === "pagos" && (
+            <LiquidationPanel
+              grupoId={grupoId}
+              uidActual={uidActual}
+              miembros={miembros}
+              gastos={gastos}
+              pagos={pagos}
+            />
+          )}
+
+          {tab === "info" && (
+            <InfoProfile
+              uidActual={uidActual}
+              perfil={perfil}
+              grupoId={grupoId}
+              grupos={grupos}
+              onCambiarGrupo={onCambiarGrupo}
+            />
+          )}
+        </FondoEscena>
       </main>
 
       <nav className="tabbar">
-        <TabButton activo={tab === "inicio"} onClick={() => setTab("inicio")} label="Inicio">
+        <TabButton activo={tab === "inicio"} onClick={() => setTab("inicio")} label="Inicio" iconoPersonalizado={iconosTab.inicio}>
           <IconoTabInicio />
         </TabButton>
-        <TabButton activo={tab === "gastos"} onClick={() => setTab("gastos")} label="Gastos">
+        <TabButton activo={tab === "gastos"} onClick={() => setTab("gastos")} label="Gastos" iconoPersonalizado={iconosTab.gastos}>
           <IconoTabGastos />
         </TabButton>
-        <TabButton activo={tab === "liquidacion"} onClick={() => setTab("liquidacion")} label="Liquidación">
+        <TabButton activo={tab === "liquidacion"} onClick={() => setTab("liquidacion")} label="Resumen" iconoPersonalizado={iconosTab.liquidacion}>
           <IconoTabLiquidacion />
         </TabButton>
-        <TabButton activo={tab === "info"} onClick={() => setTab("info")} label="Info">
+        <TabButton activo={tab === "pagos"} onClick={() => setTab("pagos")} label="Liquidación" iconoPersonalizado={iconosTab.pagos}>
+          <IconoTabPagos />
+        </TabButton>
+        <TabButton activo={tab === "info"} onClick={() => setTab("info")} label="Info" iconoPersonalizado={iconosTab.info}>
           <IconoTabInfo />
         </TabButton>
       </nav>
@@ -81,10 +130,14 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
   );
 }
 
-function TabButton({ activo, onClick, label, children }) {
+function TabButton({ activo, onClick, label, children, iconoPersonalizado }) {
   return (
     <button className={`tab-btn${activo ? " activo" : ""}`} onClick={onClick}>
-      {children}
+      {iconoPersonalizado ? (
+        <img src={iconoPersonalizado} alt="" className="tab-btn-icono-custom" />
+      ) : (
+        children
+      )}
       {label}
     </button>
   );

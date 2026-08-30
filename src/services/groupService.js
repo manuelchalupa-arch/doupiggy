@@ -9,6 +9,10 @@ import {
   onSnapshot,
   serverTimestamp,
   arrayUnion,
+  arrayRemove,
+  deleteField,
+  deleteDoc,
+  getDocs,
   updateDoc,
   query,
   where,
@@ -62,4 +66,64 @@ export function suscribirseAGruposDeUsuario(uid, callback, onError) {
       onError?.(error);
     }
   );
+}
+
+/**
+ * Agrega un miembro LOCAL/temporal al grupo: alguien que participa de los
+ * gastos (se le puede asignar "pagó" o incluir en "dividir entre") sin
+ * tener cuenta de Google ni pasar por invitación — pensado para gente que
+ * no usa la app pero igual hay que trackear cuánto puso o cuánto debe.
+ *
+ * Se identifica con un id sintético "local:<random>" (nunca puede
+ * coincidir con un uid real de Firebase Auth) y se marca con esLocal:true
+ * en miembrosInfo para poder diferenciarlo en la UI de los miembros reales
+ * (invitados por Google). Lo hace quien ya es miembro real del grupo — las
+ * reglas de Firestore ya permiten que cualquier miembro actualice el
+ * documento del grupo, así que no hace falta ningún permiso nuevo.
+ *
+ * @returns {string} el id local recién creado
+ */
+export async function agregarMiembroLocal(grupoId, nombre) {
+  const idLocal = `local:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  await updateDoc(doc(db, "grupos", grupoId), {
+    miembros: arrayUnion(idLocal),
+    [`miembrosInfo.${idLocal}`]: { nombre, esLocal: true, foto: null, activo: true },
+    actualizadoEn: serverTimestamp(),
+  });
+  return idLocal;
+}
+
+/**
+ * Saca a un miembro LOCAL del grupo (nunca a uno real: por diseño esta
+ * función solo se llama desde la UI para ids que empiezan con "local:").
+ * No borra los gastos ya cargados en los que haya participado — quedan
+ * con su nombre histórico dentro de cada gasto, solo deja de aparecer
+ * como opción para gastos nuevos.
+ */
+export async function eliminarMiembroLocal(grupoId, idLocal) {
+  await updateDoc(doc(db, "grupos", grupoId), {
+    miembros: arrayRemove(idLocal),
+    [`miembrosInfo.${idLocal}`]: deleteField(),
+    actualizadoEn: serverTimestamp(),
+  });
+}
+
+/**
+ * Borra un grupo entero: sus gastos y el documento del grupo.
+ *
+ * Firestore no borra subcolecciones en cascada, así que primero se recorren
+ * los gastos y se eliminan uno por uno, y recién después el doc del grupo.
+ *
+ * NOTA: las reglas solo permiten BORRAR el grupo a su creador, y solo
+ * permiten escribir `usuarios/{uid}` a su dueño. Por eso acá NO se tocan
+ * los docs de `usuarios` de los demás miembros: un `gruposIds` huérfano es
+ * inofensivo porque el doc del grupo ya no existe (la suscripción de grupos
+ * usa `miembros` array-contains, no esa lista). La UI exhibe el botón solo
+ * al creador.
+ */
+export async function eliminarGrupo(grupoId) {
+  const gastosSnap = await getDocs(collection(db, "grupos", grupoId, "gastos"));
+  await Promise.all(gastosSnap.docs.map((d) => deleteDoc(d.ref)));
+
+  await deleteDoc(doc(db, "grupos", grupoId));
 }

@@ -4,7 +4,7 @@
 
 /* ---------- Tarjetas estilo "sticker" ---------- */
 .tarjeta {
-  background: var(--paper);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
   border: var(--border-thick);
   border-radius: var(--radius-lg);
   padding: var(--space-md) 18px;
@@ -20,8 +20,8 @@
 
 /* Tarjeta "flotante": semitransparente + blur */
 .tarjeta-flotante {
-  background: color-mix(in srgb, var(--paper) 78%, transparent);
-  backdrop-filter: blur(6px);
+  background: color-mix(in srgb, var(--paper) 15%, transparent);
+  backdrop-filter: blur(8px);
   border: var(--border-medium);
   border-radius: var(--radius-lg);
   padding: 14px 18px;
@@ -29,31 +29,195 @@
   margin-bottom: 14px;
 }
 
+/* Tarjeta con foto decorativa a color cubriendo TODO el fondo (sin recorte,
+   sin bordes ni espacios vacíos alrededor de la imagen, sin blend mode que
+   le saque color). El texto va en un panel legible flotando encima. */
+.tarjeta-imagen-completa {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+.tarjeta-imagen-completa-panel {
+  position: relative;
+  margin: 14px;
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  backdrop-filter: blur(6px);
+  border: var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+
+/* ---------- Fondo ilustrado compartido por todas las pestañas ---------- */
+/* El fondo va a pantalla completa (min-height cubre todo menos el header
+   vacío de 64px); el contenido de cada pestaña se acota en ancho para no
+   quedar estirado en escritorio, y deja lugar abajo para la tabbar fija. */
+.fondo-escena {
+  min-height: calc(100dvh - 150px);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background-image 0.4s ease;
+}
+
+.fondo-escena-contenido {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 18px 16px 90px;
+}
+
+/* ---------- Inicio: todo el contenido baja para dejar libre arriba ---------- */
+/* Se aplica solo a la pestaña Inicio (HomeSummary): tarjetas y cerditos
+   empezan más abajo y la parte superior queda despejada, dejando ver el
+   escenario ilustrado de fondo junto al header. En columna flexible para
+   que tarjetas y escena hereden un espacio parejo entre sí (gap). */
+.inicio-contenido {
+  padding-top: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.inicio-contenido .tarjeta-flotante { margin-bottom: 0; }
+
 /* ---------- Header "cartel" ---------- */
-/* Sin contenido por ahora: es un marco reservado para que más adelante
-   se le agregue una imagen. min-height evita que colapse a 0. */
 .cartel-header {
-  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 150px;
+  padding: 12px 14px;
+  padding-top: max(12px, env(safe-area-inset-top));
   background: var(--paper);
   border-bottom: var(--border-thick);
   position: relative;
 }
 
-/* dos "clavos" arriba, como un letrero colgado */
-.cartel-header::before,
-.cartel-header::after {
-  content: "";
-  position: absolute;
-  top: 5px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ink);
-  opacity: 0.5;
+/* Izquierda: imagen título (DouPiggy). Se remonta (key={tab}) cada vez que
+   cambia la pestaña activa, así el "pop" se vuelve a disparar — es la
+   animación al cambiar entre Inicio/Gastos/Liquidación/Resumen/Info. */
+.header-titulo-animado {
+  height: 112px;
+  width: auto;
+  max-width: 50vw;
+  object-fit: contain;
+  flex: none;
+  animation: header-logo-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center bottom;
+}
+@keyframes header-logo-pop {
+  0% { transform: scale(0.55) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.18) rotate(6deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-titulo-animado { animation: none; }
 }
 
-.cartel-header::before { left: 16px; }
-.cartel-header::after { right: 16px; }
+/* Derecha: el cartel de madera ES el botón selector de grupo — grande,
+   con el nombre grabado en dorado encima, y un menú propio (no <select>
+   nativo) que despliega al tocarlo. */
+.cartel-madera-selector {
+  position: relative;
+  flex: none;
+  max-width: 58vw;
+}
+
+.cartel-madera-boton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(140px, 32vw, 210px);
+  aspect-ratio: 1.78;
+  padding: 0 22px 0 14px;
+  border: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  cursor: pointer;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.25));
+}
+.cartel-madera-boton:active { transform: translateY(1px); }
+
+/* Nombre del grupo: dorado brillante con relieve grabado (degradé +
+   sombra clara arriba / oscura abajo, simulando talla en la madera).
+   El contorno negro (-webkit-text-stroke) se dibuja sobre el borde de cada
+   letra y funciona con background-clip:text: queda el degradé dorado por
+   dentro y el borde negro afuera, estilo cartoon. */
+.cartel-madera-texto {
+  font-family: var(--font-display);
+  font-size: clamp(12px, 3.4vw, 16px);
+  letter-spacing: 0.3px;
+  line-height: 1.05;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(180deg, #fff3b0 0%, #e8b923 45%, #a8730a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 0.7px var(--ink);
+  text-shadow: none;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 245, 200, 0.5))
+    drop-shadow(0 -1px 1px rgba(60, 30, 5, 0.55));
+}
+
+.cartel-madera-flecha {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  font-size: 13px;
+  color: #f5c542;
+  text-shadow: 0 1px 0 rgba(60, 30, 5, 0.6);
+  transition: transform 0.2s ease;
+}
+.cartel-madera-flecha.abierta { transform: rotate(180deg); }
+
+/* Menú propio (reemplaza el <select> nativo, que no tenía estilo). */
+.cartel-madera-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  min-width: 180px;
+  max-width: 70vw;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: var(--border-medium);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+.cartel-madera-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+.cartel-madera-menu-item:hover,
+.cartel-madera-menu-item.sel {
+  background: color-mix(in srgb, var(--mustard) 35%, transparent);
+}
 
 /* ---------- Tabbar ---------- */
 .tabbar {
@@ -67,6 +231,38 @@
   background: var(--paper);
   border-top: var(--border-thick);
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---------- Escritorio: mismo componente, layout distinto ---------- */
+/* A partir de 900px la tabbar deja de ser una barra inferior y pasa a ser
+   una barra lateral fija (patrón típico de escritorio), sin duplicar
+   marcado ni componentes — solo cambia el CSS. El resto del contenido se
+   corre para no quedar debajo. */
+@media (min-width: 900px) {
+  .tabbar {
+    top: 0;
+    bottom: 0;
+    right: auto;
+    width: 88px;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 22px;
+    padding-top: max(20px, env(safe-area-inset-top) + 8px);
+    padding-bottom: 0;
+    border-top: none;
+    border-right: var(--border-thick);
+  }
+  .tab-btn { flex: none; }
+
+  .cartel-header { padding-left: 104px; }
+
+  .fondo-escena-contenido {
+    max-width: 720px;
+    padding-left: 104px;
+    padding-bottom: 32px;
+  }
+
+  .switch-tema-flotante { bottom: 16px; }
 }
 
 .tab-btn {
@@ -85,38 +281,39 @@
   font-size: 10px;
 }
 
-.tab-btn svg {
+.tab-btn svg,
+.tab-btn-icono-custom {
   width: 24px;
   height: 24px;
+  object-fit: contain;
+  border-radius: 6px;
   transition: transform 0.15s ease;
 }
 
 .tab-btn.activo { color: var(--burnt); }
 
-.tab-btn.activo svg { transform: scale(1.14) translateY(-1px); }
-
-.contenido-tab {
-  padding: 18px 16px 100px;
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-/* ---------- Contenido de pestañas ---------- */
-.contenido-tab {
-  padding: 18px 16px 100px;
-  max-width: 480px;
-  margin: 0 auto;
-}
+.tab-btn.activo svg,
+.tab-btn.activo .tab-btn-icono-custom { transform: scale(1.14) translateY(-1px); }
 
 /* ---------- Rótulos de sección tipo cartel ---------- */
+/* ---------- Rótulos de sección ---------- */
+/* Antes eran texto simple con una línea punteada fina abajo, que se
+   perdía contra los fondos ilustrados. Ahora son una etiqueta tipo cartel
+   —mismo lenguaje visual que .etiqueta (fondo dorado, borde grueso,
+   sombra dura)— así se leen claro sobre cualquier escena de fondo. */
 .titulo-seccion {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--ink);
-  margin: var(--space-xl) 4px var(--space-sm);
-  padding-bottom: 5px;
-  border-bottom: 2px dashed color-mix(in srgb, var(--ink) 40%, transparent);
   letter-spacing: 0.4px;
+  background: var(--mustard);
+  border: var(--border-medium);
+  border-radius: 999px;
+  padding: 7px 20px;
+  margin: var(--space-xl) 0 var(--space-sm);
+  box-shadow: 3px 3px 0 var(--ink);
 }
 
 .titulo-seccion:first-child { margin-top: 0; }

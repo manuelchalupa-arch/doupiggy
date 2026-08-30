@@ -2,7 +2,7 @@
 // Mascota reactiva que comenta el estado financiero del grupo.
 // Ahora con dos cerditos varones: Cerdito 1 (rico) y Cerdito 2 (humilde).
 
-import { spriteAssets } from "../assets";
+import { avatarAssets } from "../assets";
 
 const FRASES = {
   "muy-debe": [
@@ -60,10 +60,13 @@ export default function Chanchito({ nivel }) {
 
   // Cerdito 1 (rico, arrogante) para estados positivos
   // Cerdito 2 (humilde, alegre) para estados negativos o neutrales
+  // Se usa el recorte cuadrado (avatarAssets) en vez del sprite completo:
+  // a 48px el sprite entero (con el lienzo grande de la soga) se ve
+  // como un puntito; el recorte muestra el personaje entero y legible.
   const sprite =
     nivel === "le-deben-mucho" || nivel === "le-deben"
-      ? spriteAssets.cerdito1
-      : spriteAssets.cerdito2;
+      ? avatarAssets[0].src
+      : avatarAssets[1].src;
 
   return (
     <div

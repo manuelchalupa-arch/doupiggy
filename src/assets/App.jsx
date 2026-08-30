@@ -15,7 +15,6 @@ import InvitarTrasCrear from "./components/InvitarTrasCrear";
 import { useAuthState } from "./hooks/useAuthState";
 import { suscribirseAGruposDeUsuario } from "./services/groupService";
 import { iniciarSesionConGoogle, unirseComoInvitado } from "./services/authService";
-import { actualizarPerfil, esAliasValido } from "./services/profileService";
 
 // Se lee una sola vez al cargar el módulo: si hay ?invite=TOKEN en la URL,
 // se guarda acá y se limpia de la barra de direcciones inmediatamente
@@ -37,10 +36,6 @@ export default function App() {
   const [aceptandoInvitacion, setAceptandoInvitacion] = useState(!!tokenInvitacion);
   const [errorInvitacion, setErrorInvitacion] = useState(null);
   const [grupoDeInvitacionId, setGrupoDeInvitacionId] = useState(null);
-  // Después de aceptar la invitación (Google ya autenticado), se pide un
-  // registro breve (nombre + alias) antes de entrar al grupo. Guarda acá
-  // el usuario de Google recién autenticado mientras se completa ese paso.
-  const [usuarioInvitadoPendiente, setUsuarioInvitadoPendiente] = useState(null);
 
   const { usuario, perfil, estaAutenticado, cargando } = useAuthState();
   const [grupos, setGrupos] = useState([]);
@@ -85,25 +80,12 @@ export default function App() {
   async function manejarAceptarInvitacion() {
     setErrorInvitacion(null);
     try {
-      const { user, grupoId } = await unirseComoInvitado(tokenInvitacion);
+      const { grupoId } = await unirseComoInvitado(tokenInvitacion);
       setGrupoDeInvitacionId(grupoId);
-      // No cerramos la pantalla de invitación todavía: primero pedimos el
-      // registro breve (nombre + alias).
-      setUsuarioInvitadoPendiente(user);
+      setAceptandoInvitacion(false);
     } catch (err) {
       setErrorInvitacion(err.message);
     }
-  }
-
-  async function manejarRegistroInvitado({ nombre, alias }) {
-    await actualizarPerfil(usuarioInvitadoPendiente.uid, {
-      nombre,
-      correoContacto: usuarioInvitadoPendiente.email ?? "",
-      cbu: "",
-      alias,
-    });
-    setUsuarioInvitadoPendiente(null);
-    setAceptandoInvitacion(false);
   }
 
   if (mostrarSplash) {
@@ -116,18 +98,11 @@ export default function App() {
   if (aceptandoInvitacion && tokenInvitacion) {
     return (
       <ThemeProvider>
-        {usuarioInvitadoPendiente ? (
-          <PantallaRegistroInvitado
-            nombreInicial={usuarioInvitadoPendiente.displayName ?? ""}
-            onConfirmar={manejarRegistroInvitado}
-          />
-        ) : (
-          <PantallaInvitacion
-            onAceptar={manejarAceptarInvitacion}
-            onOmitir={() => setAceptandoInvitacion(false)}
-            error={errorInvitacion}
-          />
-        )}
+        <PantallaInvitacion
+          onAceptar={manejarAceptarInvitacion}
+          onOmitir={() => setAceptandoInvitacion(false)}
+          error={errorInvitacion}
+        />
       </ThemeProvider>
     );
   }
@@ -188,6 +163,7 @@ function PantallaInvitacion({ onAceptar, onOmitir, error }) {
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
+        <span className="etiqueta">Invitación</span>
         <h2>Te invitaron a un grupo de DouPiggy</h2>
         <p style={{ margin: "0 0 14px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
           Ingresá con tu cuenta de Google para sumarte. Vas a poder seguir usando
@@ -201,72 +177,6 @@ function PantallaInvitacion({ onAceptar, onOmitir, error }) {
         <button type="button" className="btn secundario bloque" style={{ marginTop: 10 }} onClick={onOmitir}>
           Ahora no
         </button>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Formulario breve para usuarios invitados: se muestra una sola vez, justo
- * después de aceptar la invitación (Google ya autenticado). Pide nombre
- * (pre-cargado con el de Google, editable) y alias de cobro — es el dato
- * mínimo para poder participar y eventualmente cobrar dentro del grupo.
- * Reusa profileService.actualizarPerfil, así que las mismas validaciones
- * de siempre aplican (alias: 6+ caracteres).
- */
-function PantallaRegistroInvitado({ nombreInicial, onConfirmar }) {
-  const [nombre, setNombre] = useState(nombreInicial);
-  const [alias, setAlias] = useState("");
-  const [tocado, setTocado] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [error, setError] = useState(null);
-
-  const aliasInvalido = tocado && alias.trim() !== "" && !esAliasValido(alias);
-  const aliasVacio = tocado && alias.trim() === "";
-
-  async function manejarEnvio(evento) {
-    evento.preventDefault();
-    setTocado(true);
-    if (!nombre.trim() || !esAliasValido(alias)) return;
-    setError(null);
-    setEnviando(true);
-    try {
-      await onConfirmar({ nombre: nombre.trim(), alias: alias.trim() });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setEnviando(false);
-    }
-  }
-
-  return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
-      <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
-        <h2>Completá tu registro</h2>
-        <p style={{ margin: "0 0 14px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
-          Ya te uniste al grupo. Con esto terminamos.
-        </p>
-        <form onSubmit={manejarEnvio}>
-          <label className="campo">Nombre</label>
-          <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-
-          <label className="campo">Alias (para cobrar/pagar dentro del grupo)</label>
-          <input
-            type="text"
-            value={alias}
-            placeholder="ej: juan.gastos.retro"
-            className={aliasInvalido || aliasVacio ? "invalido" : ""}
-            onChange={(e) => setAlias(e.target.value)}
-            onBlur={() => setTocado(true)}
-          />
-          {aliasVacio && <p className="ayuda-error">El alias es obligatorio para continuar.</p>}
-          {!aliasVacio && aliasInvalido && <p className="ayuda-error">El alias debe tener al menos 6 caracteres.</p>}
-          {error && <p className="ayuda-error">{error}</p>}
-
-          <button type="submit" className="btn bloque" style={{ marginTop: 12 }} disabled={enviando}>
-            {enviando ? "Guardando..." : "Confirmar y entrar al grupo"}
-          </button>
-        </form>
       </div>
     </div>
   );

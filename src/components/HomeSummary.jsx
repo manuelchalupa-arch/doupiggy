@@ -1,283 +1,93 @@
 // components/HomeSummary.jsx
-// Pestaña Inicio: saldo neto, cuerda con dos cerditos, y mini-resumen.
+// Pestaña Inicio: saldo neto, escena "tira y afloje" con dos cerditos, y
+// mini-resumen. El fondo (uno de los 5 escenarios) lo aplica FondoEscena desde
+// AppShell; este componente solo dibuja el contenido que flota encima.
 //
-// Rediseño integral: dos cerditos varones
-//   - Cerdito 1 (derecha): rico, arrogante, traje, sombrero de copa
-//   - Cerdito 2 (izquierda): humilde, alegre, chaleco, gorra plana
-// La cuerda se inclina según el saldo: hacia la derecha = saldo positivo
-// (el rico "gana"), hacia la izquierda = saldo negativo (el humilde "pierde").
+// La escena es TugOfWarScene (ver src/components/TugOfWar/): elementos
+// independientes (PigLeft, Soga, BalanceMarker, PigRight). La posición del
+// marcador la da calcularPosicionBalance (proporcional al saldo real, no a 5
+// zonas) y la escena la anima sobre la trayectoria SVG.
 //
-// El fondo (uno de los 5 escenarios que ya existen, elegido según el saldo)
-// ocupa TODA el área visible de la pantalla —no está recortado dentro de
-// una tarjeta—, tanto en mobile como en escritorio. El contenido (saldo,
-// cuerda, stats) flota encima en tarjetas semitransparentes.
+// Cerditos frente a frente, tironeando de la misma soga:
+//   - Cerdito 1 (rico, arrogante) → IZQUIERDA
+//   - Cerdito 2 (humilde, alegre) → DERECHA
+// El marcador se va hacia la izquierda (hacia el cerdito rico) cuando el
+// saldo es positivo (le deben) y hacia la derecha cuando es negativo (debe).
 
 import { useMemo } from "react";
-import { backgroundAssets, spriteAssets } from "../assets";
 import { formatoARS } from "../utils/format";
+import { calcularSaldoUsuario, calcularNivel } from "../utils/nivelSaldo";
+import { calcularPosicionBalance } from "../utils/calcularPosicionBalance";
 import Chanchito from "./Chanchito";
-
-const UMBRAL_NEUTRO = 500;
-const UMBRAL_ALTO = 5000;
+import TugOfWarScene from "./TugOfWar/TugOfWarScene";
 
 /**
  * @param {object} props
  * @param {string} props.uidActual
  * @param {Array<{uid: string, nombre: string}>} props.miembros
  * @param {Array} props.gastos
- * @param {string} props.nombreGrupo
+ * @param {Array} [props.pagos] - pagos confirmados como recibidos
  */
-export default function HomeSummary({ uidActual, miembros, gastos, nombreGrupo }) {
-  const saldo = useMemo(() => {
-    let s = 0;
-    for (const g of gastos) {
-      const partes = g.participantes?.length || 1;
-      const miParte = g.monto / partes;
-      if (g.pagadoPor === uidActual) s += g.monto - miParte;
-      else if ((g.participantes || []).includes(uidActual)) s -= miParte;
-    }
-    return s;
-  }, [gastos, uidActual]);
+export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] }) {
+  const saldo = useMemo(
+    () => calcularSaldoUsuario(gastos, uidActual, pagos),
+    [gastos, uidActual, pagos]
+  );
+  const nivel = useMemo(() => calcularNivel(saldo), [saldo]);
+
+  // Posición del marcador conectada con los MONTOS REALES (0..1, 0.5=equilibrio).
+  const posicion = useMemo(
+    () => calcularPosicionBalance(gastos, uidActual),
+    [gastos, uidActual]
+  );
 
   const totalGastado = useMemo(
     () => gastos.reduce((a, g) => a + g.monto, 0),
     [gastos]
   );
 
-  const nivel = useMemo(() => {
-    if (saldo <= -UMBRAL_ALTO) return "muy-debe";
-    if (saldo <= -UMBRAL_NEUTRO) return "debe";
-    if (saldo >= UMBRAL_ALTO) return "le-deben-mucho";
-    if (saldo >= UMBRAL_NEUTRO) return "le-deben";
-    return "neutral";
-  }, [saldo]);
-
-  const fondo = backgroundAssets.nivel[nivel];
-
   const { texto, sub } = useMemo(() => {
-    if (saldo >= UMBRAL_ALTO)
+    if (nivel === "le-deben-mucho")
       return { texto: "¡Te deben un montón!", sub: "Sos el rey de la finanza" };
-    if (saldo >= UMBRAL_NEUTRO)
+    if (nivel === "le-deben")
       return { texto: "Te deben plata", sub: "Estás en números azules" };
-    if (saldo <= -UMBRAL_ALTO)
+    if (nivel === "muy-debe")
       return { texto: "¡Debés un montón!", sub: "Hay que ajustar el cinturón" };
-    if (saldo <= -UMBRAL_NEUTRO)
+    if (nivel === "debe")
       return { texto: "Debés plata", sub: "Falta equilibrar un poco" };
     return { texto: "Estamos a mano", sub: "Ni debe ni le deben" };
-  }, [saldo]);
-
-  const offsetX = useMemo(() => {
-    if (nivel === "muy-debe") return -46;
-    if (nivel === "debe") return -24;
-    if (nivel === "neutral") return 0;
-    if (nivel === "le-deben") return 24;
-    return 46;
   }, [nivel]);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        minHeight: "calc(100dvh - 64px)",
-        backgroundImage: `url(${fondo})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        transition: "background-image 0.4s ease",
-      }}
-    >
-      {/* El fondo va edge-to-edge (arriba); el contenido sí se acota en
-          ancho para que en escritorio no quede estirado de punta a punta. */}
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "18px 16px 90px" }}>
-      <div
-        className="tarjeta-flotante"
-        style={{
-          textAlign: "center",
-          padding: "16px 12px 12px",
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 22,
-            letterSpacing: 0.5,
-            margin: "2px 0 0",
-            lineHeight: 1.05,
-          }}
-        >
-          {texto}
-        </p>
-        <p
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 36,
-            margin: "2px 0 0",
-            lineHeight: 1,
-          }}
-        >
-          {formatoARS.format(Math.abs(saldo))}
-        </p>
-        <p
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "var(--ink)",
-            opacity: 0.7,
-            margin: "3px 0 0",
-          }}
-        >
-          {sub}
-        </p>
+    <div className="inicio-contenido">
+      <div className="tarjeta-flotante" style={{ textAlign: "center", marginTop: -70 }}>
+        <p className="estado-etiqueta">{texto}</p>
+        <p className="estado-monto">{formatoARS.format(Math.abs(saldo))}</p>
+        <p className="estado-subtitulo">{sub}</p>
       </div>
 
-      {/* Escena de la cuerda */}
-      <div
-        style={{
-          position: "relative",
-          height: 140,
-          margin: "16px 0",
-        }}
-      >
-        {/* Cerdito 2 — humilde, alegre, izquierda, tira hacia la izquierda.
-            El PNG original trae un lienzo de 1408x768 con mucho espacio
-            transparente reservado para la soga; lo recortamos acá con
-            overflow:hidden + un offset negativo para mostrar solo el
-            personaje (sin tocar el archivo). La soga visible es la línea
-            de abajo, no la que trae dibujada el PNG. */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 4,
-            width: 123,
-            height: 128,
-            overflow: "hidden",
-            zIndex: 3,
-          }}
-        >
-          <img
-            src={spriteAssets.cerdito2}
-            alt="Cerdito humilde tironeando"
-            className="cerdito2-sprite"
-            style={{
-              position: "absolute",
-              left: -78,
-              top: -3,
-              width: 242,
-              height: "auto",
-            }}
-          />
-        </div>
+      {/* Escena "tira y afloje": elementos independientes sobre un SVG con
+          viewBox lógico (ver src/components/TugOfWar/). La posición del
+          marcador proviene de calcularPosicionBalance, que usa los montos
+          reales (0..1, 0.5 = equilibrio). */}
+      <TugOfWarScene posicion={posicion} />
 
-        {/* Cerdito 1 — rico, arrogante, derecha, tira hacia la derecha.
-            Mismo recorte por CSS que el cerdito 2. */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            right: 4,
-            width: 161,
-            height: 128,
-            overflow: "hidden",
-            zIndex: 3,
-          }}
-        >
-          <img
-            src={spriteAssets.cerdito1}
-            alt="Cerdito rico tironeando"
-            className="cerdito1-sprite"
-            style={{
-              position: "absolute",
-              left: -30,
-              top: -2,
-              width: 240,
-              height: "auto",
-            }}
-          />
-        </div>
-
-        {/* Cuerda (única — ya no se ve la que traía cada PNG, quedó recortada) */}
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            width: 200,
-            height: 4,
-            background: "var(--ink)",
-            borderRadius: 2,
-            transform: `translate(-50%, -50%) translateX(${offsetX}px) rotate(${
-              offsetX * 0.15
-            }deg)`,
-            transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            zIndex: 2,
-          }}
-        />
-
-        {/* Indicador central */}
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            width: 24,
-            height: 24,
-            background: "var(--gold)",
-            border: "2px solid var(--ink)",
-            borderRadius: "50%",
-            transform: `translate(-50%, -50%) translateX(${offsetX}px)`,
-            transition: "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
-            zIndex: 4,
-          }}
-        />
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          marginTop: 6,
-        }}
-      >
-        <div
-          className="tarjeta-flotante"
-          style={{ flex: 1, textAlign: "center", padding: "8px 4px", marginBottom: 0 }}
-        >
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
-            Total gastado
-          </p>
-          <p
-            style={{
-              margin: "2px 0 0",
-              fontFamily: "var(--font-mono)",
-              fontSize: 18,
-            }}
-          >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+        <div className="tarjeta-flotante" style={{ flex: 1, textAlign: "center" }}>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Total gastado</p>
+          <p style={{ margin: "2px 0 0", fontFamily: "var(--font-mono)", fontSize: 18 }}>
             {formatoARS.format(totalGastado)}
           </p>
         </div>
-        <div
-          className="tarjeta-flotante"
-          style={{ flex: 1, textAlign: "center", padding: "8px 4px", marginBottom: 0 }}
-        >
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>
-            Miembros
-          </p>
-          <p
-            style={{
-              margin: "2px 0 0",
-              fontFamily: "var(--font-mono)",
-              fontSize: 18,
-            }}
-          >
+        <div className="tarjeta-flotante" style={{ flex: 1, textAlign: "center" }}>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Miembros</p>
+          <p style={{ margin: "2px 0 0", fontFamily: "var(--font-mono)", fontSize: 18 }}>
             {miembros.length}
           </p>
         </div>
       </div>
 
       <Chanchito nivel={nivel} />
-      </div>
     </div>
   );
 }

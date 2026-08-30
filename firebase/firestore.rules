@@ -90,6 +90,32 @@ service cloud.firestore {
         allow delete: if esMiembroDelGrupo(grupoId) &&
           request.auth.uid == resource.data.prestamista;
       }
+
+      // --- pagos (subcolección) ---
+      // Registros de pagos confirmados como recibidos por el ACREEDOR de
+      // cada par. Solo quien cobra (para == auth.uid) puede crear el
+      // registro, y no puede confirmarse un pago de sí mismo (de != para).
+      // Se crean una sola vez (update = false); desmarcar = delete, y solo
+      // lo puede hacer quien lo confirmó.
+      match /pagos/{pagoId} {
+        allow read: if esMiembroDelGrupo(grupoId);
+        allow create: if esMiembroDelGrupo(grupoId) &&
+          request.resource.data.para == request.auth.uid &&
+          request.resource.data.de != request.auth.uid;
+        allow update: if false;
+        allow delete: if esMiembroDelGrupo(grupoId) &&
+          resource.data.confirmadoPor == request.auth.uid;
+      }
+
+      // --- liquidaciones (subcolección) ---
+      // Snapshot de cierre de una liquidación: lo crea cualquier miembro
+      // (queda grabado quién cerró), y una vez escrito queda inmutable.
+      match /liquidaciones/{liquidacionId} {
+        allow read: if esMiembroDelGrupo(grupoId);
+        allow create: if esMiembroDelGrupo(grupoId) &&
+          request.resource.data.cerradoPor == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     // --- invitaciones ---
