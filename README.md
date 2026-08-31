@@ -2,9 +2,11 @@
 
 App de gastos compartidos en pesos argentinos, React + Firebase, offline-first,
 con identidad visual de dibujos animados de los años 30 (estilo rubber-hose)
-y mascota propia. Sign-in con Google para quien crea el grupo, acceso anónimo
-vía invitación para invitados, cálculo de saldos y liquidación de deudas,
-alta de gastos con división igualitaria, e informes exportables.
+y mascota propia. Sign-in con Google o correo+contraseña para quien crea el
+grupo y para invitados (ya no hay acceso anónimo: quienes entran por un enlace
+de invitación se identifican con su propia cuenta), cálculo de saldos y
+liquidación de deudas, alta de gastos con división igualitaria, e informes
+exportables.
 
 ## Cómo correrlo
 
@@ -32,15 +34,16 @@ src/
 
   assets/
     index.js                 Único punto de importación de imágenes
-    branding/                 logo.webp, splash.webp, favicon.ico
+    branding/                 logo.webp, splash.webp, titulo.webp, madera.webp,
+                              soga.png (barra de carga) + mono-rojo.png (moño)
     backgrounds/               bg-level1..5.webp, bg-form.webp, bg-report.webp
-    sprites/                    cerdito1.png, cerdito2.png
+    sprites/                    avatar-cerdito1..6.webp (avatares de perfil)
 
   firebase/
     firebaseConfig.js         Inicialización Firestore (offline-first) + Auth
 
   services/                   Lógica de negocio pura, sin JSX
-    authService.js             Google + anónimo vía invitación
+    authService.js             Google + correo/contraseña + invitaciones
     invitationService.js       Enlaces temporales de invitación
     groupService.js            CRUD de grupos y membresía
     expenseService.js          Alta de gastos + división igualitaria (centavos enteros)
@@ -71,7 +74,7 @@ src/
     SplashScreen.jsx            Pantalla de carga con logo + splash de fondo
     AppShell.jsx                 Header "cartel" + navegación por pestañas
     AppHeader.jsx                  Header persistente (marca + contexto de pantalla)
-    HomeSummary.jsx                Inicio: saldo neto + cuerda animada + 5 fondos por zona
+    HomeSummary.jsx                Inicio: saldo neto + 5 fondos por zona
     Chanchito.jsx                   Sistema reutilizable de personajes (estados de animación)
     ExpenseForm.jsx                  Gastos: alta ("hoja contable") + historial + informes
     SettlementPanel.jsx               Resumen: quién le debe a quién (con pagos recibidos descontados)
@@ -89,7 +92,6 @@ src/
                                 de un gasto, única fuente de verdad para todos los saldos
     nivelSaldo.js               Saldo neto del usuario + zona visual (5 niveles)
     calcularDeudas.js           Resumen: quién le debe a quién + resumen por miembro
-    offlineSync.js               Helpers de conectividad para el modo offline-first
 
 firebase/
   firestore.rules              Reglas de seguridad: aislamiento por grupo/usuario.
@@ -108,25 +110,24 @@ GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub 
   CSS en `src/styles/tokens.css` (no un filtro de brillo). Marfil/papel, tinta,
   mostaza, rojo ladrillo, verde apagado, azul petróleo y un rosa "piggy" de marca.
 - **Tipografía**: Fredericka the Great (títulos) + Arvo (cuerpo) + Courier Prime (montos).
-- **Personajes**: `Chanchito.jsx` es el sistema reutilizable de los dos chanchitos
-  (`spriteAssets.cerdito1` / `cerdito2`, ver nota de assets abajo) con 7 estados de
-  animación (`idle/happy/sad/angry/pulling/money/celebrate`) definidos en `animations.css`.
+- **Personajes**: `Chanchito.jsx` es la mascota de los dos chanchitos (cerdito
+  rico y cerdito humilde, recortes cuadrados de `avatarAssets` en
+  `assets/index.js`) con frases según cada una de las 5 zonas de saldo.
 - **Inicio**: `HomeSummary.jsx` calcula el saldo neto real con
   `nivelSaldo.calcularSaldoUsuario` (que usa la división exacta guardada en
   cada gasto, o montos/partes como respaldo) y lo traduce a una de las 5
-  zonas (`backgroundAssets.nivel`), con los dos chanchitos tironeando de una
-  cuerda dibujada en CSS (sin imagen de flecha superpuesta). La pestaña
+  zonas (`backgroundAssets.nivel`). La pestaña
   Resumen usa el mismo criterio (`calcularDeudas` / `utils/division.js`), con
   los pagos confirmados como recibidos ya descontados (pagoService).
 - **Modo oscuro**: `ThemeContext.jsx` aplica la clase `.tema-noche` al contenedor
   raíz (`.app-root`), que redefine las variables de color en `tokens.css`.
 
-## ⚠️ Nota sobre los sprites de los chanchitos
+## Nota sobre los avatares de los chanchitos
 
-Ya están conectados: `cerdito1.png` (rico y arrogante) y `cerdito2.png`
-(humilde y alegre) viven en `src/assets/sprites/` y `assets/index.js` los
-importa directamente. Los sprites viejos (`pig-boy.png`/`pig-girl.png`) ya
-no se usan.
+Los personajes (cerdito rico y cerdito humilde) viven como avatares
+cuadrados en `src/assets/sprites/avatar-cerdito1..6.webp` y `assets/index.js`
+los expone en `avatarAssets` (6 variantes, usados en `Chanchito.jsx`, en la
+creación de grupos y en Cuenta > Tu perfil).
 
 ## Sobre los assets
 

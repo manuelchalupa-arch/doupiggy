@@ -82,6 +82,16 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
     [gastos, miembros, pagos]
   );
   const [mensajeEstado, setMensajeEstado] = useState(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [rangoDesde, setRangoDesde] = useState(null);
+  const [rangoHasta, setRangoHasta] = useState(null);
+  const [mensaje, setMensaje] = useState(null);
+
+  const nombrePorUid = useMemo(() => {
+    const mapa = {};
+    for (const m of miembros) mapa[m.uid] = m.nombre;
+    return mapa;
+  }, [miembros]);
 
   const hayDeuda = pares.length > 0;
   const totalGeneral = pares.reduce((acc, p) => acc + p.monto, 0);
@@ -96,6 +106,21 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
       );
     } catch (err) {
       setMensajeEstado(err.message);
+    }
+  }
+
+  function generar(formato) {
+    if (!rangoDesde) return;
+    const hasta = rangoHasta ?? rangoDesde;
+    const generador = formato === "pdf" ? generarInformePdf : generarInformeExcel;
+    try {
+      const cantidad = generador(gastos, nombrePorUid, rangoDesde, hasta);
+      setModalAbierto(false);
+      setMensaje(
+        cantidad > 0 ? `Informe ${formato.toUpperCase()} generado (${cantidad} gastos)` : "No hubo gastos en ese rango"
+      );
+    } catch (err) {
+      setMensaje(err.message);
     }
   }
 
@@ -134,17 +159,13 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
         </div>
       </div>
 
-      {/* ---------- 2. ESTADO ACTUAL (informe) ---------- */}
+      {/* ---------- 2. INFORME (estado actual + rango de fechas) ---------- */}
       <div className="tarjeta tarjeta-imagen-completa">
-        <div className="tarjeta-imagen-completa-panel">
-          <h2>¿Quién le debe a quién?</h2>
-          <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-            Informe con el resumen del grupo, la matriz de deudas y los pagos
-            pendientes, tal como están ahora.
-          </p>
+        <div className="tarjeta-imagen-completa-panel" style={{ gap: 10, display: "flex", flexDirection: "column" }}>
+          <h2>Informe</h2>
           <button
             type="button"
-            className="btn secundario bloque"
+            className="btn accion bloque"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             onClick={generarEstado}
           >
@@ -152,7 +173,58 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
             Estado actual
           </button>
           {mensajeEstado && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensajeEstado}</p>}
+          <button
+            type="button"
+            className="btn accion bloque"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            onClick={() => setModalAbierto(true)}
+          >
+            <IconoCalendar tamano={16} />
+            Generar informe
+          </button>
+          {mensaje && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensaje}</p>}
         </div>
+
+        {modalAbierto && (
+          <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
+            <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
+              <h3>Elegí el rango del informe</h3>
+              <CalendarioRango
+                desde={rangoDesde}
+                hasta={rangoHasta}
+                onCambiarRango={(d, h) => {
+                  setRangoDesde(d);
+                  setRangoHasta(h);
+                }}
+              />
+              <div className="modal-acciones">
+                <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn chico accion"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => generar("excel")}
+                  disabled={!rangoDesde}
+                >
+                  <IconoExcel tamano={14} />
+                  Excel
+                </button>
+                <button
+                  type="button"
+                  className="btn chico accion"
+                  style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  onClick={() => generar("pdf")}
+                  disabled={!rangoDesde}
+                >
+                  <IconoPdf tamano={14} />
+                  PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ---------- 3. A QUIÉN HAY QUE PAGARLE ---------- */}
@@ -197,100 +269,7 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
             </p>
           </>
         )}
-      </div>
-
-      <GeneradorInformes gastos={gastos} miembros={miembros} uidActual={uidActual} />
+</div>
     </>
-  );
-}
-
-/** Generador de informes (movido desde Gastos). */
-function GeneradorInformes({ gastos, miembros, uidActual }) {
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [rangoDesde, setRangoDesde] = useState(null);
-  const [rangoHasta, setRangoHasta] = useState(null);
-  const [mensaje, setMensaje] = useState(null);
-
-  const nombrePorUid = useMemo(() => {
-    const mapa = {};
-    for (const m of miembros) mapa[m.uid] = m.nombre;
-    return mapa;
-  }, [miembros]);
-
-  function generar(formato) {
-    if (!rangoDesde) return;
-    const hasta = rangoHasta ?? rangoDesde;
-    const generador = formato === "pdf" ? generarInformePdf : generarInformeExcel;
-    try {
-      const cantidad = generador(gastos, nombrePorUid, rangoDesde, hasta);
-      setModalAbierto(false);
-      setMensaje(
-        cantidad > 0 ? `Informe ${formato.toUpperCase()} generado (${cantidad} gastos)` : "No hubo gastos en ese rango"
-      );
-    } catch (err) {
-      setMensaje(err.message);
-    }
-  }
-
-  return (
-    <div className="tarjeta tarjeta-imagen-completa">
-      <div className="tarjeta-imagen-completa-panel">
-        <h2>Descargá tus gastos</h2>
-        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-          Elegí un rango de fechas del calendario.
-        </p>
-        <button
-          type="button"
-          className="btn secundario bloque"
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-          onClick={() => setModalAbierto(true)}
-        >
-          <IconoCalendar tamano={16} />
-          Generar informe
-        </button>
-        {mensaje && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensaje}</p>}
-      </div>
-
-      {modalAbierto && (
-        <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
-            <h3>Elegí el rango del informe</h3>
-            <CalendarioRango
-              desde={rangoDesde}
-              hasta={rangoHasta}
-              onCambiarRango={(d, h) => {
-                setRangoDesde(d);
-                setRangoHasta(h);
-              }}
-            />
-            <div className="modal-acciones">
-              <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn chico"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => generar("excel")}
-                disabled={!rangoDesde}
-              >
-                <IconoExcel tamano={14} />
-                Excel
-              </button>
-              <button
-                type="button"
-                className="btn chico"
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-                onClick={() => generar("pdf")}
-                disabled={!rangoDesde}
-              >
-                <IconoPdf tamano={14} />
-                PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }

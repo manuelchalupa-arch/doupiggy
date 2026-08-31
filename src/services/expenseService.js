@@ -117,13 +117,17 @@ export async function eliminarGasto(grupoId, gastoId) {
 }
 
 /** Suscripción en tiempo real a los gastos de un grupo, ordenados por fecha. */
-export function suscribirseAGastos(grupoId, callback) {
+export function suscribirseAGastos(grupoId, callback, onError) {
   const q = query(
     collection(db, "grupos", grupoId, "gastos"),
     orderBy("creadoEn", "desc")
   );
-  return onSnapshot(q, (snapshot) => {
-    const gastos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(gastos);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const gastos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(gastos);
+    },
+    (error) => onError?.(error)
+  );
 }

@@ -1,25 +1,12 @@
 // components/HomeSummary.jsx
-// Pestaña Inicio: saldo neto, escena "tira y afloje" con dos cerditos, y
-// mini-resumen. El fondo (uno de los 5 escenarios) lo aplica FondoEscena desde
-// AppShell; este componente solo dibuja el contenido que flota encima.
-//
-// La escena es TugOfWarScene (ver src/components/TugOfWar/): elementos
-// independientes (PigLeft, Soga, BalanceMarker, PigRight). La posición del
-// marcador la da calcularPosicionBalance (proporcional al saldo real, no a 5
-// zonas) y la escena la anima sobre la trayectoria SVG.
-//
-// Cerditos frente a frente, tironeando de la misma soga:
-//   - Cerdito 1 (rico, arrogante) → IZQUIERDA
-//   - Cerdito 2 (humilde, alegre) → DERECHA
-// El marcador se va hacia la izquierda (hacia el cerdito rico) cuando el
-// saldo es positivo (le deben) y hacia la derecha cuando es negativo (debe).
+// Pestaña Inicio: saldo neto y mini-resumen. El fondo (uno de los 5
+// escenarios) lo aplica FondoEscena desde AppShell; este componente solo
+// dibuja el contenido que flota encima.
 
 import { useMemo } from "react";
 import { formatoARS } from "../utils/format";
 import { calcularSaldoUsuario, calcularNivel } from "../utils/nivelSaldo";
-import { calcularPosicionBalance } from "../utils/calcularPosicionBalance";
 import Chanchito from "./Chanchito";
-import TugOfWarScene from "./TugOfWar/TugOfWarScene";
 
 /**
  * @param {object} props
@@ -27,19 +14,14 @@ import TugOfWarScene from "./TugOfWar/TugOfWarScene";
  * @param {Array<{uid: string, nombre: string}>} props.miembros
  * @param {Array} props.gastos
  * @param {Array} [props.pagos] - pagos confirmados como recibidos
+ * @param {object} [props.perfil] - perfil del usuario (avatar guardado en perfil.foto)
  */
-export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] }) {
+export default function HomeSummary({ uidActual, miembros, gastos, pagos = [], perfil }) {
   const saldo = useMemo(
     () => calcularSaldoUsuario(gastos, uidActual, pagos),
     [gastos, uidActual, pagos]
   );
   const nivel = useMemo(() => calcularNivel(saldo), [saldo]);
-
-  // Posición del marcador conectada con los MONTOS REALES (0..1, 0.5=equilibrio).
-  const posicion = useMemo(
-    () => calcularPosicionBalance(gastos, uidActual),
-    [gastos, uidActual]
-  );
 
   const totalGastado = useMemo(
     () => gastos.reduce((a, g) => a + g.monto, 0),
@@ -60,17 +42,11 @@ export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] })
 
   return (
     <div className="inicio-contenido">
-      <div className="tarjeta-flotante" style={{ textAlign: "center", marginTop: -70 }}>
+      <div className="tarjeta-flotante" style={{ textAlign: "center" }}>
         <p className="estado-etiqueta">{texto}</p>
         <p className="estado-monto">{formatoARS.format(Math.abs(saldo))}</p>
         <p className="estado-subtitulo">{sub}</p>
       </div>
-
-      {/* Escena "tira y afloje": elementos independientes sobre un SVG con
-          viewBox lógico (ver src/components/TugOfWar/). La posición del
-          marcador proviene de calcularPosicionBalance, que usa los montos
-          reales (0..1, 0.5 = equilibrio). */}
-      <TugOfWarScene posicion={posicion} />
 
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
         <div className="tarjeta-flotante" style={{ flex: 1, textAlign: "center" }}>
@@ -87,7 +63,7 @@ export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] })
         </div>
       </div>
 
-      <Chanchito nivel={nivel} />
+      <Chanchito nivel={nivel} foto={perfil?.foto} />
     </div>
   );
 }

@@ -12,9 +12,11 @@ completo mientras llega el arte definitivo. Reemplazalos 1 a 1.
 
 | Archivo | Tamaño sugerido | Formato | Dónde se usa |
 |---|---|---|---|
-| `logo.webp` | 512×512, fondo transparente | WEBP | Splash (aro central) e ícono de marca en Información |
+| `logo.webp` | 512×512, fondo transparente | WEBP | Ícono de marca en Información |
 | `splash.webp` | 750×1334 (proporción de pantalla de celular) | WEBP | Fondo de pantalla completa del splash |
 | `favicon.ico` | 16/32/48/64 multi-tamaño | ICO | Pestaña del navegador (`index.html`) |
+| `soga.png` | 2172×724, fondo transparente | PNG | Barra de carga del splash (carril) |
+| `mono-rojo.png` | 1536×1024, fondo transparente | PNG | Moño rojo que desliza sobre la soga como medidor de carga |
 
 ## `backgrounds/`
 

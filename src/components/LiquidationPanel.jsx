@@ -149,10 +149,6 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
       {/* ---------- 1. LO QUE TENÉS QUE COBRAR ---------- */}
       <div className="tarjeta-flotante">
         <h2>Pagos pendientes</h2>
-        <p className="leyenda-matriz">
-          Tildá cada pago que efectivamente recibiste: se descuenta solo de los
-          saldos y queda registrado. Destildar lo vuelve a dejar pendiente.
-        </p>
 
         {error && <p className="ayuda-error">{error}</p>}
 
@@ -218,14 +214,14 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
       <div className="tarjeta tarjeta-imagen-completa">
         <div className="tarjeta-imagen-completa-panel">
           <h2>Cerrar liquidación</h2>
-          <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-            {todoRecibido
-              ? "Todo confirmado. Se guarda un cierre con los pagos recibidos y el histórico queda registrado."
-              : "Confirmá todos los pagos como recibidos para poder cerrar la liquidación."}
-          </p>
+          {!todoRecibido && (
+            <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--ink)", opacity: 0.8 }}>
+              Confirmá todos los pagos como recibidos para poder cerrar la liquidación.
+            </p>
+          )}
           <button
             type="button"
-            className="btn principal bloque"
+            className="btn accion bloque"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             onClick={cerrar}
             disabled={procesando !== null || !todoRecibido}

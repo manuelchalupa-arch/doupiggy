@@ -7,14 +7,15 @@ poca necesidad de joins), (3) escalabilidad de un grupo con N miembros y M gasto
 ## Colecciones raíz
 
 ### `usuarios/{uid}`
-Perfil del usuario autenticado (Google) o anónimo (invitado).
+Perfil del usuario autenticado (Google o correo+contraseña).
 ```
 {
   uid: string,              // = auth.uid, también es el id del doc
   nombre: string,
-  email: string | null,     // null si es anónimo
+  email: string | null,
   foto: string | null,
-  esAnonimo: boolean,
+  esAnonimo: boolean,       // ya siempre false (el acceso anónimo se sacó)
+  proveedor: "google" | "email",
   gruposIds: string[],      // desnormalizado para listar "mis grupos" sin query costosa
   creadoEn: Timestamp,
   ultimaConexion: Timestamp
@@ -102,8 +103,8 @@ Snapshot inmutable de un cierre de liquidación (una por vez que se cierra).
 ```
 
 ### `invitaciones/{token}`
-Enlaces temporales para que invitados entren de forma anónima a un grupo
-sin exponer el `grupoId` real en la URL más que a través del token.
+Enlaces temporales para que invitados (con su propia cuenta de Google o correo)
+entren a un grupo sin exponer el `grupoId` real en la URL más que a través del token.
 ```
 {
   grupoId: string,

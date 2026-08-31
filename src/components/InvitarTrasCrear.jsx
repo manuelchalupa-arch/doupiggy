@@ -25,7 +25,7 @@ export default function InvitarTrasCrear({ grupoId, uidActual, onContinuar }) {
     >
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
         <h2>Invitá a tu gente</h2>
-        <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
+        <p style={{ margin: "0 0 12px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
           Generá un enlace y compartilo — quien lo abra inicia sesión con su
           propia cuenta de Google y queda sumado a este grupo, sin perder
           sus otros grupos.

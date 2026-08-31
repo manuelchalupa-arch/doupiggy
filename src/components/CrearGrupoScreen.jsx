@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { crearGrupo } from "../services/groupService";
 import { brandingAssets } from "../assets";
+import { IconoCrearGrupo } from "./IconosRaster";
 
 /**
  * @param {object} props
@@ -54,7 +55,7 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
 
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
         <h2>Creá tu primer grupo</h2>
-        <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--burnt)" }}>
+        <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
           Es el espacio donde van a vivir los gastos compartidos con tu gente.
           Después vas a poder invitar al resto con un enlace.
         </p>
@@ -72,7 +73,13 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
 
           {error && <p className="ayuda-error">{error}</p>}
 
-          <button type="submit" className="btn bloque" style={{ marginTop: 14 }} disabled={creando}>
+          <button
+            type="submit"
+            className="btn accion bloque"
+            style={{ marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            disabled={creando}
+          >
+            <IconoCrearGrupo tamano={16} />
             {creando ? "Creando..." : "Crear grupo"}
           </button>
         </form>

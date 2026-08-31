@@ -40,6 +40,8 @@
   background-position: center;
   background-repeat: no-repeat;
   background-color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .tarjeta-imagen-completa-panel {
@@ -70,13 +72,10 @@
   padding: 18px 16px 90px;
 }
 
-/* ---------- Inicio: todo el contenido baja para dejar libre arriba ---------- */
-/* Se aplica solo a la pestaña Inicio (HomeSummary): tarjetas y cerditos
-   empezan más abajo y la parte superior queda despejada, dejando ver el
-   escenario ilustrado de fondo junto al header. En columna flexible para
-   que tarjetas y escena hereden un espacio parejo entre sí (gap). */
+/* ---------- Inicio: contenido sobre el fondo ilustrado ---------- */
+/* Se aplica solo a la pestaña Inicio (HomeSummary). En columna flexible
+   para que tarjetas y mascota hereden un espacio parejo entre sí (gap). */
 .inicio-contenido {
-  padding-top: 170px;
   display: flex;
   flex-direction: column;
   gap: 26px;
@@ -290,7 +289,7 @@
   transition: transform 0.15s ease;
 }
 
-.tab-btn.activo { color: var(--burnt); }
+.tab-btn.activo { color: var(--gold); }
 
 .tab-btn.activo svg,
 .tab-btn.activo .tab-btn-icono-custom { transform: scale(1.14) translateY(-1px); }

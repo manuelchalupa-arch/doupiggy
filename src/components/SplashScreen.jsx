@@ -1,13 +1,18 @@
 // components/SplashScreen.jsx
-// Splash mejorado: el logo entra con un efecto de "cortina de cine" (barrido
-// + rebote), y el nombre aparece con una leve demora tipo intertítulo de
-// película muda. Duración deliberadamente cómoda: se alcanza a disfrutar el
-// cartel antes de entrar al grupo.
+// Splash: barra de carga con forma de soga — una soga (brandingAssets.soga)
+// como carril y un moño rojo (brandingAssets.monoRojo) que se desliza de
+// izquierda a derecha marcando el progreso hasta entrar al grupo, con el
+// texto "CARGANDO" asomando debajo. El logo y la imagen título se sacaron
+// del splash: el fondo ya lleva la marca.
 
 import { useEffect } from "react";
 import { brandingAssets } from "../assets";
 
-const DURACION_MS = 2600;
+const DURACION_MS = 4000;
+
+// La barra de carga (soga + moño) y el "CARGANDO" se empujan este tanto hacia
+// abajo dentro de la pantalla (~4 cm en pantallas de densidad normal).
+const CORRIMIENTO_VERTICAL_PX = 150;
 
 const estilos = {
   splash: {
@@ -17,41 +22,44 @@ const estilos = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: "7vh",
     backgroundImage: `url(${brandingAssets.splash})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     zIndex: 100,
   },
-  logo: {
-    width: "min(70vw, 320px)",
-    height: "auto",
-    objectFit: "contain",
-    filter: "drop-shadow(4px 4px 0 var(--ink))",
-    animation: "splashPop 0.6s cubic-bezier(.34,1.56,.64,1)",
+  medidor: {
+    position: "relative",
+    width: "min(78vw, 320px)",
   },
-  nombre: {
-    marginTop: 18,
-    fontFamily: "var(--font-display)",
-    fontSize: 26,
-    color: "var(--ink)",
-    letterSpacing: 1,
-    background: "var(--cream)",
-    border: "4px solid var(--ink)",
-    borderRadius: 16,
-    padding: "6px 18px",
-    boxShadow: "4px 4px 0 var(--ink)",
-    opacity: 0,
-    animation: "splashTitulo 0.5s ease 0.35s forwards",
+  soga: {
+    display: "block",
+    width: "100%",
+    height: "auto",
+    filter: "drop-shadow(3px 3px 0 var(--ink))",
+  },
+  mono: {
+    position: "absolute",
+    top: "50%",
+    left: "5%",
+    width: 44,
+    height: "auto",
+    transform: "translate(-50%, -50%)",
+    animation: "deslizarSoga 3.5s cubic-bezier(.4,0,.2,1) forwards",
+  },
+  contenido: {
+    transform: `translateY(${CORRIMIENTO_VERTICAL_PX}px)`,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
   cargando: {
-    marginTop: 16,
+    marginTop: 14,
     color: "var(--paper)",
     fontFamily: "var(--font-display)",
     fontSize: 13,
     letterSpacing: 2,
     opacity: 0,
-    animation: "splashTitulo 0.5s ease 0.6s forwards",
+    animation: "splashTitulo 0.5s ease 0.35s forwards",
   },
 };
 
@@ -64,10 +72,9 @@ export default function SplashScreen({ onFinish }) {
   return (
     <div style={estilos.splash}>
       <style>{`
-        @keyframes splashPop {
-          0% { transform: scale(0) rotate(-35deg); opacity: 0; }
-          60% { transform: scale(1.12) rotate(5deg); opacity: 1; }
-          100% { transform: scale(1) rotate(0); }
+        @keyframes deslizarSoga {
+          0% { left: 5%; }
+          100% { left: 95%; }
         }
         @keyframes splashTitulo {
           from { opacity: 0; transform: translateY(6px); }
@@ -82,17 +89,20 @@ export default function SplashScreen({ onFinish }) {
         .splash-puntos span:nth-child(3) { animation-delay: 0.36s; }
       `}</style>
 
-      <img src={brandingAssets.logo} alt="DouPiggy" style={estilos.logo} />
+      <div style={estilos.contenido}>
+        <div className="splash-medidor" style={estilos.medidor}>
+          <img src={brandingAssets.soga} alt="" style={estilos.soga} />
+          <img src={brandingAssets.monoRojo} alt="" className="splash-mono" style={estilos.mono} />
+        </div>
 
-      <div style={estilos.nombre}>DouPiggy</div>
-
-      <div style={estilos.cargando}>
-        CARGANDO
-        <span className="splash-puntos">
-          <span>.</span>
-          <span>.</span>
-          <span>.</span>
-        </span>
+        <div style={estilos.cargando}>
+          CARGANDO
+          <span className="splash-puntos">
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+          </span>
+        </div>
       </div>
     </div>
   );

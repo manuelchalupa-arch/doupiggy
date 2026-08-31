@@ -4,9 +4,12 @@
 
 import {
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signInWithPopup,
   onAuthStateChanged,
   signOut,
+  updateProfile,
 } from "firebase/auth";
 import {
   doc,
@@ -35,8 +38,44 @@ export async function iniciarSesionConGoogle() {
     email,
     foto: photoURL,
     esAnonimo: false,
+    proveedor: "google",
   });
 
+  return credencial.user;
+}
+
+/**
+ * Registro con correo electrónico + contraseña. Además de la cuenta de
+ * Firebase crea/actualiza el documento en /usuarios (nombre, email y foto).
+ */
+export async function registrarseConEmail({ email, password, nombre }) {
+  const credencial = await createUserWithEmailAndPassword(auth, email, password);
+  await updateProfile(credencial.user, { displayName: nombre });
+  await upsertPerfilUsuario({
+    uid: credencial.user.uid,
+    nombre,
+    email,
+    foto: null,
+    esAnonimo: false,
+    proveedor: "email",
+  });
+  return credencial.user;
+}
+
+/**
+ * Login con correo electrónico + contraseña.
+ */
+export async function iniciarSesionConEmail({ email, password }) {
+  const credencial = await signInWithEmailAndPassword(auth, email, password);
+  const { uid, displayName, email: correo, photoURL } = credencial.user;
+  await upsertPerfilUsuario({
+    uid,
+    nombre: displayName ?? "Usuario",
+    email: correo,
+    foto: photoURL,
+    esAnonimo: false,
+    proveedor: "email",
+  });
   return credencial.user;
 }
 
@@ -64,6 +103,7 @@ export async function unirseComoInvitado(token) {
     email,
     foto: photoURL,
     esAnonimo: false,
+    proveedor: "google",
   });
 
   // Si ya era miembro de este grupo (ej. abrió el enlace de nuevo), no
@@ -75,7 +115,43 @@ export async function unirseComoInvitado(token) {
   return { user: credencial.user, grupoId: invitacion.grupoId };
 }
 
-async function upsertPerfilUsuario({ uid, nombre, email, foto, esAnonimo }) {
+/**
+ * Traduce códigos de error comunes de Firebase Auth a mensajes en español
+ * que el usuario puede entender y corregir (pantalla de login y aceptación
+ * de invitaciones). Para códigos desconocidos devuelve el mensaje crudo.
+ */
+export function traducirErrorLogin(err) {
+  const mensajes = {
+    "auth/popup-blocked":
+      "Tu navegador bloqueó la ventana de acceso. Permití las ventanas emergentes para este sitio y volvé a intentar.",
+    "auth/popup-closed-by-user": "Se canceló el acceso con Google.",
+    "auth/cancelled-popup-request": "Se canceló el acceso con Google.",
+    "auth/unauthorized-domain":
+      "Este sitio no está autorizado para usar el login de Google. Agregá su dominio en Firebase Console > Authentication > Authorized domains.",
+    "auth/network-request-failed":
+      "No hay conexión a Internet. Revisá tu conexión y volvé a intentar.",
+    "auth/operation-not-allowed":
+      "Ese método de acceso está desactivado en Firebase. Activá Google o Correo/contraseña en Authentication > Sign-in method.",
+    "auth/account-exists-with-different-credential":
+      "Ya existe una cuenta con ese correo pero con otro método de acceso.",
+    "auth/invalid-credential": "Correo o contraseña incorrectos. Revisá los datos o pedí restablecer tu contraseña.",
+    "auth/timeout": "La operación tardó demasiado. Volvé a intentar.",
+    "auth/invalid-email": "El correo electrónico no tiene un formato válido.",
+    "auth/missing-password": "Escribí tu contraseña.",
+    "auth/invalid-login-credentials":
+      "Correo o contraseña incorrectos. Revisá los datos o pedí restablecer tu contraseña.",
+    "auth/user-not-found": "No existe una cuenta con ese correo. ¿Querés crear una?",
+    "auth/wrong-password": "Contraseña incorrecta. Volvé a intentar.",
+    "auth/email-already-in-use":
+      "Ya existe una cuenta con ese correo. Ingresá con tu contraseña o usá Google.",
+    "auth/weak-password": "La contraseña debe tener al menos 6 caracteres.",
+    "auth/too-many-requests":
+      "Demasiados intentos fallidos. Esperá unos minutos y volvé a intentar.",
+  };
+  return mensajes[err?.code] ?? (err?.message ?? "No se pudo iniciar sesión. Volvé a intentar.");
+}
+
+async function upsertPerfilUsuario({ uid, nombre, email, foto, esAnonimo, proveedor }) {
   const ref = doc(db, "usuarios", uid);
   const snap = await getDoc(ref);
 
@@ -84,14 +160,36 @@ async function upsertPerfilUsuario({ uid, nombre, email, foto, esAnonimo }) {
       uid,
       nombre,
       email,
-      foto,
+      foto: foto ?? null,
       esAnonimo,
+      proveedor,
       gruposIds: [],
       creadoEn: serverTimestamp(),
       ultimaConexion: serverTimestamp(),
     });
   } else {
-    await updateDoc(ref, { ultimaConexion: serverTimestamp() });
+    // Re-login: siempre se actualiza el email (fuente de verdad de auth) y
+    // la última conexión. El nombre solo se propaga si falta, para no pisar
+    // un nombre que la persona editó en Cuenta > Tu perfil. La foto de
+    // Google solo se sincroniza si la guardada no es un avatar custom
+    // (preset:..., data:...) ni una URL vieja de Google; así un cambio de
+    // foto de la cuenta se refleja sin reemplazar un avatar elegido a mano.
+    const datos = snap.data();
+    const cambios = { ultimaConexion: serverTimestamp() };
+    if (proveedor) cambios.proveedor = proveedor;
+    if (email && !datos.email) cambios.email = email;
+    if (nombre && !datos.nombre) cambios.nombre = nombre;
+    const fotoGuardada = datos.foto;
+    if (
+      foto &&
+      (!fotoGuardada ||
+        String(fotoGuardada).startsWith("preset:") ||
+        String(fotoGuardada).startsWith("data:") ||
+        String(fotoGuardada).startsWith("http"))
+    ) {
+      cambios.foto = foto;
+    }
+    await updateDoc(ref, cambios);
   }
 }
 

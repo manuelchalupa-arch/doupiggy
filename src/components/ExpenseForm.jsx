@@ -11,9 +11,8 @@ import {
   eliminarGasto,
   calcularDivisionIgualitaria,
 } from "../services/expenseService";
-import { useExpenses } from "../hooks/useExpenses";
 import { formatoARS } from "../utils/format";
-import { IconoTrash } from "./IconosRaster";
+import { IconoTrash, IconoInvitacion } from "./IconosRaster";
 import InvitarGrupo from "./InvitarGrupo";
 
 /**
@@ -21,8 +20,10 @@ import InvitarGrupo from "./InvitarGrupo";
  * @param {string} props.grupoId
  * @param {string} props.uidActual - uid del usuario que está cargando el gasto
  * @param {Array<{uid: string, nombre: string}>} props.miembros - miembros del grupo
+ * @param {Array} props.gastos - gastos ya suscriptos por AppShell (evita un
+ *   segundo listener: AppShell es el dueño de useExpenses)
  */
-export default function ExpenseForm({ grupoId, uidActual, miembros }) {
+export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
   const [monto, setMonto] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [pagadoPor, setPagadoPor] = useState(uidActual);
@@ -33,7 +34,6 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   const [error, setError] = useState(null);
   const [invitarAbierto, setInvitarAbierto] = useState(false);
 
-  const { gastos } = useExpenses(grupoId);
   const ultimosCuatro = gastos.slice(0, 4);
 
   const montoNumerico = parseFloat(monto.replace(",", ".")) || 0;
@@ -71,8 +71,12 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
     }
   }
 
-  async function manejarBorrado(gastoId) {
-    await eliminarGasto(grupoId, gastoId);
+  async function manejarBorrado(gasto) {
+    const confirmar = window.confirm(
+      `¿Borrar el gasto "${gasto.descripcion}" (${formatoARS.format(gasto.monto)})? Esta acción no se puede deshacer.`
+    );
+    if (!confirmar) return;
+    await eliminarGasto(grupoId, gasto.id);
   }
 
   function nombreDe(uid) {
@@ -82,7 +86,13 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
   return (
     <>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        <button type="button" className="btn chico" onClick={() => setInvitarAbierto(true)}>
+        <button
+          type="button"
+          className="btn chico accion"
+          style={{ display: "flex", alignItems: "center", gap: 6 }}
+          onClick={() => setInvitarAbierto(true)}
+        >
+          <IconoInvitacion tamano={14} />
           Invitar a este grupo
         </button>
       </div>
@@ -136,7 +146,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
 
           {error && <p className="ayuda-error">{error}</p>}
 
-          <button type="submit" className="btn principal bloque" style={{ marginTop: 14 }} disabled={enviando}>
+          <button type="submit" className="btn accion bloque" style={{ marginTop: 14 }} disabled={enviando}>
             {enviando ? "Guardando..." : "Agregar gasto"}
           </button>
         </form>
@@ -147,7 +157,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
         <h2>Últimos 4 gastos</h2>
         <div className="lista-historial">
           {ultimosCuatro.length === 0 && (
-            <p style={{ fontSize: 13, color: "var(--burnt)", fontWeight: 600 }}>
+            <p style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600, opacity: 0.7 }}>
               Todavía no hay gastos cargados.
             </p>
           )}
@@ -162,9 +172,9 @@ export default function ExpenseForm({ grupoId, uidActual, miembros }) {
               <button
                 className="btn-borrar"
                 aria-label="Borrar gasto"
-                onClick={() => manejarBorrado(g.id)}
+                onClick={() => manejarBorrado(g)}
               >
-                <IconoTrash tamano={14} />
+                <IconoTrash tamano={14} prohibido />
               </button>
             </div>
           ))}

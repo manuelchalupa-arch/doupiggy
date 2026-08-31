@@ -90,9 +90,6 @@ export function generarInformeExcel(gastos, nombrePorUid, desde, hasta) {
   return filtrados.length;
 }
 
-// Alias retrocompatible: el nombre anterior de la función.
-export const generarInforme = generarInformeExcel;
-
 /**
  * Genera un informe en PDF sin depender de ninguna librería externa: arma
  * una vista imprimible en una ventana nueva y dispara el diálogo de

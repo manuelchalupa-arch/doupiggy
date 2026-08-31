@@ -16,6 +16,13 @@ select:focus-visible {
   outline-offset: 2px;
 }
 
+/* Botones: foco punteado mostaza (design system, sección "Botones") */
+.btn:focus-visible,
+.btn-borrar:focus-visible {
+  outline: 3px dashed var(--gold);
+  outline-offset: 2px;
+}
+
 /* ---------- prefers-reduced-motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .anim-bounce,

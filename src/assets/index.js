@@ -8,6 +8,8 @@ import logo from "./branding/logo.webp";
 import splash from "./branding/splash.webp";
 import titulo from "./branding/titulo.webp";
 import madera from "./branding/madera.webp";
+import soga from "./branding/soga.png";
+import monoRojo from "./branding/mono-rojo.png";
 
 // ---------- backgrounds (5 estados de saldo + 2 fondos de sección) ----------
 import bgLevel1 from "./backgrounds/bg-level1.webp";
@@ -18,18 +20,6 @@ import bgLevel5 from "./backgrounds/bg-level5.webp";
 import bgForm from "./backgrounds/bg-form.webp";
 import bgReport from "./backgrounds/bg-report.webp";
 
-// ---------- sprites (animación de la cuerda en Inicio) ----------
-// Cerdito 1: rico, arrogante, traje, sombrero de copa, monocle
-// Cerdito 2: humilde, alegre, chaleco, gorra plana, tiradores
-import cerdito1 from "./sprites/cerdito1.webp";
-import cerdito2 from "./sprites/cerdito2.webp";
-
-// ---------- escena "tira y afloje" (Inicio) ----------
-// soga.png: textura ilustrada de la soga (enmascarada sobre la trayectoria SVG)
-// marcador.png: recurso final del marcador central (moño)
-import soga from "./tugofwar/soga.png";
-import marcador from "./tugofwar/marcador.png";
-
 // ---------- avatares de perfil (recortes cuadrados + variantes de color) ----------
 import avatarCerdito1 from "./sprites/avatar-cerdito1.webp";
 import avatarCerdito2 from "./sprites/avatar-cerdito2.webp";
@@ -38,7 +28,7 @@ import avatarCerdito4 from "./sprites/avatar-cerdito4.webp";
 import avatarCerdito5 from "./sprites/avatar-cerdito5.webp";
 import avatarCerdito6 from "./sprites/avatar-cerdito6.webp";
 
-export const brandingAssets = { logo, splash, titulo, madera };
+export const brandingAssets = { logo, splash, titulo, madera, soga, monoRojo };
 
 export const backgroundAssets = {
   nivel: {
@@ -51,15 +41,6 @@ export const backgroundAssets = {
   form: bgForm,
   report: bgReport,
 };
-
-export const spriteAssets = {
-  cerdito1, // Rico, arrogante — ahora a la IZQUIERDA en la escena de Inicio
-  cerdito2, // Humilde, alegre — ahora a la DERECHA en la escena de Inicio
-};
-
-// Recursos de la escena "tira y afloje". Reemplazables desde
-// components/TugOfWar/configuracion.js.
-export const tugOfWarAssets = { soga, marcador };
 
 // Avatares seleccionables en Cuenta > Tu perfil: 6 en total — los 2
 // personajes originales + 4 variantes de color de esos mismos dibujos

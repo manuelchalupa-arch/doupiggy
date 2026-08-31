@@ -13,6 +13,7 @@
 
 import { useState } from "react";
 import { crearInvitacion } from "../services/invitationService";
+import { IconoInvitacion } from "./IconosRaster";
 
 export default function InvitarGrupo({ grupoId, uidActual }) {
   const [link, setLink] = useState(null);
@@ -34,9 +35,32 @@ export default function InvitarGrupo({ grupoId, uidActual }) {
   }
 
   async function copiarLink() {
-    await navigator.clipboard.writeText(link);
+    setError(null);
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      // Navigator.clipboard puede no estar disponible (contexto inseguro o
+      // permisos del navegador): fallback con selección + execCommand.
+      await copiarConFallback(link);
+    }
     setCopiado(true);
     setTimeout(() => setCopiado(false), 1500);
+  }
+
+  /** Fallback de copiado cuando la Clipboard API no está disponible. */
+  async function copiarConFallback(texto) {
+    const area = document.createElement("textarea");
+    area.value = texto;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    try {
+      document.execCommand("copy");
+    } finally {
+      document.body.removeChild(area);
+    }
   }
 
   function compartirPorWhatsapp() {
@@ -48,7 +72,14 @@ export default function InvitarGrupo({ grupoId, uidActual }) {
 
   if (!link) {
     return (
-      <button type="button" className="btn bloque" onClick={generarLink} disabled={generando}>
+      <button
+        type="button"
+        className="btn accion bloque"
+        style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+        onClick={generarLink}
+        disabled={generando}
+      >
+        <IconoInvitacion tamano={16} />
         {generando ? "Generando..." : "Invitar"}
       </button>
     );

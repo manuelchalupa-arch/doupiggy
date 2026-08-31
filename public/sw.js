@@ -4,8 +4,16 @@
 // conexión se sirve lo último que quedó cacheado y, para navegación, la
 // portada. No intercepta pedidos cross-origin (Google auth, API de Firebase).
 
-const CACHE = "doupiggy-v3";
-const NUCLEO = ["/", "/index.html", "/manifest.json", "/icon-512.png"];
+const CACHE = "doupiggy-v4";
+const NUCLEO = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/apple-touch-icon.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png",
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -47,7 +55,7 @@ self.addEventListener("fetch", (e) => {
     caches.match(req).then((enCache) =>
       fetch(req)
         .then((res) => {
-          if (res.ok && (url.pathname.startsWith("/assets/") || url.pathname === "/manifest.json" || url.pathname === "/icon-512.png")) {
+          if (res.ok && (url.pathname.startsWith("/assets/") || url.pathname === "/manifest.json" || url.pathname.startsWith("/icons/") || url.pathname === "/apple-touch-icon.png")) {
             const clone = res.clone();
             caches.open(CACHE).then((c) => c.put(req, clone));
           }

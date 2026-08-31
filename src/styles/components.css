@@ -4,56 +4,91 @@
 */
 
 /* ---------- Botones ---------- */
+/* Sistema de botones del design system (sección "Botones"):
+   base papel con tinta, forma wobbly, Bungee en MAYÚSCULAS con tracking,
+   sombra dura, hover que "levanta" y active que "aplasta".
+   Variantes: .accion/.principal (mostaza) y .peligro (rosa). */
 .btn {
-  font-family: var(--font-display);
-  font-size: 13px;
-  color: var(--paper);
-  background: var(--burnt);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-btn);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: normal;
+  color: var(--btn-tinta);
+  background: var(--btn-bg);
   border: var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 11px 16px;
+  border-radius: var(--radius-wobbly);
   box-shadow: var(--shadow-medium);
   cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--transition-fast) ease, box-shadow var(--transition-fast) ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-hard);
 }
 
 .btn:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 var(--ink);
+  transform: translateY(1px) scale(0.98);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-.btn.secundario { background: var(--teal); }
-
-.btn.chico {
-  padding: 6px 10px;
-  font-size: 11px;
-  border-radius: 10px;
-  box-shadow: 2px 2px 0 var(--ink);
-}
-
-.btn.bloque { width: 100%; text-align: center; }
-
-.btn.fantasma {
-  background: transparent;
-  color: var(--ink);
-  box-shadow: none;
-}
+/* Botón neutro/secundario: misma base papel, sin énfasis */
+.btn.secundario { background: var(--btn-bg); }
 
 /* Botón principal de una pantalla */
 .btn.principal {
-  background: var(--mustard);
-  color: var(--ink);
+  background: var(--btn-primario);
+  color: var(--btn-tinta-oscura);
   font-size: 15px;
   padding: 14px 16px;
   box-shadow: var(--shadow-hard);
 }
 
-.btn.principal:active { box-shadow: 2px 2px 0 var(--ink); }
+.btn.principal:active { box-shadow: var(--shadow-soft); }
+
+/* Una sola familia de color para las acciones positivas
+   (crear / agregar / invitar / guardar / generar) */
+.btn.accion { background: var(--btn-primario); color: var(--btn-tinta-oscura); }
+
+/* Las acciones destructivas (borrar/eliminar) van siempre en el mismo color,
+   distinto del resto, para que se distingan a simple vista */
+.btn.peligro { background: var(--btn-peligro); color: var(--btn-tinta-clara); }
+
+/* Fantasma: transparente con contorno punteado (ghost del design system) */
+.btn.fantasma {
+  background: transparent;
+  border-style: dashed;
+}
+
+.btn.chico {
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  box-shadow: 2px 3px 0 var(--ink);
+}
+
+.btn.chico:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 3px 4px 0 var(--ink);
+}
+
+.btn.chico:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.btn.bloque { width: 100%; text-align: center; }
 
 /* ---------- Formularios ---------- */
 label.campo {
@@ -399,7 +434,8 @@ input.invalido {
 
 .item-gasto .meta {
   font-size: 11px;
-  color: var(--burnt);
+  color: var(--ink);
+  opacity: 0.7;
   font-weight: 600;
 }
 
@@ -415,9 +451,9 @@ input.invalido {
   height: 26px;
   flex: none;
   border: var(--border-thin);
-  border-radius: 50%;
-  background: var(--magenta);
-  color: var(--paper);
+  border-radius: 8px;
+  background: var(--btn-peligro);
+  color: var(--btn-tinta-clara);
   font-weight: 800;
   cursor: pointer;
   display: flex;
@@ -516,33 +552,29 @@ input.invalido {
   line-height: 1.5;
 }
 
-/* ---------- Selector de avatar (subir foto / elegir preset) ---------- */
-.avatar-picker {
+/* ---------- Avatar de "Mi cuenta" (presets, sin subir foto) ---------- */
+/* Columna centrada: el avatar grande arriba y el selector "Cerdito" abajo. */
+.avatar-centro {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.avatar-actual img {
-  width: 64px;
-  height: 64px;
+/* Avatar al doble del tamaño estándar, centrado como cabecera de la tarjeta */
+.avatar-grande img {
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
   object-fit: cover;
   border: var(--border-medium);
   flex: none;
 }
 
-.avatar-opciones {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.avatar-subir-btn {
-  display: inline-block;
-  cursor: pointer;
-  width: fit-content;
+.avatar-grande .avatar {
+  width: 128px;
+  height: 128px;
+  font-size: 44px;
 }
 
 /* ---------- Lista de miembros del grupo (reales + locales) ---------- */
@@ -580,13 +612,14 @@ input.invalido {
 
 /* ---------- Lista desplegable de avatares ---------- */
 .avatar-preset-dropdown { position: relative; }
-.avatar-preset-toggle { width: 100%; }
+.avatar-preset-toggle { width: auto; }
 /* Grilla fija de 3 columnas: todas las imágenes quedan visibles a la vez
    (los presets son hasta 6: 2 filas parejas, sin scroll). */
 .avatar-preset-lista {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 20;
   list-style: none;
   margin: 0;
@@ -706,7 +739,8 @@ input.invalido {
   font-size: 10px;
   text-align: center;
   font-weight: 800;
-  color: var(--burnt);
+  color: var(--ink);
+  opacity: 0.6;
 }
 
 .cal-day {

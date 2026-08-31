@@ -15,31 +15,120 @@ const STROKE = {
 /**
  * Tacho de basura estilo cartoon.
  * Cuerpo bulboso, tapa con "orejas" redondas, líneas verticales onduladas.
+ * Con `prohibido` agrega el símbolo de "no pasar" (círculo + diagonal)
+ * detrás, para reusar el mismo concepto en botones de borrar/eliminar.
  */
-export function IconoTrash({ tamano = 16, color = "currentColor" }) {
+export function IconoTrash({ tamano = 16, color = "currentColor", prohibido = false }) {
   return (
     <svg viewBox="0 0 40 40" width={tamano} height={tamano} fill="none" stroke={color}>
-      {/* Tapa con orejas redondas */}
-      <path
-        d="M12 10 Q10 6 14 6 H26 Q30 6 28 10"
-        {...STROKE.grueso}
-      />
-      {/* Asa de la tapa */}
-      <path
-        d="M17 6 Q20 2 23 6"
-        {...STROKE.medio}
-      />
-      {/* Cuerpo del tacho: ligeramente más ancho abajo */}
-      <path
-        d="M10 12 L12 34 Q13 36 15 36 H25 Q27 36 28 34 L30 12"
-        {...STROKE.grueso}
-      />
-      {/* Líneas verticales onduladas (como tablones de madera) */}
-      <path d="M16 15 Q15.5 24 16 32" {...STROKE.fino} />
-      <path d="M20 15 Q20.5 24 20 32" {...STROKE.fino} />
-      <path d="M24 15 Q23.5 24 24 32" {...STROKE.fino} />
-      {/* Cruz de advertencia estilo rubber-hose */}
-      <path d="M8 12 H32" {...STROKE.grueso} />
+      {prohibido && (
+        <>
+          {/* Anillo de prohibido */}
+          <circle cx="20" cy="20" r="16.5" {...STROKE.fino} />
+          {/* Diagonal del prohibido */}
+          <path d="M12 28 L28 12" {...STROKE.grueso} />
+        </>
+      )}
+      {/* El tacho ligeramente más chico para que entre dentro del anillo */}
+      <g transform={prohibido ? "translate(3.6 5.4) scale(0.82)" : undefined}>
+        {/* Tapa con orejas redondas */}
+        <path
+          d="M12 10 Q10 6 14 6 H26 Q30 6 28 10"
+          {...STROKE.grueso}
+        />
+        {/* Asa de la tapa */}
+        <path
+          d="M17 6 Q20 2 23 6"
+          {...STROKE.medio}
+        />
+        {/* Cuerpo del tacho: ligeramente más ancho abajo */}
+        <path
+          d="M10 12 L12 34 Q13 36 15 36 H25 Q27 36 28 34 L30 12"
+          {...STROKE.grueso}
+        />
+        {/* Líneas verticales onduladas (como tablones de madera) */}
+        <path d="M16 15 Q15.5 24 16 32" {...STROKE.fino} />
+        <path d="M20 15 Q20.5 24 20 32" {...STROKE.fino} />
+        <path d="M24 15 Q23.5 24 24 32" {...STROKE.fino} />
+        {/* Cruz de advertencia estilo rubber-hose */}
+        <path d="M8 12 H32" {...STROKE.grueso} />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * Invitación online: una persona con un sobre a su lado (sumá gente al
+ * grupo con un enlace). Referencia la idea de Google/WhatsApp: compartir
+ * la invitación con otras personas.
+ */
+export function IconoInvitacion({ tamano = 16, color = "currentColor" }) {
+  return (
+    <svg viewBox="0 0 40 40" width={tamano} height={tamano} fill="none" stroke={color}>
+      {/* Cabeza de la persona */}
+      <circle cx="11" cy="11" r="4.5" {...STROKE.grueso} />
+      {/* Hombros */}
+      <path d="M3 32 Q5 25 8.5 25 H13.5 Q17 25 19 32" {...STROKE.medio} />
+      {/* Sobre (invitación) */}
+      <path d="M23 20 H36 Q37 20 37 21 V30 Q37 31 36 31 H23 Q22 31 22 30 V21 Q22 20 23 20 Z" {...STROKE.grueso} />
+      {/* Solapa del sobre */}
+      <path d="M22 21 L29.5 26 L37 21" {...STROKE.medio} />
+      {/* Sello del sobre */}
+      <circle cx="29.5" cy="26" r="1.3" fill={color} stroke="none" />
+    </svg>
+  );
+}
+
+/**
+ * Agregar a alguien "local" (sin cuenta): una persona junto a una casa,
+ * = sumar a un miembro a este grupo aunque no use la app.
+ */
+export function IconoAgregarLocal({ tamano = 16, color = "currentColor" }) {
+  return (
+    <svg viewBox="0 0 40 40" width={tamano} height={tamano} fill="none" stroke={color}>
+      {/* Persona */}
+      <circle cx="11" cy="10" r="4" {...STROKE.grueso} />
+      <path d="M4 32 Q6 23 8.5 23 H13.5 Q17 23 19 32" {...STROKE.medio} />
+      {/* Casa */}
+      <path d="M23 18 L29 10.5 L35 18" {...STROKE.grueso} />
+      <path d="M24 17 H34 V32 H24 Z" {...STROKE.medio} />
+      {/* Puerta de la casa */}
+      <path d="M27.5 31.5 V25.5 H30.5 V31.5" {...STROKE.fino} />
+    </svg>
+  );
+}
+
+/** Un cerdito de frente (orejas, hocico y ojos), estilo rubber-hose. */
+function Piglet({ cx, cy, color }) {
+  return (
+    <g>
+      {/* Orejas */}
+      <circle cx={cx - 4} cy={cy - 5.5} r="1.7" {...STROKE.fino} />
+      <circle cx={cx + 4} cy={cy - 5.5} r="1.7" {...STROKE.fino} />
+      {/* Cabeza */}
+      <circle cx={cx} cy={cy} r="5" {...STROKE.grueso} />
+      {/* Hocico */}
+      <ellipse cx={cx} cy={cy + 2.2} rx="3" ry="1.9" {...STROKE.fino} />
+      {/* Nariz */}
+      <circle cx={cx - 1.1} cy={cy + 2.2} r="0.7" fill={color} stroke="none" />
+      <circle cx={cx + 1.1} cy={cy + 2.2} r="0.7" fill={color} stroke="none" />
+      {/* Ojos */}
+      <circle cx={cx - 1.8} cy={cy - 0.8} r="0.6" fill={color} stroke="none" />
+      <circle cx={cx + 1.8} cy={cy - 0.8} r="0.6" fill={color} stroke="none" />
+    </g>
+  );
+}
+
+/**
+ * Crear grupo: varios cerditos juntos (una piña). Reutiliza la misma figura
+ * de cerdo que los avatares: la marca de la app son los chanchos.
+ */
+export function IconoCrearGrupo({ tamano = 16, color = "currentColor" }) {
+  return (
+    <svg viewBox="0 0 40 40" width={tamano} height={tamano} fill="none" stroke={color}>
+      <Piglet cx={10} cy={18} color={color} />
+      <Piglet cx={20} cy={13} color={color} />
+      <Piglet cx={30} cy={18} color={color} />
     </svg>
   );
 }

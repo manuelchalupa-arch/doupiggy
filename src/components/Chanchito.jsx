@@ -42,11 +42,20 @@ function fraseAleatoria(nivel) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
+/** Resuelve el valor guardado en perfil.foto ("preset:<id>") contra avatarAssets.
+ *  Si no hay foto o el id no existe, devuelve null para usar el fallback por nivel. */
+function resolverFoto(foto) {
+  if (!foto || !foto.startsWith("preset:")) return null;
+  const id = foto.slice("preset:".length);
+  return avatarAssets.find((a) => a.id === id)?.src ?? null;
+}
+
 /**
  * @param {object} props
  * @param {string} props.nivel — "muy-debe" | "debe" | "neutral" | "le-deben" | "le-deben-mucho"
+ * @param {string} [props.foto] — avatar guardado en perfil.foto ("preset:<id>" o data URL)
  */
-export default function Chanchito({ nivel }) {
+export default function Chanchito({ nivel, foto }) {
   const cara =
     nivel === "muy-debe"
       ? "sad"
@@ -58,15 +67,16 @@ export default function Chanchito({ nivel }) {
       ? "happy"
       : "excited";
 
-  // Cerdito 1 (rico, arrogante) para estados positivos
-  // Cerdito 2 (humilde, alegre) para estados negativos o neutrales
+  // El avatar que el usuario eligió en Cuenta > Tu perfil. Si no hay uno
+  // seleccionado, se usa el sprite por nivel como antes.
   // Se usa el recorte cuadrado (avatarAssets) en vez del sprite completo:
   // a 48px el sprite entero (con el lienzo grande de la soga) se ve
   // como un puntito; el recorte muestra el personaje entero y legible.
   const sprite =
-    nivel === "le-deben-mucho" || nivel === "le-deben"
+    resolverFoto(foto) ??
+    (nivel === "le-deben-mucho" || nivel === "le-deben"
       ? avatarAssets[0].src
-      : avatarAssets[1].src;
+      : avatarAssets[1].src);
 
   return (
     <div

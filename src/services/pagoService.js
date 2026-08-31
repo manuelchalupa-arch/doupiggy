@@ -28,11 +28,15 @@ import {
 import { db } from "../firebase/firebaseConfig";
 
 /** Escucha en vivo los pagos confirmados del grupo. */
-export function suscribirseAPagos(grupoId, callback) {
+export function suscribirseAPagos(grupoId, callback, onError) {
   const q = query(collection(db, "grupos", grupoId, "pagos"), orderBy("creadoEn", "desc"));
-  return onSnapshot(q, (snap) => {
-    callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      callback(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    },
+    (error) => onError?.(error)
+  );
 }
 
 /**

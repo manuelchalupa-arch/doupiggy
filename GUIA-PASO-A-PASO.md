@@ -120,7 +120,8 @@ maneja el login. Es gratis para este tamaño de app.
 1. En el menú de la izquierda, andá a **Authentication**.
 2. Click en **Comenzar** (Get started).
 3. En la pestaña **Sign-in method**, hacé click en **Google**, activalo con el switch, elegí un email de soporte, y **Guardar**.
-4. Volvé a la lista de métodos y hacé click en **Anónimo** (Anonymous), activalo con el switch, y **Guardar**. Esto es lo que permite que los invitados entren sin crear cuenta.
+4. Volvé a la lista de métodos, hacé click en **Correo/Contraseña** (Email/Password), activalo con el switch y **Guardar**. Así la pantalla de inicio permite además registrarse o entrar con email + contraseña.
+5. No hace falta activar **Anónimo**: los invitados que abren un enlace entran con su propia cuenta (Google o correo), el acceso anónimo ya no se usa.
 
 ### 3.3 Activar la base de datos (Firestore)
 

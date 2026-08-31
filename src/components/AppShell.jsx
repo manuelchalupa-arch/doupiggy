@@ -48,8 +48,11 @@ import {
  */
 export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [], onCambiarGrupo }) {
   const [tab, setTab] = useState("inicio");
-  const { gastos } = useExpenses(grupoId);
-  const { pagos } = usePagos(grupoId);
+  const { gastos, error: errorGastos } = useExpenses(grupoId);
+  const { pagos, error: errorPagos } = usePagos(grupoId);
+
+  const errorDatos = errorGastos ?? errorPagos;
+  const esPermisos = errorDatos?.code === "permission-denied";
 
   const miembros = useMemo(() => {
     if (!grupo?.miembrosInfo) return [];
@@ -75,12 +78,38 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
 
       <main>
         <FondoEscena nivel={nivel}>
+          {errorDatos && (
+            <div className="tarjeta tarjeta-imagen-completa" style={{ marginBottom: 14 }}>
+              <div className="tarjeta-imagen-completa-panel">
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
+                  {esPermisos
+                    ? "No se pudieron leer los datos: Firestore rechazó el pedido por permisos. Revisá que publicaste las reglas de seguridad (firebase/firestore.rules) en Firebase Console > Firestore Database > Rules."
+                    : `Hubo un problema al leer los datos del grupo. Código: ${errorDatos?.code ?? "desconocido"}.`}{" "}
+                  <button
+                    type="button"
+                    className="btn chico"
+                    style={{ marginLeft: 6 }}
+                    onClick={() => window.location.reload()}
+                  >
+                    Reintentar
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
           {tab === "inicio" && (
-            <HomeSummary gastos={gastos} miembros={miembros} uidActual={uidActual} pagos={pagos} />
+            <HomeSummary
+              gastos={gastos}
+              miembros={miembros}
+              uidActual={uidActual}
+              pagos={pagos}
+              perfil={perfil}
+            />
           )}
 
           {tab === "gastos" && (
-            <ExpenseForm grupoId={grupoId} uidActual={uidActual} miembros={miembros} />
+            <ExpenseForm grupoId={grupoId} uidActual={uidActual} miembros={miembros} gastos={gastos} />
           )}
 
           {tab === "liquidacion" && (

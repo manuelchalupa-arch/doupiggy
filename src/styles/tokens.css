@@ -4,11 +4,12 @@
    Se importa PRIMERO en theme.css.
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&family=Arvo:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Fredericka+the+Great&family=Arvo:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
 
 :root {
   /* ---------- Tipografía ---------- */
   --font-display: 'Fredericka the Great', cursive;
+  --font-btn: 'Bungee', cursive;
   --font-body: 'Arvo', serif;
   --font-mono: 'Courier Prime', monospace;
 
@@ -17,6 +18,7 @@
   --radius-md: 14px;
   --radius-lg: 22px;
   --radius-pill: 9999px;
+  --radius-wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
 
   /* ---------- Espaciado (base 4px) ---------- */
   --space-xs: 4px;
@@ -58,21 +60,39 @@
   --piggy: #E893A0;
   --piggy-oreja: #C9596B;
   --astro: var(--gold);
+
+  /* ---------- Botones (design system, día) ---------- */
+  --btn-bg: #F5E6C8;        /* paper-cream */
+  --btn-tinta: #1A120B;     /* ink-black */
+  --btn-primario: #D4A017;  /* water-mustard */
+  --btn-peligro: #CD5C5C;   /* water-rose */
 }
 
-/* ---------- MODO NOCHE (paleta propia) ---------- */
+/* ---------- MODO NOCHE (espresso/sepia cálido, estilo 1930s) ---------- */
 .app-root.tema-noche {
-  --cream: #1B1830;
-  --paper: #241F3D;
-  --ink: #F2E4C4;
-  --mustard: #E3B23C;
-  --burnt: #E0704F;
-  --avocado: #7FA85C;
-  --teal: #4FB3A6;
-  --magenta: #E06B87;
+  --cream: #211713;     /* fondo: café espresso profundo */
+  --paper: #2C211B;     /* tarjetas / superficies */
+  --ink: #F2E4C4;       /* texto: crema cálido */
+  --mustard: #E3B23C;   /* dorado cálido */
+  --burnt: #E0704F;     /* alerta / naranja tostado */
+  --avocado: #8FA668;   /* oliva cálido */
+  --teal: #4FA892;
+  --magenta: #DE7A8D;   /* rosa cálido */
   --gold: #E3B23C;
-  --sun: #2A2650;
+  --sun: #3B2B22;       /* pista del switch, café tostado */
   --piggy: #D98AA0;
-  --piggy-oreja: #E0704F;
-  --astro: #C9CBEA;
+  --piggy-oreja: #D96A4E;
+  --astro: #EFD9A0;     /* estrellas doradas suaves */
+
+  /* Botones (design system, noche) */
+  --btn-bg: #2C211B;
+  --btn-tinta: #F2E4C4;
+  --btn-primario: #E3B23C;
+  --btn-peligro: #C9604E;
+}
+
+/* Tintas de botón independientes del tema */
+:root {
+  --btn-tinta-oscura: #241811;  /* sobre mostaza/crema */
+  --btn-tinta-clara: #F5E6C8;   /* sobre rosa */
 }

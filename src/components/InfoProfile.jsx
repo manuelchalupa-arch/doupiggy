@@ -5,10 +5,9 @@
 // Cambios de esta ronda:
 //   - Se sacó la tarjeta de branding ("DouPiggy" + logo) que abría la
 //     pantalla: ahora "Mi cuenta" arranca directo en la tarjeta de perfil.
-//   - Selector de avatar: subir una foto propia (se comprime a un data URL
-//     chico con <canvas>, sin Firebase Storage — más simple y liviano, y
-//     evita depender de reglas de Storage que no puedo verificar) o elegir
-//     entre los avatares preset (hoy 2, pensado para crecer a 4-6).
+//   - Selector de avatar: solo avatares preset (hoy 2, pensado para crecer
+//     a 4-6). Sin "Subir foto": no se guardan imágenes propias, se eligen
+//     cerditos predefinidos para no depender de almacenamiento extra.
 //   - "Informes" ahora manda a Resumen (el generador se movió ahí).
 //   - "Configuración" quedó reducida al selector Sol/Luna sin tarjeta ni
 //     texto explicativo alrededor.
@@ -26,6 +25,7 @@ import { avatarAssets } from "../assets";
 import InvitarGrupo from "./InvitarGrupo";
 import InstalarApp from "./InstalarApp";
 import { IconoSol, IconoLuna } from "./IconoAstro";
+import { IconoTrash, IconoAgregarLocal, IconoCrearGrupo } from "./IconosRaster";
 
 /** Resuelve el valor guardado en perfil.foto a una URL de imagen mostrable.
  *  Los presets se guardan como "preset:<id>" (no la URL final del bundle,
@@ -38,32 +38,6 @@ function resolverFoto(foto) {
     return avatarAssets.find((a) => a.id === id)?.src ?? null;
   }
   return foto;
-}
-
-/** Redimensiona/comprime una imagen elegida por el usuario a un data URL
- *  chico (JPEG, lado máximo 256px). Suficiente para un avatar circular y
- *  liviano de guardar directo en el documento de Firestore (sin Storage). */
-function comprimirImagenComoDataUrl(archivo, ladoMax = 256, calidad = 0.75) {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onerror = () => reject(new Error("No se pudo leer el archivo."));
-    lector.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("El archivo no es una imagen válida."));
-      img.onload = () => {
-        const escala = Math.min(1, ladoMax / Math.max(img.width, img.height));
-        const w = Math.round(img.width * escala);
-        const h = Math.round(img.height * escala);
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", calidad));
-      };
-      img.src = lector.result;
-    };
-    lector.readAsDataURL(archivo);
-  });
 }
 
 /**
@@ -85,8 +59,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
   const [mensaje, setMensaje] = useState(null);
 
   const [foto, setFoto] = useState(perfil?.foto ?? null);
-  const [subiendoFoto, setSubiendoFoto] = useState(false);
-  const [errorFoto, setErrorFoto] = useState(null);
+  const [errorAvatar, setErrorAvatar] = useState(null);
   const [presetAbierto, setPresetAbierto] = useState(false);
 
   const [nombreMiembroLocal, setNombreMiembroLocal] = useState("");
@@ -113,31 +86,14 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
 
   const fotoResuelta = resolverFoto(foto);
 
-  async function manejarSubidaFoto(evento) {
-    const archivo = evento.target.files?.[0];
-    if (!archivo) return;
-    setErrorFoto(null);
-    setSubiendoFoto(true);
-    try {
-      const dataUrl = await comprimirImagenComoDataUrl(archivo);
-      await actualizarFotoPerfil(uidActual, dataUrl);
-      setFoto(dataUrl);
-    } catch (err) {
-      setErrorFoto(err.message ?? "No se pudo subir la imagen.");
-    } finally {
-      setSubiendoFoto(false);
-      evento.target.value = "";
-    }
-  }
-
   async function elegirAvatarPreset(id) {
-    setErrorFoto(null);
+    setErrorAvatar(null);
     const valor = `preset:${id}`;
     try {
       await actualizarFotoPerfil(uidActual, valor);
       setFoto(valor);
     } catch (err) {
-      setErrorFoto(err.message ?? "No se pudo guardar el avatar.");
+      setErrorAvatar(err.message ?? "No se pudo guardar el avatar.");
     }
   }
 
@@ -239,8 +195,8 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
       <h1 className="titulo-seccion">Mi cuenta</h1>
 
       <div className="tarjeta-flotante">
-        <div className="avatar-picker">
-          <div className="avatar-actual">
+        <div className="avatar-centro">
+          <div className="avatar-grande">
             {fotoResuelta ? (
               <img src={fotoResuelta} alt="Tu avatar" />
             ) : (
@@ -248,72 +204,52 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
             )}
           </div>
 
-          <div className="avatar-opciones">
-            <label className="btn chico secundario avatar-subir-btn">
-              {subiendoFoto ? "Subiendo..." : "Subir foto"}
-              <input type="file" accept="image/*" onChange={manejarSubidaFoto} disabled={subiendoFoto} hidden />
-            </label>
-
-            {/* Lista desplegable de avatares preset. Para agregar más
-                (hoy hay 2, admite hasta 6): guardá el .webp cuadrado en
-                src/assets/sprites/ y agregalo al array avatarAssets en
-                src/assets/index.js — este desplegable lee de ahí solo. */}
-            <div className="avatar-preset-dropdown">
-              <button
-                type="button"
-                className="btn chico secundario avatar-preset-toggle"
-                onClick={() => setPresetAbierto((v) => !v)}
-                aria-expanded={presetAbierto}
-              >
-                Elegir avatar cerdito ▾
-              </button>
-              {presetAbierto && (
-                <ul className="avatar-preset-lista" role="listbox">
-                  {avatarAssets
-                    .filter((a) => a.src && a.alt) // defensivo: nunca renderiza una opción sin nombre/imagen
-                    .map((a) => (
-                    <li key={a.id}>
-                      <button
-                        type="button"
-                        className={`avatar-preset-item${foto === `preset:${a.id}` ? " sel" : ""}`}
-                        role="option"
-                        aria-selected={foto === `preset:${a.id}`}
-                        aria-label={a.alt}
-                        onClick={() => {
-                          elegirAvatarPreset(a.id);
-                          setPresetAbierto(false);
-                        }}
-                      >
-                        <img src={a.src} alt="" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+          {/* Selector de avatares preset. Para agregar más (hoy hay 2, admite
+              hasta 6): guardá el .webp cuadrado en src/assets/sprites/ y
+              agregalo al array avatarAssets en src/assets/index.js — este
+              desplegable lee de ahí solo. */}
+          <div className="avatar-preset-dropdown">
+            <button
+              type="button"
+              className="btn chico secundario avatar-preset-toggle"
+              onClick={() => setPresetAbierto((v) => !v)}
+              aria-expanded={presetAbierto}
+            >
+              Cerdito ▾
+            </button>
+            {presetAbierto && (
+              <ul className="avatar-preset-lista" role="listbox">
+                {avatarAssets
+                  .filter((a) => a.src && a.alt) // defensivo: nunca renderiza una opción sin nombre/imagen
+                  .map((a) => (
+                  <li key={a.id}>
+                    <button
+                      type="button"
+                      className={`avatar-preset-item${foto === `preset:${a.id}` ? " sel" : ""}`}
+                      role="option"
+                      aria-selected={foto === `preset:${a.id}`}
+                      aria-label={a.alt}
+                      onClick={() => {
+                        elegirAvatarPreset(a.id);
+                        setPresetAbierto(false);
+                      }}
+                    >
+                      <img src={a.src} alt="" loading="lazy" decoding="async" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
-        {errorFoto && <p className="ayuda-error">{errorFoto}</p>}
-
-        <div className="fila-perfil" style={{ marginTop: 12 }}>
-          <div>
-            <h2 style={{ margin: 0 }}>{nombre || "Sin nombre"}</h2>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
-              {perfil?.esAnonimo ? "Invitado" : "Cuenta de Google"}
-            </p>
-          </div>
-        </div>
+        {errorAvatar && <p className="ayuda-error">{errorAvatar}</p>}
 
         <form onSubmit={guardarPerfil}>
           <label className="campo">Nombre</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
 
-          <label className="campo">Correo</label>
+          <label className="campo">Correo electrónico</label>
           <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} />
-
-          <p style={{ margin: "10px 0 0", fontSize: 11, fontWeight: 700, color: "var(--burnt)" }}>
-            Completá CBU o alias (con uno de los dos alcanza para cobrar).
-          </p>
 
           <label className="campo">CBU</label>
           <input
@@ -345,8 +281,8 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
             </p>
           )}
 
-          <button type="submit" className="btn bloque" style={{ marginTop: 12 }} disabled={guardando}>
-            {guardando ? "Guardando..." : "Guardar perfil"}
+          <button type="submit" className="btn accion bloque" style={{ marginTop: 12 }} disabled={guardando}>
+            {guardando ? "Guardando..." : "Guardar"}
           </button>
         </form>
       </div>
@@ -376,7 +312,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
                   aria-label={`Quitar a ${m.nombre}`}
                   onClick={() => manejarEliminarMiembroLocal(m.uid, m.nombre)}
                 >
-                  ✕
+                  <IconoTrash tamano={12} prohibido />
                 </button>
               )}
             </li>
@@ -385,16 +321,13 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
       </div>
 
       <div className="tarjeta-flotante">
-        <p style={{ margin: "4px 0 10px", fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
+        <p style={{ margin: "4px 0 10px", fontSize: 12, fontWeight: 600, color: "var(--ink)", opacity: 0.8 }}>
           La persona entra con su cuenta de Google y queda como miembro real del grupo.
         </p>
         <InvitarGrupo grupoId={grupoId} uidActual={uidActual} />
       </div>
 
       <div className="tarjeta-flotante">
-        <p style={{ margin: "4px 0 10px", fontSize: 12, fontWeight: 600, color: "var(--burnt)" }}>
-          Sin cuenta ni invitación — para alguien que no usa la app pero participa de los gastos igual.
-        </p>
         <form onSubmit={manejarAgregarMiembroLocal}>
           <input
             type="text"
@@ -404,7 +337,13 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
             required
           />
           {errorMiembroLocal && <p className="ayuda-error">{errorMiembroLocal}</p>}
-          <button type="submit" className="btn secundario bloque" style={{ marginTop: 8 }} disabled={agregandoMiembroLocal}>
+          <button
+            type="submit"
+            className="btn accion bloque"
+            style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+            disabled={agregandoMiembroLocal}
+          >
+            <IconoAgregarLocal tamano={16} />
             {agregandoMiembroLocal ? "Agregando..." : "Agregar miembro local"}
           </button>
         </form>
@@ -427,10 +366,13 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
           </>
         )}
         <h2 style={{ marginTop: grupos.length > 1 ? 12 : 0 }}>¿Otro grupo de gastos?</h2>
-        <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
-          Creá un grupo nuevo (ej. para otro depto, un viaje, la familia) sin perder este.
-        </p>
-        <button type="button" className="btn secundario bloque" onClick={() => setModalGrupoAbierto(true)}>
+        <button
+          type="button"
+          className="btn accion bloque"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+          onClick={() => setModalGrupoAbierto(true)}
+        >
+          <IconoCrearGrupo tamano={16} />
           Crear otro grupo
         </button>
 
@@ -438,15 +380,12 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
           <>
             <button
               type="button"
-              className="btn fantasma chico bloque"
-              style={{
-                marginTop: 8,
-                color: "var(--burnt)",
-                border: "var(--border-medium)",
-              }}
+              className="btn peligro chico bloque"
+              style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
               disabled={borrandoGrupo}
               onClick={manejarBorrarGrupo}
             >
+              <IconoTrash tamano={14} prohibido />
               {borrandoGrupo ? "Borrando..." : "Borrar este grupo"}
             </button>
             {errorGrupo && <p className="ayuda-error">{errorGrupo}</p>}
@@ -530,7 +469,13 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
                     >
                       Cancelar
                     </button>
-                    <button type="submit" className="btn chico bloque" disabled={creandoGrupo}>
+                    <button
+                      type="submit"
+                      className="btn chico accion"
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                      disabled={creandoGrupo}
+                    >
+                      <IconoCrearGrupo tamano={14} />
                       {creandoGrupo ? "Creando..." : "Crear grupo"}
                     </button>
                   </div>
