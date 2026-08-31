@@ -20,6 +20,12 @@ import bgLevel5 from "./backgrounds/bg-level5.webp";
 import bgForm from "./backgrounds/bg-form.webp";
 import bgReport from "./backgrounds/bg-report.webp";
 
+// ---------- sprites (escena "tira y afloje" de Inicio) ----------
+// Cerdito 1: rico, arrogante, traje, sombrero de copa, monocle
+// Cerdito 2: humilde, alegre, chaleco, gorra plana, tiradores
+import cerdito1 from "./sprites/cerdito1.webp";
+import cerdito2 from "./sprites/cerdito2.webp";
+
 // ---------- avatares de perfil (recortes cuadrados + variantes de color) ----------
 import avatarCerdito1 from "./sprites/avatar-cerdito1.webp";
 import avatarCerdito2 from "./sprites/avatar-cerdito2.webp";
@@ -29,6 +35,17 @@ import avatarCerdito5 from "./sprites/avatar-cerdito5.webp";
 import avatarCerdito6 from "./sprites/avatar-cerdito6.webp";
 
 export const brandingAssets = { logo, splash, titulo, madera, soga, monoRojo };
+
+// Sprites completos de la escena "tira y afloje" (Inicio).
+export const spriteAssets = {
+  cerdito1, // Rico, arrogante — IZQUIERDA en la escena
+  cerdito2, // Humilde, alegre — DERECHA en la escena
+};
+
+// Recursos de la escena "tira y afloje". La soga y el marcador (moño) viven
+// en branding/ y se reutilizan acá; se reemplazan desde
+// components/TugOfWar/configuracion.js.
+export const tugOfWarAssets = { soga, marcador: monoRojo };
 
 export const backgroundAssets = {
   nivel: {

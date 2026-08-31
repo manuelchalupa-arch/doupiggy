@@ -4,7 +4,7 @@
 // conexión se sirve lo último que quedó cacheado y, para navegación, la
 // portada. No intercepta pedidos cross-origin (Google auth, API de Firebase).
 
-const CACHE = "doupiggy-v4";
+const CACHE = "doupiggy-v5";
 const NUCLEO = [
   "/",
   "/index.html",

@@ -30,12 +30,24 @@ const app = initializeApp(firebaseConfig);
 // persistentLocalCache habilita IndexedDB como caché local persistente.
 // persistentMultipleTabManager permite mantener la sincronización si el usuario
 // tiene la app abierta en varias pestañas simultáneamente.
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-  }),
-});
+//
+// En Safari modo privado (o con Smart Tracking Prevention agresivo) IndexedDB
+// puede estar bloqueado o ser volátil y initializeFirestore con caché persistente
+// lanza una excepción al arrancar. Se intenta la caché persistente y, si no
+// arranca, se cae a caché en memoria (la app sigue funcionando normalmente).
+export const db = (() => {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+        cacheSizeBytes: CACHE_SIZE_UNLIMITED,
+      }),
+    });
+  } catch (error) {
+    console.warn("IndexedDB no disponible (modo privado/Safari?). Uso caché en memoria:", error);
+    return initializeFirestore(app);
+  }
+})();
 
 // --- Auth ---
 export const auth = getAuth(app);

@@ -41,7 +41,7 @@ const estilos = {
     position: "absolute",
     top: "50%",
     left: "5%",
-    width: 44,
+    width: 52,
     height: "auto",
     transform: "translate(-50%, -50%)",
     animation: "deslizarSoga 3.5s cubic-bezier(.4,0,.2,1) forwards",

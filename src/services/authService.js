@@ -86,14 +86,17 @@ export async function iniciarSesionConEmail({ email, password }) {
  * grupo, y si el token es válido queda agregado a ese grupo puntual sin
  * perder la posibilidad de crear o pertenecer a otros grupos propios.
  *
+ * ORDEN CRÍTICO (reglas de seguridad): primero se autentica con Google y
+ * recién después se valida el token leyendo Firestore. Las reglas exigen
+ * `request.auth != null` para leer `/invitaciones/{token}`, así que validar
+ * antes de abrir sesión siempre fallaba con permission-denied para quien
+ * entra por primera vez. Además, para saber si ya era miembro se consulta
+ * su PROPIO perfil (`usuarios/{uid}.gruposIds`), que siempre puede leer,
+ * en vez del doc del grupo (cuya lectura exige ser miembro).
+ *
  * @param {string} token - token de /invitaciones/{token}
  */
 export async function unirseComoInvitado(token) {
-  const invitacion = await validarInvitacion(token);
-  if (!invitacion.valida) {
-    throw new Error(invitacion.motivo ?? "Invitación inválida o expirada");
-  }
-
   const credencial = await signInWithPopup(auth, googleProvider);
   const { uid, displayName, email, photoURL } = credencial.user;
 
@@ -106,9 +109,16 @@ export async function unirseComoInvitado(token) {
     proveedor: "google",
   });
 
+  const invitacion = await validarInvitacion(token);
+  if (!invitacion.valida) {
+    throw new Error(invitacion.motivo ?? "Invitación inválida o expirada");
+  }
+
   // Si ya era miembro de este grupo (ej. abrió el enlace de nuevo), no
   // hace falta gastar un uso de la invitación.
-  if (!invitacion.miembrosActuales?.includes(uid)) {
+  const perfilSnap = await getDoc(doc(db, "usuarios", uid));
+  const yaEsMiembro = (perfilSnap.data()?.gruposIds ?? []).includes(invitacion.grupoId);
+  if (!yaEsMiembro) {
     await consumirInvitacion(token, uid, invitacion.grupoId);
   }
 
@@ -136,7 +146,11 @@ export function traducirErrorLogin(err) {
       "Ya existe una cuenta con ese correo pero con otro método de acceso.",
     "auth/invalid-credential": "Correo o contraseña incorrectos. Revisá los datos o pedí restablecer tu contraseña.",
     "auth/timeout": "La operación tardó demasiado. Volvé a intentar.",
+    "auth/web-storage-unsupported":
+      "Este navegador no permite guardar la sesión (modo privado o navegador embebido). Abrí el enlace en Safari o Chrome y volvé a intentar.",
     "auth/invalid-email": "El correo electrónico no tiene un formato válido.",
+    "permission-denied":
+      "Firestore rechazó el pedido por permisos. Revisá que publicaste las reglas de seguridad (firebase/firestore.rules) en Firebase Console > Firestore Database > Rules.",
     "auth/missing-password": "Escribí tu contraseña.",
     "auth/invalid-login-credentials":
       "Correo o contraseña incorrectos. Revisá los datos o pedí restablecer tu contraseña.",

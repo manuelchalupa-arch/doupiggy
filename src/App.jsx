@@ -17,18 +17,40 @@ import { suscribirseAGruposDeUsuario } from "./services/groupService";
 import { iniciarSesionConGoogle, iniciarSesionConEmail, registrarseConEmail, traducirErrorLogin, unirseComoInvitado } from "./services/authService";
 import { actualizarPerfil, esAliasValido } from "./services/profileService";
 
+const CLAVE_TOKEN_INVITACION = "doupiggy:invite-token";
+
 // Se lee una sola vez al cargar el módulo: si hay ?invite=TOKEN en la URL,
-// se guarda acá y se limpia de la barra de direcciones inmediatamente
-// (para que un refresh de página no dispare la aceptación de nuevo).
+// se guarda acá (estado y sessionStorage) y se limpia de la barra de
+// direcciones (para que un refresh de página no dispare la aceptación de
+// nuevo). El respaldo en sessionStorage hace que un refresh a mitad del
+// flujo (o un navegador que suspende la pestaña) no pierda la invitación.
 function leerYLimpiarTokenDeInvitacion() {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("invite");
   if (token) {
+    try {
+      window.sessionStorage.setItem(CLAVE_TOKEN_INVITACION, token);
+    } catch {
+      // Storage bloqueado (modo privado extremo): seguimos con el token en estado.
+    }
     params.delete("invite");
     const resto = params.toString();
     window.history.replaceState({}, "", window.location.pathname + (resto ? `?${resto}` : ""));
+    return token;
   }
-  return token;
+  try {
+    return window.sessionStorage.getItem(CLAVE_TOKEN_INVITACION);
+  } catch {
+    return null;
+  }
+}
+
+function limpiarTokenInvitacion() {
+  try {
+    window.sessionStorage.removeItem(CLAVE_TOKEN_INVITACION);
+  } catch {
+    // Sin storage: no hay nada que limpiar.
+  }
 }
 
 export default function App() {
@@ -102,6 +124,7 @@ export default function App() {
       cbu: "",
       alias,
     });
+    limpiarTokenInvitacion();
     setUsuarioInvitadoPendiente(null);
     setAceptandoInvitacion(false);
   }
@@ -124,7 +147,10 @@ export default function App() {
         ) : (
           <PantallaInvitacion
             onAceptar={manejarAceptarInvitacion}
-            onOmitir={() => setAceptandoInvitacion(false)}
+            onOmitir={() => {
+              limpiarTokenInvitacion();
+              setAceptandoInvitacion(false);
+            }}
             error={errorInvitacion}
           />
         )}
@@ -185,6 +211,12 @@ function PantallaInvitacion({ onAceptar, onOmitir, error }) {
     setProcesando(false);
   }
 
+  const navegadorEmbebido = (() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    return /(FBAN|FBAV|Instagram|Line\/|WhatsApp|wkwebview|Twitter for iPhone|MicroMessenger|wv;)/i.test(ua);
+  })();
+
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, padding: 24 }}>
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
@@ -194,6 +226,12 @@ function PantallaInvitacion({ onAceptar, onOmitir, error }) {
           o creando tus propios grupos sin problema — este se agrega a los tuyos,
           no lo reemplaza.
         </p>
+        {navegadorEmbebido && (
+          <p className="ayuda-error" style={{ marginTop: 0, marginBottom: 14 }}>
+            Parece que estás en el navegador integrado de WhatsApp/otra app.
+            Si la ventana de Google no se abre, abrí este enlace en Safari o Chrome.
+          </p>
+        )}
         <button type="button" className="btn accion bloque" onClick={manejarClick} disabled={procesando}>
           {procesando ? "Uniéndote..." : "Ingresar con Google y unirme"}
         </button>

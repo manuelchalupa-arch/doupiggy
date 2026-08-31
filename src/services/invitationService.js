@@ -20,7 +20,21 @@ const DIAS_EXPIRACION_DEFAULT = 7;
 function generarToken() {
   // Token URL-safe, suficiente entropía para un enlace temporal (no es un secreto
   // de larga duración: expira y además el grupo no es accesible sin ser miembro).
-  return crypto.randomUUID().replace(/-/g, "");
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID().replace(/-/g, "");
+  }
+  // Fallback para navegadores sin randomUUID (Safari < 15.4 / iOS < 15.4):
+  // uuid v4 en 32 hex, mismo formato y entropía que el caso principal.
+  const bytes = new Uint8Array(16);
+  if (cryptoObj?.getRandomValues) {
+    cryptoObj.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -44,7 +58,13 @@ export async function crearInvitacion(grupoId, creadorUid, opciones = {}) {
   return { token, expiraEn };
 }
 
-/** Valida que el token exista, no haya expirado y tenga cupo disponible. */
+/**
+ * Valida que el token exista, no haya expirado y tenga cupo disponible.
+ * NO lee el documento del grupo: las reglas de seguridad exigen ser miembro
+ * para leer `/grupos/{grupoId}`, y quien recibe la invitación todavía no lo
+ * es. La membresía se determina en authService desde el perfil propio del
+ * usuario (`usuarios/{uid}.gruposIds`), que siempre puede leer.
+ */
 export async function validarInvitacion(token) {
   const ref = doc(db, "invitaciones", token);
   const snap = await getDoc(ref);
@@ -64,10 +84,7 @@ export async function validarInvitacion(token) {
     return { valida: false, motivo: "El enlace alcanzó su límite de usos." };
   }
 
-  const grupoSnap = await getDoc(doc(db, "grupos", datos.grupoId));
-  const miembrosActuales = grupoSnap.exists() ? grupoSnap.data().miembros ?? [] : [];
-
-  return { valida: true, grupoId: datos.grupoId, miembrosActuales };
+  return { valida: true, grupoId: datos.grupoId };
 }
 
 /**

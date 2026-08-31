@@ -1,12 +1,14 @@
 // components/HomeSummary.jsx
 // Pestaña Inicio: saldo neto y mini-resumen. El fondo (uno de los 5
 // escenarios) lo aplica FondoEscena desde AppShell; este componente solo
-// dibuja el contenido que flota encima.
+// dibuja el contenido que flota encima, incluyendo la escena "tira y
+// afloje" con los dos cerditos (sprites completos en src/components/TugOfWar/).
 
 import { useMemo } from "react";
 import { formatoARS } from "../utils/format";
 import { calcularSaldoUsuario, calcularNivel } from "../utils/nivelSaldo";
-import Chanchito from "./Chanchito";
+import { calcularPosicionBalance } from "../utils/calcularPosicionBalance";
+import TugOfWarScene from "./TugOfWar/TugOfWarScene";
 
 /**
  * @param {object} props
@@ -14,14 +16,19 @@ import Chanchito from "./Chanchito";
  * @param {Array<{uid: string, nombre: string}>} props.miembros
  * @param {Array} props.gastos
  * @param {Array} [props.pagos] - pagos confirmados como recibidos
- * @param {object} [props.perfil] - perfil del usuario (avatar guardado en perfil.foto)
  */
-export default function HomeSummary({ uidActual, miembros, gastos, pagos = [], perfil }) {
+export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] }) {
   const saldo = useMemo(
     () => calcularSaldoUsuario(gastos, uidActual, pagos),
     [gastos, uidActual, pagos]
   );
   const nivel = useMemo(() => calcularNivel(saldo), [saldo]);
+
+  // Posición del marcador conectada con los montos reales (0..1, 0.5=equilibrio).
+  const posicion = useMemo(
+    () => calcularPosicionBalance(gastos, uidActual),
+    [gastos, uidActual]
+  );
 
   const totalGastado = useMemo(
     () => gastos.reduce((a, g) => a + g.monto, 0),
@@ -42,28 +49,28 @@ export default function HomeSummary({ uidActual, miembros, gastos, pagos = [], p
 
   return (
     <div className="inicio-contenido">
-      <div className="tarjeta-flotante" style={{ textAlign: "center" }}>
+      <div className="tarjeta-flotante inicio-estado">
         <p className="estado-etiqueta">{texto}</p>
         <p className="estado-monto">{formatoARS.format(Math.abs(saldo))}</p>
         <p className="estado-subtitulo">{sub}</p>
-      </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-        <div className="tarjeta-flotante" style={{ flex: 1, textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Total gastado</p>
-          <p style={{ margin: "2px 0 0", fontFamily: "var(--font-mono)", fontSize: 18 }}>
-            {formatoARS.format(totalGastado)}
-          </p>
-        </div>
-        <div className="tarjeta-flotante" style={{ flex: 1, textAlign: "center" }}>
-          <p style={{ margin: 0, fontSize: 11, fontWeight: 700 }}>Miembros</p>
-          <p style={{ margin: "2px 0 0", fontFamily: "var(--font-mono)", fontSize: 18 }}>
-            {miembros.length}
-          </p>
+        <div className="inicio-estadisticas">
+          <div className="inicio-estadistica">
+            <p className="estadistica-valor">{formatoARS.format(totalGastado)}</p>
+            <p className="estadistica-etiqueta">Total gastado</p>
+          </div>
+          <div className="inicio-estadistica">
+            <p className="estadistica-valor">{miembros.length}</p>
+            <p className="estadistica-etiqueta">Miembros</p>
+          </div>
         </div>
       </div>
 
-      <Chanchito nivel={nivel} foto={perfil?.foto} />
+      {/* Escena "tira y afloje": dos cerditos sprites tironando la soga. La
+          posición del marcador proviene de calcularPosicionBalance (montos
+          reales, 0..1; 0.5 = equilibrio). Queda centrada y baja, apoyada
+          sobre la botonera de pestañas. */}
+      <TugOfWarScene posicion={posicion} />
     </div>
   );
 }
