@@ -22,7 +22,7 @@ import { db } from "../firebase/firebaseConfig";
 /**
  * Crea un grupo nuevo. El creador queda automáticamente como miembro.
  */
-export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador }) {
+export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador, aliasCreador = null, cbuCreador = null }) {
   const ref = doc(collection(db, "grupos"));
 
   await setDoc(ref, {
@@ -31,7 +31,13 @@ export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador
     creadoPor,
     miembros: [creadoPor],
     miembrosInfo: {
-      [creadoPor]: { nombre: nombreCreador, foto: fotoCreador ?? null, activo: true },
+      [creadoPor]: {
+        nombre: nombreCreador,
+        foto: fotoCreador ?? null,
+        activo: true,
+        alias: aliasCreador,
+        cbu: cbuCreador,
+      },
     },
     creadoEn: serverTimestamp(),
     actualizadoEn: serverTimestamp(),

@@ -124,12 +124,27 @@ export async function consumirInvitacion(token, uidNuevoMiembro, grupoId) {
     const nombreInvitado = usuarioSnap.exists()
       ? usuarioSnap.data().nombre
       : "Invitado";
+    const datosCobroInvitado = usuarioSnap.exists()
+      ? (usuarioSnap.data().datosCobro ?? {})
+      : {};
+    // También se copian los datos de cobro al doc del grupo: las reglas no
+    // permiten leer /usuarios a los demás miembros, así que el alias/CBU
+    // tiene que estar adentro de miembrosInfo para que aparezca en la
+    // liquidación del grupo.
+    const aliasInvitado = datosCobroInvitado.alias ?? null;
+    const cbuInvitado = datosCobroInvitado.cbu ?? null;
 
     tx.update(invitacionRef, { usosActuales: increment(1) });
 
     tx.update(grupoRef, {
       miembros: arrayUnion(uidNuevoMiembro),
-      [`miembrosInfo.${uidNuevoMiembro}`]: { nombre: nombreInvitado, foto: null, activo: true },
+      [`miembrosInfo.${uidNuevoMiembro}`]: {
+        nombre: nombreInvitado,
+        foto: null,
+        activo: true,
+        alias: aliasInvitado,
+        cbu: cbuInvitado,
+      },
       actualizadoEn: serverTimestamp(),
       ultimaInvitacionToken: token,
     });

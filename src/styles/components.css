@@ -312,58 +312,435 @@ input.invalido {
   margin: 0 auto;
 }
 
-/* Tilde circular para marcar/desmarcar un pago como recibido (Liquidación) */
-.pago-check {
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border-radius: 50%;
-  border: var(--border-medium);
+/* ---------- Liquidación (rediseño): niveles 1, 2 y 3 ---------- */
+
+/* Aviso transitorio de éxito (toast liviano inline) */
+.aviso-flotante {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--avocado);
+  background: color-mix(in srgb, var(--avocado) 12%, transparent);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin: 0 0 10px;
+}
+
+/* N1 · Situación: tres tarjetas grandes, estados bien diferenciados */
+.estado-liquidacion-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.estado-liquidacion {
   background: var(--paper);
-  color: transparent;
-  font-size: 15px;
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: var(--shadow-soft);
+}
+
+.estado-liquidacion-etiqueta {
+  font-size: 10px;
   font-weight: 800;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast),
-    transform var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0;
 }
 
-.pago-check:hover:not(:disabled) { transform: scale(1.1); }
+.estado-liquidacion-etiqueta.debo { color: var(--burnt); }
+.estado-liquidacion-etiqueta.me-deben { color: var(--avocado); }
+.estado-liquidacion-etiqueta.pendiente { color: var(--mustard); }
 
-.pago-check:disabled { opacity: 0.6; cursor: default; }
-
-/* Fila cuyo toggle está escribiendo en Firestore */
-.pago-fila.procesando {
-  opacity: 0.55;
-  pointer-events: none;
+.estado-liquidacion-monto {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
 }
 
-.pago-check.recibido {
-  background: var(--mustard);
+/* N2 · Consejo de liquidación */
+.consejo-liquidacion {
+  background: color-mix(in srgb, var(--mustard) 16%, transparent);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.consejo-cuerpo {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.consejo-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 4px;
   color: var(--ink);
 }
 
-/* Columna derecha de cada fila de pago: monto + estado */
-.pago-detalle {
+.consejo-meta {
+  font-size: 12px;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.consejo-motivo {
+  font-size: 11px;
+  font-weight: 600;
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+
+.consejo-vacio {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--avocado);
+  margin: 0;
+}
+
+.estrategia-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.estrategia-chip {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border: var(--border-thin);
+  border-radius: 20px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.estrategia-chip.sel {
+  background: var(--mustard);
+  border-color: var(--ink);
+}
+
+/* Modo "tengo X para pagar" */
+.modo-dinero { margin-top: 12px; }
+
+.modo-dinero-fila {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.modo-dinero-fila input { flex: 1; min-width: 0; }
+
+.opciones-plan {
+  margin-top: 12px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  margin-left: auto;
+  gap: 8px;
+}
+
+.opcion-plan {
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.opcion-titulo {
+  font-size: 13px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.opcion-lista {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.opcion-lista li {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--avocado);
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.opcion-parcial {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--burnt);
+}
+
+.opcion-lista-vacia {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+  margin: 0 0 6px;
+}
+
+.opcion-porque {
+  font-size: 11px;
+  font-weight: 600;
+  margin: 0;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+
+/* N3 · Listas de cuentas (le debés / te deben) */
+.lista-cuentas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cuenta-tarjeta {
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cuenta-tarjeta.debo { border-color: var(--burnt); }
+.cuenta-tarjeta.me-deben { border-color: var(--avocado); }
+
+.cuenta-cabecera {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cuenta-quien {
+  min-width: 0;
+  flex: 1;
+}
+
+.cuenta-nombre {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink);
+}
+
+.cuenta-favor {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--avocado);
+}
+
+.alias-copiar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  margin-top: 3px;
+  border: var(--border-thin);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mustard) 22%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.alias-copiar:hover { background: var(--mustard); }
+
+.sin-alias {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 55%, transparent);
+}
+
+.cuenta-detalles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+}
+
+.cuenta-monto {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cuenta-monto.debo strong { color: var(--burnt); }
+.cuenta-monto.favor strong { color: var(--avocado); }
+
+.cuenta-antiguedad {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 70%, transparent);
+}
+
+.cuenta-nota {
+  font-size: 10px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  margin: 0;
+}
+
+.estado-vacio {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--avocado);
+  margin: 4px 0 0;
+}
+
+/* Pendientes de confirmación (declaraciones en vuelo) */
+.lista-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.pendiente-fila {
+  background: var(--paper);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pendiente-fila.cobrar { border-color: var(--avocado); }
+.pendiente-fila.pagar { border-color: var(--mustard); }
+
+.pendiente-info { min-width: 0; }
+
+.pendiente-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: var(--ink);
+}
+
+.pendiente-meta {
+  font-size: 10px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+  margin: 0;
+}
+
+.pendiente-acciones {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.confirmar-en-linea {
+  flex-direction: column;
+  align-items: stretch;
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+
+.confirma-ayuda {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Historial de eventos de pago */
+.historial-details summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.historial-details summary::-webkit-details-marker { display: none; }
+
+.historial-titulo {
+  font-size: 15px;
+  margin: 0;
+  display: inline-flex;
+}
+
+.historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.historial-fila {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+/* Sheet de pago (modal del deudor) */
+.sheet-forma-pago {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+
+.sheet-campo {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: color-mix(in srgb, var(--ink) 65%, transparent);
+}
+
+.sheet-valor {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  flex: 1;
   min-width: 0;
 }
 
-.pago-detalle-monto {
-  font-family: var(--font-mono);
+/* Motivo de rechazo (radio en lista) */
+.radio-motivo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
   font-size: 12px;
   font-weight: 700;
-  white-space: nowrap;
+  padding: 6px 10px;
+  border: var(--border-thin);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
 }
 
+.radio-motivo.sel { background: color-mix(in srgb, var(--burnt) 18%, transparent); }
+
+/* Badge de estado de un pago (historial y pendientes) */
 .pago-estado {
   font-size: 10px;
   font-weight: 800;
@@ -372,16 +749,27 @@ input.invalido {
   padding: 1px 8px;
   border-radius: 99px;
   line-height: 1.6;
+  flex: none;
 }
 
-.pago-estado.recibido {
+.pago-estado.declarado {
+  background: color-mix(in srgb, var(--mustard) 35%, transparent);
+  color: var(--ink);
+}
+
+.pago-estado.confirmado {
   background: color-mix(in srgb, var(--avocado) 18%, transparent);
   color: var(--avocado);
 }
 
-.pago-estado.pendiente {
+.pago-estado.rechazado {
   background: color-mix(in srgb, var(--burnt) 18%, transparent);
   color: var(--burnt);
+}
+
+.pago-estado.cancelado {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  color: var(--ink);
 }
 
 /* ---------- Historial con scroll ---------- */

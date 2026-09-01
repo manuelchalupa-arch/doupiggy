@@ -6,6 +6,7 @@
 // pestañas, no solo en Inicio.
 
 import { parteDeGasto } from "./division";
+import { esPagoConfirmado } from "../services/pagoService";
 
 export const UMBRAL_NEUTRO = 500;
 export const UMBRAL_ALTO = 5000;
@@ -24,6 +25,7 @@ export function calcularSaldoUsuario(gastos, uidActual, pagosConfirmados = []) {
     else if ((g.participantes || []).includes(uidActual)) s -= miParte;
   }
   for (const p of pagosConfirmados || []) {
+    if (!esPagoConfirmado(p)) continue;
     if (p.para === uidActual) s -= p.monto;
     else if (p.de === uidActual) s += p.monto;
   }

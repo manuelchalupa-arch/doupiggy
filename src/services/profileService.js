@@ -2,7 +2,15 @@
 // Extiende el perfil de /usuarios/{uid} con los datos de cobro (CBU/alias)
 // que se muestran y editan en la pestaña de Información.
 
-import { doc, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 
 /**
@@ -47,6 +55,33 @@ export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias
   if (foto !== undefined) datos.foto = foto;
 
   await updateDoc(doc(db, "usuarios", uid), datos);
+
+  // Espejo de los datos de cobro en `miembrosInfo.{uid}` de CADA grupo del
+  // usuario: las reglas de Firestore solo permiten leer `/usuarios/{uid}` a
+  // su dueño (rules:43), así que para que el resto del grupo vea el alias/
+  // CBU al liquidar hay que copiarlo adentro del doc del grupo, que sí
+  // pueden leer los miembros.
+  await espejarDatosCobroEnGrupos(uid, { cbu: cbuLimpio || null, alias: aliasLimpio || null });
+}
+
+/**
+ * Copia los datos de cobro (CBU/alias) del usuario a `miembrosInfo.{uid}`
+ * de todos los grupos en los que es miembro, para que aparezcan en la
+ * pestaña Liquidación sin necesitar leer el perfil ajeno (prohibido por las
+ * reglas). No falla si el usuario todavía no está en ningún grupo real.
+ */
+export async function espejarDatosCobroEnGrupos(uid, { cbu = null, alias = null }) {
+  const gruposSnap = await getDocs(query(collection(db, "grupos"), where("miembros", "array-contains", uid)));
+  if (gruposSnap.empty) return;
+  await Promise.all(
+    gruposSnap.docs.map((d) =>
+      updateDoc(doc(db, "grupos", d.id), {
+        [`miembrosInfo.${uid}.alias`]: alias,
+        [`miembrosInfo.${uid}.cbu`]: cbu,
+        actualizadoEn: serverTimestamp(),
+      })
+    )
+  );
 }
 
 /**

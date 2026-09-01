@@ -92,19 +92,45 @@ service cloud.firestore {
       }
 
       // --- pagos (subcolección) ---
-      // Registros de pagos confirmados como recibidos por el ACREEDOR de
-      // cada par. Solo quien cobra (para == auth.uid) puede crear el
-      // registro, y no puede confirmarse un pago de sí mismo (de != para).
-      // Se crean una sola vez (update = false); desmarcar = delete, y solo
-      // lo puede hacer quien lo confirmó.
+      // Ciclo de vida de un pago real (trazabilidad completa):
+      //   - CREAR: el DEUDOR declara que envió dinero ("declarado"), o se
+      //     conserva el alta legacy del ACREEDOR confirmando directo (sin
+      //     estado) para no romper los registros ya creados por la versión
+      //     vieja. Nunca de == para.
+      //   - La deuda NO se considera saldada en el create: la confirmación
+      //     real llega recién con el update del acreedor.
+      //   - UPDATE (máquina de estados, con el rol correcto por transición):
+      //       declarado -> confirmado : SOLO el acreedor (para)
+      //       declarado -> rechazado  : SOLO el acreedor (para)
+      //       declarado -> cancelado  : SOLO el deudor (de), mientras siga
+      //                                 pendiente de confirmación
+      //   - DELETE: solo para deshacer un "recibido" legacy (lo creó el
+      //     acreedor) o una declaración propia todavía no confirmada.
       match /pagos/{pagoId} {
         allow read: if esMiembroDelGrupo(grupoId);
         allow create: if esMiembroDelGrupo(grupoId) &&
-          request.resource.data.para == request.auth.uid &&
-          request.resource.data.de != request.auth.uid;
-        allow update: if false;
-        allow delete: if esMiembroDelGrupo(grupoId) &&
-          resource.data.confirmadoPor == request.auth.uid;
+          request.resource.data.de != request.resource.data.para &&
+          (
+            (request.resource.data.de == request.auth.uid &&
+             request.resource.data.estado == "declarado") ||
+            (request.resource.data.para == request.auth.uid)
+          );
+        allow update: if esMiembroDelGrupo(grupoId) && (
+          (resource.data.estado == "declarado" &&
+           request.resource.data.estado == "confirmado" &&
+           request.auth.uid == resource.data.para) ||
+          (resource.data.estado == "declarado" &&
+           request.resource.data.estado == "rechazado" &&
+           request.auth.uid == resource.data.para) ||
+          (resource.data.estado == "declarado" &&
+           request.resource.data.estado == "cancelado" &&
+           request.auth.uid == resource.data.de)
+        );
+        allow delete: if esMiembroDelGrupo(grupoId) && (
+          resource.data.confirmadoPor == request.auth.uid ||
+          (resource.data.estado == "declarado" &&
+           resource.data.de == request.auth.uid)
+        );
       }
 
       // --- liquidaciones (subcolección) ---

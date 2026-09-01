@@ -10,6 +10,7 @@
 //     nivelSaldo/calcularSaldoUsuario: neto positivo = le deben (a favor).
 
 import { parteDeGasto } from "./division";
+import { esPagoConfirmado } from "../services/pagoService";
 
 /**
  * @param {Array<{uid: string, nombre: string}>} miembros
@@ -38,11 +39,13 @@ export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
 
   // Pagos que el acreedor ya confirmó como recibidos: se descuentan de la
   // deuda bruta del par (de → para) para que la liquidación refleje lo que
-  // efectivamente falta cobrar. El piso en 0 evita saldos negativos por
-  // sobre-pago; si un lado queda cubierto, el par simplemente desaparece o
-  // rota el sentido en el neto de abajo.
+  // efectivamente falta cobrar. Solo se descuentan los CONFIRMADOS: una
+  // declaración ("ya pagué") o un rechazo/cancelación no tocan el saldo. El
+  // piso en 0 evita saldos negativos por sobre-pago; si un lado queda
+  // cubierto, el par simplemente desaparece o rota el sentido en el neto.
   const confirmadoPorPar = {};
   for (const p of pagosConfirmados || []) {
+    if (!esPagoConfirmado(p)) continue;
     const clave = `${p.de}\u0000${p.para}`;
     confirmadoPorPar[clave] = (confirmadoPorPar[clave] || 0) + p.monto;
   }

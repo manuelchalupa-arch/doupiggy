@@ -59,6 +59,9 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
     return Object.entries(grupo.miembrosInfo).map(([uid, info]) => ({
       uid,
       nombre: info.nombre,
+      alias: info.alias ?? null,
+      cbu: info.cbu ?? null,
+      esLocal: !!info.esLocal,
     }));
   }, [grupo]);
 

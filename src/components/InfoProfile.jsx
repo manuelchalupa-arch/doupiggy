@@ -164,6 +164,8 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
         creadoPor: uidActual,
         nombreCreador: perfil?.nombre ?? nombre ?? "Vos",
         fotoCreador: fotoResuelta,
+        aliasCreador: perfil?.datosCobro?.alias ?? null,
+        cbuCreador: perfil?.datosCobro?.cbu ?? null,
       });
       setGrupoRecienCreadoId(grupoIdNuevo);
       setNombreNuevoGrupo("");
