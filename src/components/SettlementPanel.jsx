@@ -131,8 +131,8 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
         <h2>Resumen del grupo</h2>
 
         {!hayDeuda && (
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--avocado)" }}>
-            ¡Todo saldado! No hay deudas pendientes entre integrantes.
+          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--avocado)", margin: 0 }}>
+            ¡Todo saldado! Sin deudas pendientes.
           </p>
         )}
 
@@ -141,7 +141,7 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
             const r = resumen[m.uid];
             const esVos = m.uid === uidActual;
             return (
-              <div key={m.uid} className="chip-resumen">
+              <div key={m.uid} className={`chip-resumen${esVos ? " vos" : ""}`}>
                 <div className="chip-nombre">
                   <InicialMiembro uid={m.uid} nombre={m.nombre} />
                   <span>{esVos ? `${m.nombre} (vos)` : m.nombre}</span>
@@ -232,18 +232,20 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
         <h2>A quién hay que pagarle</h2>
 
         {!hayDeuda ? (
-          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--avocado)", margin: 0 }}>
-            Todos al día: nadie debe pagar nada.
+          <p className="estado-vacio" style={{ color: "var(--avocado)" }}>
+            Nadie debe nada: el grupo está en paz.
           </p>
         ) : (
           <>
             <p className="leyenda-matriz">
-              Un pago por pareja (los cruzados ya quedaron compensados). El dinero
-              fluye siempre del que debe hacia el que cobra.
+              Un pago por pareja (cruzados compensados). El dinero va de quien debe a quien cobra.
             </p>
             <div className="lista-pagos">
               {pares.map((p) => (
-                <div key={`${p.de}-${p.para}`} className="pago-fila">
+                <div
+                  key={`${p.de}-${p.para}`}
+                  className={`pago-fila${p.de === uidActual || p.para === uidActual ? " vos" : ""}`}
+                >
                   <span className="quien">
                     <InicialMiembro uid={p.de} nombre={p.deNombre} tamano={24} />
                     <span className="nombre" title={p.deNombre}>
@@ -254,7 +256,7 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
                   <FlechaLiquidacion />
                   <span className="pago-monto">{formatoARS.format(p.monto)}</span>
                   <FlechaLiquidacion />
-                  <span className="quien" style={{ textAlign: "right", justifyContent: "flex-end" }}>
+                  <span className="quien derecha">
                     <span className="nombre" title={p.paraNombre}>
                       {primeraPalabra(p.paraNombre)}
                       {p.para === uidActual && " (vos)"}
@@ -264,8 +266,9 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
                 </div>
               ))}
             </div>
-            <p className="leyenda-matriz" style={{ marginTop: 10, marginBottom: 0 }}>
-              Total del grupo: <strong>{formatoARS.format(totalGeneral)}</strong> en pagos pendientes.
+            <p className="total-pendiente">
+              <span>Total por saldar</span>
+              <strong>{formatoARS.format(totalGeneral)}</strong>
             </p>
           </>
         )}

@@ -1,11 +1,12 @@
 // components/LiquidationPanel.jsx
-// Pestaña Liquidación — rediseño personal, en tres niveles:
+// Pestaña Liquidación — espacio personal, en tres niveles:
 //   N1 · Situación: ¿cuánto debés? ¿cuánto te deben? ¿qué pagos esperan
 //        confirmación? (tarjetas grandes, sin mezclar estados).
 //   N2 · Consejo de liquidación: qué deuda conviene pagar primero, con
-//        estrategias explícitas y modo "tengo X para pagar".
+//        estrategias explícitas y modo "tengo X para pagar". Vive al pie de
+//        la pestaña para que lo primero que se vea sea lo accionable.
 //   N3 · Detalle: "Le debés a" (con alias para copiar y botón PAGAR),
-//        "Te deben", "Pendientes de confirmación" y "Historial".
+//        "Te deben", "Pendientes de confirmación" e "Historial".
 //
 // Ciclo de vida de un pago (REGLA PRINCIPAL):
 //   "Declaré que pagué" NO significa "la deuda está liquidada". Declarar un
@@ -205,106 +206,6 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
         <TarjetaEstado clase="pendiente" etiqueta="Pendiente de confirmación" monto={pos.totalPendienteConfirmacion} />
       </div>
 
-      {/* ---------- N2 · CONSEJO DE LIQUIDACIÓN ---------- */}
-      <div className="tarjeta-flotante">
-        <h2>Consejo de liquidación</h2>
-
-        {consejo.recomendada ? (
-          <div className="consejo-liquidacion">
-            <div className="consejo-cuerpo">
-              <InicialMiembro uid={consejo.recomendada.para} nombre={consejo.recomendada.nombre} tamano={34} />
-              <div>
-                <p className="consejo-titulo">
-                  Te conviene pagar primero a <strong>{consejo.recomendada.nombre}</strong>
-                </p>
-                <p className="consejo-meta">
-                  Deuda: <strong>{formatoARS.format(consejo.recomendada.monto)}</strong> ·
-                  Antigüedad: {antiguedadTexto(consejo.recomendada.antiguedadDias)}
-                </p>
-                <p className="consejo-motivo">Motivo: {consejo.motivo}</p>
-              </div>
-            </div>
-            <div className="modal-acciones" style={{ marginTop: 10 }}>
-              <button
-                type="button"
-                className="btn chico secundario"
-                onClick={() => document.getElementById(`deuda-${consejo.recomendada.para}`)?.scrollIntoView({ behavior: "smooth" })}
-              >
-                Ver detalle
-              </button>
-              <button
-                type="button"
-                className="btn chico accion"
-                onClick={() => abrirPagoDeuda(consejo.recomendada)}
-                disabled={procesando !== null}
-              >
-                Pagar {formatoARS.format(consejo.recomendada.monto)}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className="consejo-vacio">{consejo.motivo}</p>
-        )}
-
-        <p className="leyenda-matriz" style={{ marginTop: 12 }}>Cambiar estrategia:</p>
-        <div className="estrategia-chips">
-          {(["liberarme", "antiguedad", "monto"]).map((clave) => (
-            <button
-              type="button"
-              key={clave}
-              className={`estrategia-chip${estrategia === clave ? " sel" : ""}`}
-              onClick={() => setEstrategia(clave)}
-            >
-              {clave === "liberarme" ? "Liberarme rápido" : clave === "antiguedad" ? "Más antiguas" : "Mayor monto"}
-            </button>
-          ))}
-        </div>
-
-        {/* Modo "tengo X para pagar" */}
-        <div className="modo-dinero">
-          <label className="campo">¿Cuánto dinero tenés disponible para liquidar ahora?</label>
-          <div className="modo-dinero-fila">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={dineroTexto}
-              onChange={(e) => setDineroTexto(e.target.value)}
-              placeholder="0"
-            />
-            <button type="button" className="btn chico accion" onClick={analizarDinero} disabled={procesando !== null}>
-              Analizar
-            </button>
-          </div>
-        </div>
-
-        {analizador && analizador.length > 0 && (
-          <div className="opciones-plan">
-            {analizador.map((op) => (
-              <div className="opcion-plan" key={op.clave}>
-                <p className="opcion-titulo">{op.titulo}</p>
-                {op.items.length > 0 ? (
-                  <ul className="opcion-lista">
-                    {op.items.map((it) => (
-                      <li key={`${op.clave}-${it.para}`}>
-                        <span>✓ {it.nombre} — {formatoARS.format(it.pagado)}</span>
-                        {it.esParcial && <span className="opcion-parcial">(parcial)</span>}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="opcion-lista-vacia">Ninguna deuda queda incluida.</p>
-                )}
-                <p className="opcion-porque">{op.porque}</p>
-              </div>
-            ))}
-            <p className="leyenda-matriz">
-              Las opciones son orientativas: vos decidís. La confirmación del
-              acreedor siempre es obligatoria para saldar la deuda.
-            </p>
-          </div>
-        )}
-      </div>
-
       {/* ---------- N3 · LE DEBÉS A ---------- */}
       <div className="tarjeta-flotante">
         <h2>Le debés a</h2>
@@ -496,6 +397,106 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
             </div>
           )}
         </details>
+      </div>
+
+      {/* ---------- N2 · CONSEJO DE LIQUIDACIÓN (pie de pestaña) ---------- */}
+      <div className="tarjeta-flotante">
+        <h2>Consejo de liquidación</h2>
+
+        {consejo.recomendada ? (
+          <div className="consejo-liquidacion">
+            <div className="consejo-cuerpo">
+              <InicialMiembro uid={consejo.recomendada.para} nombre={consejo.recomendada.nombre} tamano={34} />
+              <div>
+                <p className="consejo-titulo">
+                  Te conviene pagar primero a <strong>{consejo.recomendada.nombre}</strong>
+                </p>
+                <p className="consejo-meta">
+                  Deuda: <strong>{formatoARS.format(consejo.recomendada.monto)}</strong> ·
+                  Antigüedad: {antiguedadTexto(consejo.recomendada.antiguedadDias)}
+                </p>
+                <p className="consejo-motivo">Motivo: {consejo.motivo}</p>
+              </div>
+            </div>
+            <div className="modal-acciones" style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                className="btn chico secundario"
+                onClick={() => document.getElementById(`deuda-${consejo.recomendada.para}`)?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Ver detalle
+              </button>
+              <button
+                type="button"
+                className="btn chico accion"
+                onClick={() => abrirPagoDeuda(consejo.recomendada)}
+                disabled={procesando !== null}
+              >
+                Pagar {formatoARS.format(consejo.recomendada.monto)}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="consejo-vacio">{consejo.motivo}</p>
+        )}
+
+        <p className="leyenda-matriz" style={{ marginTop: 12 }}>Cambiar estrategia:</p>
+        <div className="estrategia-chips">
+          {(["liberarme", "antiguedad", "monto"]).map((clave) => (
+            <button
+              type="button"
+              key={clave}
+              className={`estrategia-chip${estrategia === clave ? " sel" : ""}`}
+              onClick={() => setEstrategia(clave)}
+            >
+              {clave === "liberarme" ? "Liberarme rápido" : clave === "antiguedad" ? "Más antiguas" : "Mayor monto"}
+            </button>
+          ))}
+        </div>
+
+        {/* Modo "tengo X para pagar" */}
+        <div className="modo-dinero">
+          <label className="campo">¿Cuánto dinero tenés disponible para liquidar ahora?</label>
+          <div className="modo-dinero-fila">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={dineroTexto}
+              onChange={(e) => setDineroTexto(e.target.value)}
+              placeholder="0"
+            />
+            <button type="button" className="btn chico accion" onClick={analizarDinero} disabled={procesando !== null}>
+              Analizar
+            </button>
+          </div>
+        </div>
+
+        {analizador && analizador.length > 0 && (
+          <div className="opciones-plan">
+            {analizador.map((op) => (
+              <div className="opcion-plan" key={op.clave}>
+                <p className="opcion-titulo">{op.titulo}</p>
+                {op.items.length > 0 ? (
+                  <ul className="opcion-lista">
+                    {op.items.map((it) => (
+                      <li key={`${op.clave}-${it.para}`}>
+                        <span>✓ {it.nombre} — {formatoARS.format(it.pagado)}</span>
+                        {it.esParcial && <span className="opcion-parcial">(parcial)</span>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="opcion-lista-vacia">Ninguna deuda queda incluida.</p>
+                )}
+                <p className="opcion-porque">{op.porque}</p>
+              </div>
+            ))}
+            <p className="leyenda-matriz">
+              Las opciones son orientativas: vos decidís. La confirmación del
+              acreedor siempre es obligatoria para saldar la deuda.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Modal de pago (deudor) */}

@@ -154,7 +154,6 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
       </div>
 
       <div className="tarjeta">
-        <h2>Últimos 4 gastos</h2>
         <div className="lista-historial">
           {ultimosCuatro.length === 0 && (
             <p style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600, opacity: 0.7 }}>

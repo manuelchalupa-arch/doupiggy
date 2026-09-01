@@ -250,6 +250,11 @@ input.invalido {
 .chip-resumen .neg { color: var(--burnt); }
 .chip-resumen .neutro { color: var(--ink); opacity: 0.6; }
 
+.chip-resumen.vos {
+  border-color: var(--mustard);
+  background: color-mix(in srgb, var(--mustard) 14%, var(--paper));
+}
+
 .inicial-circulo {
   width: 26px;
   height: 26px;
@@ -282,11 +287,18 @@ input.invalido {
 .pago-fila {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 6px;
+  padding: 10px;
   background: var(--paper);
   border: var(--border-thin);
   border-radius: var(--radius-md);
+}
+
+/* La fila destaca cuando vos sos quien paga o quien cobra: lectura rápida
+   del "¿qué me toca a mí?" en el Resumen. */
+.pago-fila.vos {
+  border-color: var(--mustard);
+  background: color-mix(in srgb, var(--mustard) 16%, var(--paper));
 }
 
 .pago-fila .quien {
@@ -296,6 +308,12 @@ input.invalido {
   font-size: 12px;
   font-weight: 700;
   min-width: 0;
+  flex: 1;
+}
+
+.pago-fila .quien.derecha {
+  justify-content: flex-end;
+  text-align: right;
 }
 
 .pago-fila .quien .nombre {
@@ -306,10 +324,28 @@ input.invalido {
 
 .pago-fila .pago-monto {
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--burnt);
-  margin: 0 auto;
+  flex: none;
+  padding: 0 2px;
+}
+
+.total-pendiente {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 10px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+
+.total-pendiente strong {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--burnt);
 }
 
 /* ---------- Liquidación (rediseño): niveles 1, 2 y 3 ---------- */
@@ -355,7 +391,7 @@ input.invalido {
 
 .estado-liquidacion-etiqueta.debo { color: var(--burnt); }
 .estado-liquidacion-etiqueta.me-deben { color: var(--avocado); }
-.estado-liquidacion-etiqueta.pendiente { color: var(--mustard); }
+.estado-liquidacion-etiqueta.pendiente { color: color-mix(in srgb, var(--mustard) 52%, var(--ink) 48%); }
 
 .estado-liquidacion-monto {
   font-family: var(--font-mono);
@@ -772,17 +808,17 @@ input.invalido {
   color: var(--ink);
 }
 
-/* ---------- Historial con scroll ---------- */
+/* Historial con scroll (Gastos: últimos 4, sin título) */
 .lista-historial {
   max-height: 172px;
   overflow-y: auto;
   padding-right: 4px;
-  margin-top: 8px;
+  margin-top: 0;
   background-image: repeating-linear-gradient(
     to bottom,
     transparent,
-    transparent 43px,
-    color-mix(in srgb, var(--ink) 10%, transparent) 44px
+    transparent 47px,
+    color-mix(in srgb, var(--ink) 10%, transparent) 48px
   );
 }
 
@@ -803,7 +839,7 @@ input.invalido {
   border: none;
   border-bottom: 2px solid color-mix(in srgb, var(--ink) 30%, transparent);
   border-radius: 0;
-  padding: 8px 2px;
+  padding: 10px 4px;
   margin-bottom: 0;
 }
 
@@ -1182,4 +1218,21 @@ input.invalido {
   object-fit: contain;
   vertical-align: middle;
   flex: none;
+}
+
+/* ---------- Móvil angosto (≈9:16): legibilidad sin apretar ---------- */
+@media (max-width: 400px) {
+  .estado-liquidacion-grid { gap: 6px; }
+  .estado-liquidacion { padding: 8px; }
+  .estado-liquidacion-etiqueta { font-size: 9px; letter-spacing: 0.2px; }
+  .estado-liquidacion-monto { font-size: 14px; }
+
+  .pago-fila { padding: 8px; gap: 5px; }
+  .pago-fila .pago-monto { font-size: 14px; }
+  .pago-fila .quien { font-size: 11px; gap: 4px; }
+
+  .chip-resumen { padding: 7px 8px; }
+  .chip-resumen .chip-monto { font-size: 12px; }
+
+  .tarjeta-flotante { padding: 12px 14px; }
 }
