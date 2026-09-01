@@ -18,6 +18,7 @@ import { iniciarSesionConGoogle, iniciarSesionConEmail, registrarseConEmail, tra
 import { actualizarPerfil, esAliasValido } from "./services/profileService";
 
 const CLAVE_TOKEN_INVITACION = "doupiggy:invite-token";
+const CLAVE_ULTIMO_GRUPO = "doupiggy:ultimo-grupo";
 
 // Se lee una sola vez al cargar el módulo: si hay ?invite=TOKEN en la URL,
 // se guarda acá (estado y sessionStorage) y se limpia de la barra de
@@ -53,6 +54,11 @@ function limpiarTokenInvitacion() {
   }
 }
 
+/** true si el navegador reporta no tener conexión (para no esperar al servidor). */
+function estaSinConexion() {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
 export default function App() {
   const [mostrarSplash, setMostrarSplash] = useState(true);
   const [tokenInvitacion] = useState(leerYLimpiarTokenDeInvitacion);
@@ -73,6 +79,18 @@ export default function App() {
   // Mientras tenga un valor, tiene prioridad sobre AppShell.
   const [grupoParaInvitarId, setGrupoParaInvitarId] = useState(null);
 
+  // Si la app está instalada y se abre sin conexión, Firestore solo entrega
+  // snapshots locales. Este contador fuerza re-suscribirse cuando IoT vuelve,
+  // para que el snapshot de red reemplace el "offline" y la app entre directo
+  // al grupo del usuario.
+  const [conexionRevivida, setConexionRevivida] = useState(0);
+
+  useEffect(() => {
+    const alRecuperar = () => setConexionRevivida((n) => n + 1);
+    window.addEventListener("online", alRecuperar);
+    return () => window.removeEventListener("online", alRecuperar);
+  }, []);
+
   useEffect(() => {
     if (!estaAutenticado) {
       setGrupos([]);
@@ -82,17 +100,45 @@ export default function App() {
     }
     return suscribirseAGruposDeUsuario(
       usuario.uid,
-      (lista) => {
-        setErrorGrupos(null);
+      (lista, desdeCache) => {
         setGrupos(lista);
-        setCargandoGrupos(false);
-        // Si venimos de aceptar una invitación, priorizar ESE grupo aunque
-        // no sea el primero de la lista.
+        // Silenciar la pantalla de "crear grupo" cuando la lista vacía viene
+        // SOLO de la caché local (app instalada recién abierta o sin conexión):
+        // todavía no hay confirmación del servidor, así que no sabemos si el
+        // usuario realmente no tiene grupos. Se espera el snapshot de red.
+        const esVaciaDeCache = lista.length === 0 && desdeCache;
+        if (esVaciaDeCache) {
+          if (estaSinConexion()) {
+            // Sin red nunca llegará el snapshot del servidor: mostramos un
+            // estado de error claro (con Reintentar) en vez de un spinner
+            // eterno o de mandar a quien sí tiene grupos a crear otro.
+            setCargandoGrupos(false);
+            setErrorGrupos({ code: "offline" });
+          } else {
+            setCargandoGrupos(true);
+            setErrorGrupos(null);
+          }
+        } else {
+          setCargandoGrupos(false);
+          setErrorGrupos(null);
+        }
+        // Restaurar el último grupo usado (si sigue existiendo), para que la
+        // app instalada / el navegador entren directo al mismo grupo de antes
+        // en vez de exigir elegir de nuevo. La invitación tiene prioridad.
         setGrupoSeleccionadoId((actual) => {
           if (grupoDeInvitacionId && lista.some((g) => g.id === grupoDeInvitacionId)) {
             return grupoDeInvitacionId;
           }
-          return lista.some((g) => g.id === actual) ? actual : lista[0]?.id ?? null;
+          if (lista.some((g) => g.id === actual)) return actual;
+          const ultimoGrupo = (() => {
+            try {
+              return window.localStorage.getItem(CLAVE_ULTIMO_GRUPO);
+            } catch {
+              return null;
+            }
+          })();
+          if (ultimoGrupo && lista.some((g) => g.id === ultimoGrupo)) return ultimoGrupo;
+          return lista[0]?.id ?? null;
         });
       },
       (error) => {
@@ -100,9 +146,20 @@ export default function App() {
         setErrorGrupos(error);
       }
     );
-  }, [estaAutenticado, usuario, grupoDeInvitacionId]);
+  }, [estaAutenticado, usuario, grupoDeInvitacionId, conexionRevivida]);
 
   const grupoSeleccionado = grupos.find((g) => g.id === grupoSeleccionadoId) ?? null;
+
+  // Recordar el último grupo elegido para que la próxima apertura (navegador
+  // o app instalada) entre directo al mismo grupo sin volver a preguntar.
+  useEffect(() => {
+    if (!grupoSeleccionadoId) return;
+    try {
+      window.localStorage.setItem(CLAVE_ULTIMO_GRUPO, grupoSeleccionadoId);
+    } catch {
+      // Sin storage (modo privado extremo): no hay nada que guardar.
+    }
+  }, [grupoSeleccionadoId]);
 
   async function manejarAceptarInvitacion() {
     setErrorInvitacion(null);
@@ -320,13 +377,16 @@ function PantallaCarga({ texto }) {
 
 function PantallaError({ error }) {
   const esPermisos = error?.code === "permission-denied";
+  const esOffline = error?.code === "offline";
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, padding: 24, textAlign: "center" }}>
       <p style={{ fontFamily: "var(--font-display)", fontSize: 16, color: "var(--burnt)" }}>
-        No se pudo conectar con la base de datos
+        {esOffline ? "No hay conexión a Internet" : "No se pudo conectar con la base de datos"}
       </p>
       <p style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)", maxWidth: 320 }}>
-        {esPermisos
+        {esOffline
+          ? "Estás sin conexión. Cuando vuelvas a estar en línea, la app te va a llevar a tus grupos automáticamente."
+          : esPermisos
           ? "Firestore rechazó el pedido por permisos. Revisá que publicaste las reglas de seguridad (firebase/firestore.rules) en Firebase Console > Firestore Database > Rules."
           : `Código de error: ${error?.code ?? "desconocido"}. Revisá que Firestore Database esté creado en Firebase Console.`}
       </p>

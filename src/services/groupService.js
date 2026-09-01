@@ -59,7 +59,12 @@ export function suscribirseAGruposDeUsuario(uid, callback, onError) {
     q,
     (snapshot) => {
       const grupos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-      callback(grupos);
+      // `desdeCache` dice si esta lista salió SOLO de la caché local (todavía
+      // no llegó la confirmación del servidor). La UI la usa para NO concluir
+      // "no tenés grupos" cuando la caché está vacía (típico al abrir la app
+      // instalada recién instalada o sin conexión), evitando mandar a quien ya
+      // es miembro de un grupo a la pantalla de "crear grupo".
+      callback(grupos, snapshot.metadata.fromCache);
     },
     (error) => {
       console.error("Error al suscribirse a los grupos del usuario:", error);
