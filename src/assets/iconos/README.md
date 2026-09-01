@@ -56,7 +56,6 @@ src/assets/iconos/
 | `whatsapp.svg`     | Compartir por WhatsApp           |
 | `google.svg`       | Ingresar con Google              |
 | `instalar.svg`     | Instalar la app (PWA)            |
-| `sol.svg` / `luna.svg` | Cambiar tema día/noche       |
 | `pdf.svg` / `excel.svg` | Formato de informe          |
 | `estado.svg`       | Generar "Estado actual" (PDF)    |
 | `informe.svg`       | Generar informe por fechas       |

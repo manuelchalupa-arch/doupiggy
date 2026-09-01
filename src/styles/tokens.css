@@ -1,6 +1,5 @@
 /* styles/tokens.css
    Tokens visuales: colores, espaciado, tipografía, radios, sombras.
-   Modo día y modo noche son DOS paletas reales (no un filtro).
    Se importa PRIMERO en theme.css.
 */
 
@@ -56,39 +55,14 @@
   --teal: #2E7D74;
   --magenta: #B5384C;
   --gold: #E8B923;
-  --sun: #FCEFCF;
   --piggy: #E893A0;
   --piggy-oreja: #C9596B;
-  --astro: var(--gold);
 
   /* ---------- Botones (design system, día) ---------- */
   --btn-bg: #F5E6C8;        /* paper-cream */
   --btn-tinta: #1A120B;     /* ink-black */
   --btn-primario: #D4A017;  /* water-mustard */
   --btn-peligro: #CD5C5C;   /* water-rose */
-}
-
-/* ---------- MODO NOCHE (espresso/sepia cálido, estilo 1930s) ---------- */
-.app-root.tema-noche {
-  --cream: #211713;     /* fondo: café espresso profundo */
-  --paper: #2C211B;     /* tarjetas / superficies */
-  --ink: #F2E4C4;       /* texto: crema cálido */
-  --mustard: #E3B23C;   /* dorado cálido */
-  --burnt: #E0704F;     /* alerta / naranja tostado */
-  --avocado: #8FA668;   /* oliva cálido */
-  --teal: #4FA892;
-  --magenta: #DE7A8D;   /* rosa cálido */
-  --gold: #E3B23C;
-  --sun: #3B2B22;       /* pista del switch, café tostado */
-  --piggy: #D98AA0;
-  --piggy-oreja: #D96A4E;
-  --astro: #EFD9A0;     /* estrellas doradas suaves */
-
-  /* Botones (design system, noche) */
-  --btn-bg: #2C211B;
-  --btn-tinta: #F2E4C4;
-  --btn-primario: #E3B23C;
-  --btn-peligro: #C9604E;
 }
 
 /* Tintas de botón independientes del tema */

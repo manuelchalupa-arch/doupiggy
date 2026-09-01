@@ -9,8 +9,7 @@
 //     a 4-6). Sin "Subir foto": no se guardan imágenes propias, se eligen
 //     cerditos predefinidos para no depender de almacenamiento extra.
 //   - "Informes" ahora manda a Resumen (el generador se movió ahí).
-//   - "Configuración" quedó reducida al selector Sol/Luna sin tarjeta ni
-//     texto explicativo alrededor.
+//   - "Configuración" quedó reducida a la instalación PWA.
 
 import { useMemo, useState } from "react";
 import {
@@ -20,11 +19,9 @@ import {
   esAliasValido,
 } from "../services/profileService";
 import { crearGrupo, agregarMiembroLocal, eliminarMiembroLocal, eliminarGrupo } from "../services/groupService";
-import { useTheme } from "../context/ThemeContext";
 import { avatarAssets } from "../assets";
 import InvitarGrupo from "./InvitarGrupo";
 import InstalarApp from "./InstalarApp";
-import { IconoSol, IconoLuna } from "./IconoAstro";
 import { IconoTrash, IconoAgregarLocal, IconoCrearGrupo } from "./IconosRaster";
 
 /** Resuelve el valor guardado en perfil.foto a una URL de imagen mostrable.
@@ -49,7 +46,6 @@ function resolverFoto(foto) {
  * @param {(id: string) => void} [props.onCambiarGrupo]
  */
 export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], onCambiarGrupo }) {
-  const { modoOscuro, alternarModo } = useTheme();
   const [nombre, setNombre] = useState(perfil?.nombre ?? "");
   const [correo, setCorreo] = useState(perfil?.correoContacto ?? perfil?.email ?? "");
   const [cbu, setCbu] = useState(perfil?.datosCobro?.cbu ?? "");
@@ -400,21 +396,12 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
       </div>
 
       {/* ---------- CONFIGURACIÓN ---------- */}
-      {/* Modo día/noche + instalación PWA, fuera de la vista de las demás
-          pestañas (antes flotaban sobre toda la app). */}
+      {/* Instalación PWA, fuera de la vista de las demás pestañas
+          (antes flotaba sobre toda la app). */}
       <h1 className="titulo-seccion">Configuración</h1>
 
       <div className="tarjeta-flotante">
         <div className="fila-configuracion">
-          <button
-            type="button"
-            className="boton-icono"
-            aria-label={modoOscuro ? "Pasar a modo día" : "Pasar a modo noche"}
-            title={modoOscuro ? "Pasar a modo día" : "Pasar a modo noche"}
-            onClick={alternarModo}
-          >
-            {modoOscuro ? <IconoLuna tamano={22} /> : <IconoSol tamano={22} />}
-          </button>
           <InstalarApp />
         </div>
       </div>

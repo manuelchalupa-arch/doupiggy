@@ -6,8 +6,8 @@
 // se pasa hacia abajo.
 //
 // Pestañas: Inicio (resumen visual + saldo), Gastos (alta/edición),
-// Resumen (quién le debe a quién, exporta informes), Liquidación (tilde de
-// los pagos que uno recibió y cierre) e Info (grupo, perfil, tema).
+// Resumen (quién le debe a quién, exporta informes), Liquidación (gestión
+// personal de pagos declarados/confirmados) e Info (grupo, perfil).
 // Lógicamente, "Liquidación" gestiona los pagos confirmados en la base
 // (services/pagoService) y "Resumen" muestra el estado descontado.
 //
@@ -15,8 +15,8 @@
 // barra lateral fija — mismo componente, resuelto por CSS (ver
 // .tabbar en layout.css), sin duplicar marcado.
 //
-// El tema (día/noche) y la instalación PWA viven en su propia pestaña
-// (Info > Configuración), fuera de este armazón.
+// La instalación PWA vive en su propia pestaña (Info > Configuración),
+// fuera de este armazón.
 
 import { useMemo, useState } from "react";
 import { useExpenses } from "../hooks/useExpenses";

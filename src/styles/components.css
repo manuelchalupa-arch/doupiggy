@@ -872,37 +872,6 @@ input.invalido {
   margin-bottom: 8px;
 }
 
-.switch-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.switch-astro {
-  width: 60px;
-  height: 32px;
-  border: var(--border-medium);
-  border-radius: 20px;
-  background: var(--sun);
-  position: relative;
-  cursor: pointer;
-  flex: none;
-  display: flex;
-  align-items: center;
-}
-
-.switch-astro .astro-icono {
-  position: absolute;
-  top: 1px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  transition: left var(--transition-normal);
-}
-
-.switch-astro.noche .astro-icono { left: 32px; }
-
 /* ------------------ Configuración (Info) ------------------ */
 .fila-configuracion {
   display: flex;

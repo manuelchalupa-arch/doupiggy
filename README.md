@@ -56,13 +56,9 @@ src/
     useExpenses.js
     usePagos.js
 
-  context/
-    ThemeContext.jsx           Modo día/noche: dos paletas de color reales
-                                (no un filtro de brillo), persistido en localStorage
-
   styles/                     Design system modular, importado desde theme.css
     theme.css                  Punto de entrada: importa los 7 módulos de abajo
-    tokens.css                  Colores (paleta día/noche), tipografía, espaciado, sombras
+    tokens.css                  Colores (paleta), tipografía, espaciado, sombras
     reset.css                   box-sizing consistente
     base.css                    body, headings, .app-root (fondo + textura)
     layout.css                  Tarjetas, contenedores, grids, responsive
@@ -81,7 +77,7 @@ src/
     LiquidationPanel.jsx              Liquidación: tildar pagos recibidos y cerrarla
     InfoProfile.jsx                    Cuenta: perfil, grupos, informes, configuración
     CalendarioRango.jsx                 Selector de rango de fechas para informes
-    IconoTab.jsx / IconoAstro.jsx        Íconos SVG de navegación y sol/luna
+    IconoTab.jsx                        Íconos SVG de la navegación por pestañas
     IconosRaster.jsx                      Íconos SVG inline (trash, calendar, pdf, excel)
     CrearGrupoScreen.jsx                   Alta del primer grupo
     InvitarGrupo.jsx / InvitarTrasCrear.jsx Flujo de invitación por enlace
@@ -106,9 +102,9 @@ GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub 
 
 ## Identidad visual
 
-- **Paleta**: día y noche son dos paletas de color reales definidas como variables
-  CSS en `src/styles/tokens.css` (no un filtro de brillo). Marfil/papel, tinta,
-  mostaza, rojo ladrillo, verde apagado, azul petróleo y un rosa "piggy" de marca.
+- **Paleta**: paleta única definida como variables CSS en `src/styles/tokens.css`.
+  Marfil/papel, tinta, mostaza, rojo ladrillo, verde apagado, azul petróleo y un
+  rosa "piggy" de marca.
 - **Tipografía**: Fredericka the Great (títulos) + Arvo (cuerpo) + Courier Prime (montos).
 - **Personajes**: `Chanchito.jsx` es la mascota de los dos chanchitos (cerdito
   rico y cerdito humilde, recortes cuadrados de `avatarAssets` en
@@ -119,8 +115,6 @@ GUIA-PASO-A-PASO.md            Cómo publicar todo sin usar la terminal (GitHub 
   zonas (`backgroundAssets.nivel`). La pestaña
   Resumen usa el mismo criterio (`calcularDeudas` / `utils/division.js`), con
   los pagos confirmados como recibidos ya descontados (pagoService).
-- **Modo oscuro**: `ThemeContext.jsx` aplica la clase `.tema-noche` al contenedor
-  raíz (`.app-root`), que redefine las variables de color en `tokens.css`.
 
 ## Nota sobre los avatares de los chanchitos
 

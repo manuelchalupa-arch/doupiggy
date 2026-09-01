@@ -7,7 +7,6 @@
 
 import { useEffect, useState } from "react";
 import "./styles/theme.css";
-import { ThemeProvider } from "./context/ThemeContext";
 import SplashScreen from "./components/SplashScreen";
 import AppShell from "./components/AppShell";
 import CrearGrupoScreen from "./components/CrearGrupoScreen";
@@ -195,7 +194,7 @@ export default function App() {
   // "continuar sin unirme".
   if (aceptandoInvitacion && tokenInvitacion) {
     return (
-      <ThemeProvider>
+      <div className="app-root">
         {usuarioInvitadoPendiente ? (
           <PantallaRegistroInvitado
             nombreInicial={usuarioInvitadoPendiente.displayName ?? ""}
@@ -211,12 +210,12 @@ export default function App() {
             error={errorInvitacion}
           />
         )}
-      </ThemeProvider>
+      </div>
     );
   }
 
   return (
-    <ThemeProvider>
+    <div className="app-root">
       {cargando ? (
         <PantallaCarga texto="Cargando tu sesión..." />
       ) : !estaAutenticado ? (
@@ -250,7 +249,7 @@ export default function App() {
           onCambiarGrupo={setGrupoSeleccionadoId}
         />
       )}
-    </ThemeProvider>
+    </div>
   );
 }
 

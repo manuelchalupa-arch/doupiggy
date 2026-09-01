@@ -1,6 +1,6 @@
 /* styles/base.css
    Estilos base: body, headings, y el contenedor raíz .app-root (fondo,
-   textura de "papel de cine" vintage, paleta activa día/noche).
+   textura de "papel de cine" vintage, paleta activa).
 */
 
 body {
@@ -27,4 +27,3 @@ h1, h2, h3, .display {
   background-blend-mode: overlay;
   background-color: var(--cream);
 }
-.app-root.tema-noche { background-blend-mode: soft-light; }
