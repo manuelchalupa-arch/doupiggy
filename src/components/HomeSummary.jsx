@@ -25,9 +25,11 @@ export default function HomeSummary({ uidActual, miembros, gastos, pagos = [] })
   const nivel = useMemo(() => calcularNivel(saldo), [saldo]);
 
   // Posición del marcador conectada con los montos reales (0..1, 0.5=equilibrio).
+  // Incluye los pagos confirmados para que la soga NO contradiga el número
+  // de saldo que se muestra al lado.
   const posicion = useMemo(
-    () => calcularPosicionBalance(gastos, uidActual),
-    [gastos, uidActual]
+    () => calcularPosicionBalance(gastos, uidActual, pagos),
+    [gastos, uidActual, pagos]
   );
 
   const totalGastado = useMemo(

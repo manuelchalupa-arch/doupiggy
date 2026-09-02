@@ -140,6 +140,15 @@ export default function App() {
               return null;
             }
           })();
+          // Si el último grupo guardado ya no existe (p.ej. fue borrado),
+          // limpiar la clave obsoleta para no re-entrar a un grupo fantasma.
+          if (ultimoGrupo && !lista.some((g) => g.id === ultimoGrupo)) {
+            try {
+              window.localStorage.removeItem(CLAVE_ULTIMO_GRUPO);
+            } catch {
+              /* sin storage: nada que limpiar */
+            }
+          }
           if (ultimoGrupo && lista.some((g) => g.id === ultimoGrupo)) return ultimoGrupo;
           return lista[0]?.id ?? null;
         });
@@ -254,7 +263,7 @@ export default function App() {
           usuarioAuth={usuario}
           onCreado={setGrupoParaInvitarId}
         />
-      ) : (
+      ) : grupoSeleccionado ? (
         <AppShell
           grupoId={grupoSeleccionado.id}
           grupo={grupoSeleccionado}
@@ -264,6 +273,8 @@ export default function App() {
           onCambiarGrupo={setGrupoSeleccionadoId}
           onNuevoGrupo={() => setCreandoGrupo(true)}
         />
+      ) : (
+        <PantallaCarga texto="Preparando tu grupo..." />
       )}
     </div>
   );

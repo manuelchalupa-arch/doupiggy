@@ -29,6 +29,7 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado, adi
 
   async function manejarEnvio(evento) {
     evento.preventDefault();
+    if (creando) return;
     if (!nombre.trim()) return;
     setError(null);
     setCreando(true);

@@ -18,7 +18,7 @@
 // services/pagoService.js). Solo los pagos confirmados bajan el saldo.
 
 import { useMemo, useRef, useState } from "react";
-import { formatoARS } from "../utils/format";
+import { formatoARS, parsePeso } from "../utils/format";
 import {
   calcularPosicionLiquidacion,
   recomendarLiquidacion,
@@ -42,12 +42,6 @@ function mensajeDeError(err) {
       "Firebase Console y volvé a intentar.";
   }
   return err?.message || "No se pudo actualizar el pago.";
-}
-
-function parsePeso(texto) {
-  const limpio = String(texto ?? "").replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", ".");
-  const n = Number(limpio);
-  return Number.isFinite(n) ? n : NaN;
 }
 
 function antiguedadTexto(dias) {

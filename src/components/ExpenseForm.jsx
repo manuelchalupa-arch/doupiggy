@@ -11,7 +11,7 @@ import {
   eliminarGasto,
   calcularDivisionIgualitaria,
 } from "../services/expenseService";
-import { formatoARS } from "../utils/format";
+import { formatoARS, parsePeso } from "../utils/format";
 import { IconoTrash, IconoInvitacion } from "./IconosRaster";
 import InvitarGrupo from "./InvitarGrupo";
 
@@ -36,7 +36,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
 
   const ultimosCuatro = gastos.slice(0, 4);
 
-  const montoNumerico = parseFloat(monto.replace(",", ".")) || 0;
+  const montoNumerico = parsePeso(monto);
 
   const previewDivision = useMemo(() => {
     if (!montoNumerico || !participantesSeleccionados.length) return {};
@@ -51,6 +51,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
 
   async function manejarEnvio(evento) {
     evento.preventDefault();
+    if (enviando) return;
     setError(null);
     setEnviando(true);
     try {

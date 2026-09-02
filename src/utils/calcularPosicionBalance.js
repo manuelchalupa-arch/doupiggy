@@ -19,10 +19,11 @@ import { calcularSaldoUsuario, UMBRAL_ALTO } from "./nivelSaldo";
 /**
  * @param {Array} gastos - gastos del grupo (misma forma que usa la app)
  * @param {string} uidActual - uid del usuario activo
+ * @param {Array} [pagosConfirmados] - pagos recibidos confirmados
  * @returns {number} posición normalizada dentro de [0, 1]
  */
-export function calcularPosicionBalance(gastos, uidActual) {
-  const saldo = calcularSaldoUsuario(gastos, uidActual);
+export function calcularPosicionBalance(gastos, uidActual, pagosConfirmados = []) {
+  const saldo = calcularSaldoUsuario(gastos, uidActual, pagosConfirmados);
   // Positivo (le deben) tira hacia la izquierda; negativo (debe) tira a la derecha.
   const posicion = 0.5 - saldo / (2 * UMBRAL_ALTO);
   return Math.max(0, Math.min(1, posicion));

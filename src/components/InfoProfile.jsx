@@ -136,6 +136,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
 
   async function guardarPerfil(evento) {
     evento.preventDefault();
+    if (guardando) return;
     setTocado({ cbu: true, alias: true });
     setMensaje(null);
     setGuardando(true);
@@ -151,6 +152,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
 
   async function crearOtroGrupo(evento) {
     evento.preventDefault();
+    if (creandoGrupo) return;
     if (!nombreNuevoGrupo.trim()) return;
     setErrorGrupo(null);
     setCreandoGrupo(true);
@@ -173,6 +175,7 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
   }
 
   async function manejarBorrarGrupo() {
+    if (borrandoGrupo) return;
     const nombreGrupo = grupoActivo?.nombre ?? "este grupo";
     if (!window.confirm(`¿Borrar "${nombreGrupo}" para todos? Se eliminan sus gastos definitivamente.`)) return;
     setErrorGrupo(null);

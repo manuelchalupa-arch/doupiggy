@@ -24,8 +24,18 @@ export function calcularSaldoUsuario(gastos, uidActual, pagosConfirmados = []) {
     if (g.pagadoPor === uidActual) s += g.monto - miParte;
     else if ((g.participantes || []).includes(uidActual)) s -= miParte;
   }
+  // Sólo descontar un pago confirmado si el par (de → para) todavía tiene
+  // deuda bruta, es decir, si existe al menos un gasto en el que "para"
+  // pagó y "de" es participante. Con esto el saldo de Inicio se mantiene
+  // coherente con calcularDeudas: si el gasto se borró, el par desaparece
+  // y su pago confirmado ya no puede generar un saldo fantasma.
+  const parTieneDeudaBruta = (de, para) =>
+    (gastos || []).some(
+      (g) => g?.pagadoPor === para && (g?.participantes || []).includes(de)
+    );
   for (const p of pagosConfirmados || []) {
     if (!esPagoConfirmado(p)) continue;
+    if (!parTieneDeudaBruta(p.de, p.para)) continue;
     if (p.para === uidActual) s -= p.monto;
     else if (p.de === uidActual) s += p.monto;
   }
