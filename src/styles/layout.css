@@ -4,7 +4,10 @@
 
 /* ---------- Contenedor de tarjetas: una sola columna vertical, con un
    espaciado (gap) sutil y uniforme entre cada tarjeta. Se aplica al área
-   de contenido de cada pestaña (que renderiza las tarjetas en serie). */
+   de contenido de cada pestaña (que renderiza las tarjetas en serie).
+   `align-items: stretch` (default de flex column) hace que TODAS las
+   tarjetas compartan exactamente el mismo ancho y los mismos bordes de
+   inicio/fin, independientemente de su contenido. */
 .fondo-escena-contenido {
   --card-gap: 14px;
   max-width: 480px;
@@ -12,12 +15,17 @@
   padding: 18px 16px 90px;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: var(--card-gap);
 }
 
 /* ---------- Tarjetas estilo "clean" ---------- */
 .tarjeta {
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  width: 100%;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--paper) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: var(--border-thin);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
@@ -33,8 +41,11 @@
 
 /* Tarjeta "flotante": semitransparente + blur, borde fino, sin sombra dura */
 .tarjeta-flotante {
-  background: color-mix(in srgb, var(--paper) 68%, transparent);
-  backdrop-filter: blur(10px);
+  width: 100%;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--paper) 48%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: var(--border-thin);
   border-radius: var(--radius-lg);
   padding: 14px 18px;
@@ -48,6 +59,8 @@
 .tarjeta-imagen-completa {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0;
   background-size: cover;
   background-position: center;
@@ -61,8 +74,9 @@
 .tarjeta-imagen-completa-panel {
   position: relative;
   margin: 14px;
-  background: color-mix(in srgb, var(--paper) 85%, transparent);
-  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--paper) 58%, transparent);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
   border: var(--border-thin);
   border-radius: var(--radius-md);
   padding: 14px 18px;
@@ -71,19 +85,15 @@
 /* ---------- Fondo ilustrado compartido por todas las pestañas ---------- */
 /* El fondo va a pantalla completa (min-height cubre todo menos el header
    vacío de 64px); el contenido de cada pestaña se acota en ancho para no
-   quedar estirado en escritorio, y deja lugar abajo para la tabbar fija. */
+   quedar estirado en escritorio, y deja lugar abajo para la tabbar fija.
+   El layout de columnas + ancho + padding unificado vive en la primer
+   regla .fondo-escena-contenido (arriba), donde las tarjetas se alinean. */
 .fondo-escena {
   min-height: calc(100dvh - 150px);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   transition: background-image 0.4s ease;
-}
-
-.fondo-escena-contenido {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 18px 16px 90px;
 }
 
 /* ---------- Inicio: contenido sobre el fondo ilustrado ---------- */
@@ -95,15 +105,19 @@
 .inicio-contenido {
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 18px;
   min-height: calc(100dvh - 240px);
 }
 
 .inicio-contenido .tarjeta-flotante {
   margin: 0;
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 16px;
-  background: color-mix(in srgb, var(--paper) 62%, transparent);
-  backdrop-filter: blur(4px);
+  background: color-mix(in srgb, var(--paper) 45%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: var(--border-thin);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-soft);
