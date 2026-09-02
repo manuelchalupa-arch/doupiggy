@@ -1,130 +1,39 @@
 // functions/index.js
-// Cloud Functions de INTEGRIDAD y LIMPIEZA de DouPiggy.
+// Cloud Function de INTEGRIDAD de DouPiggy (una sola, on-demand).
 //
 // IMPORTANTE (no comprometer funcionalidad ni estructura):
-//   - Ninguna de estas funciones se invoca desde el front (la app no cambia).
-//   - Ninguna altera el esquema: solo sanean datos que la app ya maneja bien
-//     o limpian basura acumulada. Las reglas de Firestore NO se tocan: las
-//     Cloud Functions usan firebase-admin (credenciales de servicio) y
-//     eluden las reglas de seguridad a propósito — por eso recaen tareas de
-//     mantenimiento que el cliente no debería poder hacer.
-//   - Todas son IDEMPOTENTES: correrlas N veces no cambia el resultado.
+//   - No se invoca desde el front (la app no cambia).
+//   - No altera el esquema: solo sana la división de un gasto a centavos.
+//     Las reglas de Firestore NO se tocan: las Cloud Functions usan
+//     firebase-admin (credenciales de servicio) y eluden las reglas de
+//     seguridad a propósito — por eso recae una tarea que el cliente no
+//     debería hacer.
+//   - Es IDEMPOTENTE: correrla N veces no cambia el resultado.
+//
+// NOTA DE COSTO: se eliminaron las dos funciones "scheduled" (limpiarPagos
+// Huerfanos y limpiarInvitacionesVencidas) porque, al ser cron (pubsub),
+// exigen un plan con facturación activada y su costo recurrente supera el
+// beneficio que aportan. Esta función on-demand se mantiene porque solo se
+// ejecuta ante una escritura real de un gasto y vive dentro del free tier.
 
-const functions = require("firebase-functions/v2/scheduler");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions, logger } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 
 // Región por defecto: la misma que usa el proyecto (us-central1 por defecto).
-// Cambiar acá si el proyecto vive en otra región.
 setGlobalOptions({ region: "us-central1" });
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// ---------------------------------------------------------------------------
-// 1) LIMPIAR PAGOS HUÉRFANOS  (scheduled, diario)
-//    Borra pagos CONFIRMADOS cuyo par ya no tiene deuda bruta (el gasto que
-//    los originaba desapareció). La app ya los ignora en todos los cálculos,
-//    así que borrarlos no cambia ningún número visible; solo evita que la
-//    subcolección pagos acumule registros muertos para siempre.
-// ---------------------------------------------------------------------------
-/**
- * ¿El par (de → para) todavía tiene deuda BRUTA?
- * Mismo criterio que utils/nivelSaldo.js en el front (parTieneDeudaBruta):
- * existe al menos un gasto donde "para" pagó y "de" es participante.
- * Mantenerlo idéntico es lo que garantiza que acá se borre un pago EXACTAMENTE
- * cuando la app ya lo ignora en los cálculos (fix B3), y nunca antes.
- */
-function parTieneDeudaBruta(gastos, de, para) {
-  return gastos.some(
-    (g) => g.pagadoPor === para && Array.isArray(g.participantes) && g.participantes.includes(de)
-  );
-}
-
-exports.limpiarPagosHuerfanos = functions.onSchedule("0 7 * * *", async (event) => {
-  let borrados = 0;
-  let gruposRecorridos = 0;
-
-  const gruposSnap = await db.collection("grupos").get();
-  for (const grupoDoc of gruposSnap.docs) {
-    gruposRecorridos++;
-
-    const gastosSnap = await db.collection(`grupos/${grupoDoc.id}/gastos`).get();
-    const gastos = gastosSnap.docs.map((g) => g.data());
-
-    const pagosSnap = await db.collection(`grupos/${grupoDoc.id}/pagos`).get();
-    // Confirmados: estado == "confirmado" O legacy sin estado (esPagoConfirmado).
-    const huerfanos = pagosSnap.docs
-      .filter((p) => {
-        const data = p.data();
-        if (!(data.estado == null || data.estado === "confirmado")) return false;
-        return !parTieneDeudaBruta(gastos, data.de, data.para);
-      })
-      .map((p) => p.ref);
-
-    if (huerfanos.length === 0) continue;
-
-    // Borrado DEFINITIVO (decisión del usuario): en batches de 450 para
-    // respetar el máximo de 500 operaciones por transacción atómica.
-    for (let i = 0; i < huerfanos.length; i += 450) {
-      const lote = huerfanos.slice(i, i + 450);
-      const batch = db.batch();
-      lote.forEach((ref) => batch.delete(ref));
-      await batch.commit();
-    }
-    borrados += huerfanos.length;
-  }
-
-  logger.log(`limpiarPagosHuerfanos: ${borrados} pagos huérfanos borrados en ${gruposRecorridos} grupos.`);
-});
-
-// ---------------------------------------------------------------------------
-// 2) LIMPIAR INVITACIONES VENCIDAS  (scheduled, diario)
-//    Borra invitaciones ya vencidas o sin cupo restante. La app nunca las
-//    muestra después de aceptar/vencer, así que son basura acumulada.
-// ---------------------------------------------------------------------------
-function toMillis(ts) {
-  if (ts == null) return null;
-  if (typeof ts.toMillis === "function") return ts.toMillis();
-  if (ts.seconds != null) return ts.seconds * 1000;
-  return typeof ts === "number" ? ts : null;
-}
-
-exports.limpiarInvitacionesVencidas = functions.onSchedule("0 7 * * *", async (event) => {
-  const ahora = Date.now();
-  const expiradas = await db.collection("invitaciones").get();
-
-  // Nunca borrar una invitación manipulada (sin fecha): quedarse.
-  const aBorrar = expiradas.docs.filter((d) => {
-    const data = d.data();
-    const expiraEn = toMillis(data.expiraEn);
-    const vencida = expiraEn != null && expiraEn < ahora;
-    const sinCupo =
-      data.usosMaximos != null && data.usosActuales != null && data.usosActuales >= data.usosMaximos;
-    return expiraEn != null && (vencida || sinCupo);
-  });
-
-  for (let i = 0; i < aBorrar.length; i += 450) {
-    const lote = aBorrar.slice(i, i + 450);
-    const batch = db.batch();
-    lote.forEach((d) => batch.delete(d.ref));
-    await batch.commit();
-  }
-
-  logger.log(`limpiarInvitacionesVencidas: ${aBorrar.length} invitaciones borradas.`);
-});
-
-// ---------------------------------------------------------------------------
-// 3) RECONCILIAR DIVISIÓN DE GASTOS  (trigger onDocumentWritten, idempotente)
-//    Verifica que gasto.division sume exactamente el monto del gasto y, si se
-//    desvía por centavos (redondeo), reajusta el primer participante para que
-//    sume el total. NUNCA toca monto/participantes/pagadoPor/tipoDivision.
+// RECONCILIAR DIVISIÓN DE GASTOS  (trigger onDocumentWritten, idempotente)
+// Verifica que gasto.division sume exactamente el monto del gasto y, si se
+// desvía por centavos (redondeo), reajusta el primer participante para que
+// sume el total. NUNCA toca monto/participantes/pagadoPor/tipoDivision.
 //
-//    Anti-loop: si la division ya es correcta (o el desvío es > 1 centavo,
-//    señal de división personalizada), NO escribe nada. Al no escribir, no se
-//    vuelve a disparar el trigger.
-// ---------------------------------------------------------------------------
+// Anti-loop: si la division ya es correcta (o el desvío es > 1 centavo,
+// señal de división personalizada), NO escribe nada. Al no escribir, no se
+// vuelve a disparar el trigger.
 exports.reconciliarDivision = onDocumentWritten("grupos/{grupoId}/gastos/{gastoId}", async (event) => {
   const despues = event.data?.after?.data?.();
   if (!despues) return; // borrado: nada que reconciliar
