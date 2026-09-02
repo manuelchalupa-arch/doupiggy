@@ -65,6 +65,12 @@ export function suscribirseAPagos(grupoId, callback, onError) {
  * @returns {Promise<string>} id del pago creado
  */
 export async function declararPagoEnviado(grupoId, pago) {
+  if (!(pago.monto > 0)) {
+    throw new Error("El monto de la declaración debe ser mayor a cero.");
+  }
+  if (!pago.de || !pago.para || pago.de === pago.para) {
+    throw new Error("La declaración necesita un deudor y un acreedor distintos.");
+  }
   const ref = await addDoc(collection(db, "grupos", grupoId, "pagos"), {
     de: pago.de,
     para: pago.para,

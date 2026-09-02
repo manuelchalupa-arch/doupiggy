@@ -8,24 +8,29 @@
 //   - resumen: por miembro, total que debe, total que le deben, saldo neto
 //     y el detalle con quién. Convención de signo igual que
 //     nivelSaldo/calcularSaldoUsuario: neto positivo = le deben (a favor).
+//
+// Este archivo es la FUENTE ÚNICA del balance del grupo. Tanto
+// `calcularDeudas` (Resumen/Liquidación) como `calcularSaldoUsuario`
+// (Inicio/escena) consumen el mismo core `calcularBalanceGrupo`, así el
+// saldo de Inicio nunca vuelve a divergir del detalle de Resumen.
 
 import { parteDeGasto } from "./division";
 import { esPagoConfirmado } from "../services/pagoService";
 
 /**
- * @param {Array<{uid: string, nombre: string}>} miembros
- * @param {Array} gastos - cada gasto con pagadoPor, participantes[], monto y division
- * @param {Array} [pagosConfirmados] - pagos recibidos confirmados, cada uno
- *   { de: uid del que pagó, para: uid que cobró, monto }
- * @returns {{ pares: Array, resumen: Object }}
+ * Núcleo único del balance: deuda bruta por par, pagos confirmados aplicados
+ * (con piso en 0), neto por par y resumen por miembro. Es la única parte que
+ * conoce la matemática de gastos + pagos; el resto del código solo la lee.
  */
-export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
+export function calcularBalanceGrupo(gastos, miembros, pagosConfirmados = []) {
   const nombres = {};
-  for (const m of miembros) nombres[m.uid] = m.nombre;
+  const uids = [];
+  for (const m of miembros) {
+    nombres[m.uid] = m.nombre;
+    uids.push(m.uid);
+  }
 
   // Deuda bruta: bruto[deudor][acreedor] = monto que debe "deudor" a "acreedor".
-  // Se usa la división exacta guardada en cada gasto (parteDeGasto) para que
-  // nunca descuadre con lo que se guardó en la base.
   const bruto = {};
   for (const g of gastos) {
     for (const p of g.participantes || []) {
@@ -37,12 +42,7 @@ export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
     }
   }
 
-  // Pagos que el acreedor ya confirmó como recibidos: se descuentan de la
-  // deuda bruta del par (de → para) para que la liquidación refleje lo que
-  // efectivamente falta cobrar. Solo se descuentan los CONFIRMADOS: una
-  // declaración ("ya pagué") o un rechazo/cancelación no tocan el saldo. El
-  // piso en 0 evita saldos negativos por sobre-pago; si un lado queda
-  // cubierto, el par simplemente desaparece o rota el sentido en el neto.
+  // Pagos CONFIRMADOS por par (de → para) con piso en 0 en la deuda bruta.
   const confirmadoPorPar = {};
   for (const p of pagosConfirmados || []) {
     if (!esPagoConfirmado(p)) continue;
@@ -61,13 +61,11 @@ export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
 
   // Neto por par (un solo sentido: solo queda quien debe neto).
   const pares = [];
-  const uids = miembros.map((m) => m.uid);
   for (let i = 0; i < uids.length; i++) {
     for (let j = 0; j < uids.length; j++) {
       if (i === j) continue;
       const a = uids[i];
       const b = uids[j];
-      // Redondeo a centavos para no arrastrar ruido de coma flotante.
       const neto = Math.round(((bruto[a]?.[b] || 0) - (bruto[b]?.[a] || 0)) * 100) / 100;
       if (neto > 0.01) {
         pares.push({
@@ -109,5 +107,17 @@ export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
     };
   }
 
+  return { uids, bruto, pares, resumen };
+}
+
+/**
+ * @param {Array<{uid: string, nombre: string}>} miembros
+ * @param {Array} gastos - cada gasto con pagadoPor, participantes[], monto y division
+ * @param {Array} [pagosConfirmados] - pagos recibidos confirmados, cada uno
+ *   { de: uid del que pagó, para: uid que cobró, monto }
+ * @returns {{ pares: Array, resumen: Object }}
+ */
+export function calcularDeudas(gastos, miembros, pagosConfirmados = []) {
+  const { pares, resumen } = calcularBalanceGrupo(gastos, miembros, pagosConfirmados);
   return { pares, resumen };
 }

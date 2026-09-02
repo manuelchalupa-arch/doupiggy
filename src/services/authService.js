@@ -183,15 +183,15 @@ async function upsertPerfilUsuario({ uid, nombre, email, foto, esAnonimo, provee
     });
   } else {
     // Re-login: siempre se actualiza el email (fuente de verdad de auth) y
-    // la última conexión. El nombre solo se propaga si falta, para no pisar
-    // un nombre que la persona editó en Cuenta > Tu perfil. La foto de
-    // Google solo se sincroniza si la guardada no es un avatar custom
-    // (preset:..., data:...) ni una URL vieja de Google; así un cambio de
-    // foto de la cuenta se refleja sin reemplazar un avatar elegido a mano.
+    // la última conexión. El email no se edita en la app, así que si cambió
+    // en la cuenta de Google se propaga. El nombre solo se propaga si falta,
+    // para no pisar un nombre que la persona editó en Cuenta > Tu perfil.
+    // La foto de Google solo se sincroniza si la guardada no es un avatar
+    // custom (preset:..., data:...) ni una URL vieja de Google.
     const datos = snap.data();
     const cambios = { ultimaConexion: serverTimestamp() };
     if (proveedor) cambios.proveedor = proveedor;
-    if (email && !datos.email) cambios.email = email;
+    if (email && email !== datos.email) cambios.email = email;
     if (nombre && !datos.nombre) cambios.nombre = nombre;
     const fotoGuardada = datos.foto;
     if (

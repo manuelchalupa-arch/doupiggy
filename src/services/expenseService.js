@@ -6,6 +6,7 @@ import {
   collection,
   doc,
   addDoc,
+  getDoc,
   updateDoc,
   deleteDoc,
   onSnapshot,
@@ -106,8 +107,46 @@ export async function crearGasto(grupoId, datosGasto) {
 }
 
 export async function editarGasto(grupoId, gastoId, cambios) {
-  await updateDoc(doc(db, "grupos", grupoId, "gastos", gastoId), {
-    ...cambios,
+  // Lee el estado actual para validar contra valores completos (no solo lo
+  // que llega en `cambios`) y recalcular la división de forma consistente.
+  const ref = doc(db, "grupos", grupoId, "gastos", gastoId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    throw new Error("El gasto ya no existe.");
+  }
+  const actual = snap.data();
+
+  const monto = cambios.monto ?? actual.monto;
+  const descripcion = cambios.descripcion ?? actual.descripcion;
+  const pagadoPor = cambios.pagadoPor ?? actual.pagadoPor;
+  const participantes = cambios.participantes ?? actual.participantes ?? [];
+
+  // Validación defensiva, mismo criterio que construirPayloadGasto (alta).
+  if (!(monto > 0)) {
+    throw new Error("El monto debe ser mayor a cero.");
+  }
+  if (!descripcion?.trim()) {
+    throw new Error("La descripción es obligatoria.");
+  }
+  if (!participantes.length) {
+    throw new Error("Debe haber al menos un participante.");
+  }
+  if (!participantes.includes(pagadoPor)) {
+    throw new Error("Quien paga debe estar incluido entre los participantes.");
+  }
+
+  // Si cambió el monto o la composición, recalcular la división en partes
+  // iguales para que siempre sume el monto total.
+  const division =
+    cambios.division ??
+    calcularDivisionIgualitaria(monto, participantes);
+
+  await updateDoc(ref, {
+    monto,
+    descripcion: descripcion.trim(),
+    pagadoPor,
+    participantes,
+    division,
     editadoEn: serverTimestamp(),
   });
 }

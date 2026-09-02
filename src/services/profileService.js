@@ -8,6 +8,7 @@ import {
   getDocs,
   query,
   updateDoc,
+  writeBatch,
   where,
   serverTimestamp,
 } from "firebase/firestore";
@@ -54,14 +55,10 @@ export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias
   };
   if (foto !== undefined) datos.foto = foto;
 
-  await updateDoc(doc(db, "usuarios", uid), datos);
-
-  // Espejo de los datos de cobro en `miembrosInfo.{uid}` de CADA grupo del
-  // usuario: las reglas de Firestore solo permiten leer `/usuarios/{uid}` a
-  // su dueño (rules:43), así que para que el resto del grupo vea el alias/
-  // CBU al liquidar hay que copiarlo adentro del doc del grupo, que sí
-  // pueden leer los miembros.
-  await espejarDatosCobroEnGrupos(uid, { cbu: cbuLimpio || null, alias: aliasLimpio || null });
+  // Escritura atómica única: el perfil del usuario + el espejo de CBU/alias
+  // en todos sus grupos se graban en un solo batch. Así nunca queda el perfil
+  // actualizado pero un grupo con el dato de cobro viejo (ni al revés).
+  await espejarDatosCobroEnGrupos(uid, { cbu: cbuLimpio || null, alias: aliasLimpio || null }, datos);
 }
 
 /**
@@ -69,19 +66,24 @@ export async function actualizarPerfil(uid, { nombre, correoContacto, cbu, alias
  * de todos los grupos en los que es miembro, para que aparezcan en la
  * pestaña Liquidación sin necesitar leer el perfil ajeno (prohibido por las
  * reglas). No falla si el usuario todavía no está en ningún grupo real.
+ *
+ * Si se pasa `datosUsuario`, también se actualiza el doc `/usuarios/{uid}`
+ * en el mismo batch (por eso `actualizarPerfil` delega acá): garantiza que
+ * perfil propio y espejos en grupos se graben de forma atómica.
  */
-export async function espejarDatosCobroEnGrupos(uid, { cbu = null, alias = null }) {
+export async function espejarDatosCobroEnGrupos(uid, { cbu = null, alias = null }, datosUsuario = null) {
   const gruposSnap = await getDocs(query(collection(db, "grupos"), where("miembros", "array-contains", uid)));
-  if (gruposSnap.empty) return;
-  await Promise.all(
-    gruposSnap.docs.map((d) =>
-      updateDoc(doc(db, "grupos", d.id), {
-        [`miembrosInfo.${uid}.alias`]: alias,
-        [`miembrosInfo.${uid}.cbu`]: cbu,
-        actualizadoEn: serverTimestamp(),
-      })
-    )
-  );
+
+  const batch = writeBatch(db);
+  if (datosUsuario) batch.update(doc(db, "usuarios", uid), datosUsuario);
+  for (const d of gruposSnap.docs) {
+    batch.update(doc(db, "grupos", d.id), {
+      [`miembrosInfo.${uid}.alias`]: alias,
+      [`miembrosInfo.${uid}.cbu`]: cbu,
+      actualizadoEn: serverTimestamp(),
+    });
+  }
+  await batch.commit();
 }
 
 /**

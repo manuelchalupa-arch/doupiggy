@@ -5,15 +5,14 @@
 import {
   collection,
   doc,
-  setDoc,
   onSnapshot,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
   deleteField,
-  deleteDoc,
   getDocs,
   updateDoc,
+  writeBatch,
   query,
   where,
 } from "firebase/firestore";
@@ -25,7 +24,10 @@ import { db } from "../firebase/firebaseConfig";
 export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador, aliasCreador = null, cbuCreador = null }) {
   const ref = doc(collection(db, "grupos"));
 
-  await setDoc(ref, {
+  // Escritura atómica: el grupo y la membresía del creador se graban en un
+  // solo batch, así nunca queda un grupo sin dueño o un gruposIds sin grupo.
+  const batch = writeBatch(db);
+  batch.set(ref, {
     nombre,
     moneda: "ARS",
     creadoPor,
@@ -42,10 +44,10 @@ export async function crearGrupo({ nombre, creadoPor, nombreCreador, fotoCreador
     creadoEn: serverTimestamp(),
     actualizadoEn: serverTimestamp(),
   });
-
-  await updateDoc(doc(db, "usuarios", creadoPor), {
+  batch.update(doc(db, "usuarios", creadoPor), {
     gruposIds: arrayUnion(ref.id),
   });
+  await batch.commit();
 
   return ref.id;
 }
@@ -134,7 +136,11 @@ export async function eliminarMiembroLocal(grupoId, idLocal) {
  */
 export async function eliminarGrupo(grupoId) {
   const gastosSnap = await getDocs(collection(db, "grupos", grupoId, "gastos"));
-  await Promise.all(gastosSnap.docs.map((d) => deleteDoc(d.ref)));
 
-  await deleteDoc(doc(db, "grupos", grupoId));
+  // Borrado atómico: todos los gastos + el doc del grupo en un solo batch.
+  // Si algo falla a mitad no queda un grupo "pesado" a medio borrar.
+  const batch = writeBatch(db);
+  gastosSnap.docs.forEach((d) => batch.delete(d.ref));
+  batch.delete(doc(db, "grupos", grupoId));
+  await batch.commit();
 }

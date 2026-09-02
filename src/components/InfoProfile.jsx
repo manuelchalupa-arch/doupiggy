@@ -19,6 +19,7 @@ import {
   esAliasValido,
 } from "../services/profileService";
 import { crearGrupo, agregarMiembroLocal, eliminarMiembroLocal, eliminarGrupo } from "../services/groupService";
+import { cerrarSesion } from "../services/authService";
 import { avatarAssets } from "../assets";
 import InvitarGrupo from "./InvitarGrupo";
 import InstalarApp from "./InstalarApp";
@@ -187,6 +188,16 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
       setErrorGrupo(err.message ?? "No se pudo borrar el grupo.");
     } finally {
       setBorrandoGrupo(false);
+    }
+  }
+
+  async function manejarCerrarSesion() {
+    try {
+      await cerrarSesion();
+      // useAuthState escucha el estado de auth: al firmar fuera, la app
+      // vuelve a la pantalla de login automáticamente.
+    } catch (err) {
+      setErrorGrupo(err?.message ?? "No se pudo cerrar la sesión.");
     }
   }
 
@@ -407,6 +418,14 @@ export default function InfoProfile({ uidActual, perfil, grupoId, grupos = [], o
         <div className="fila-configuracion">
           <InstalarApp />
         </div>
+        <button
+          type="button"
+          className="btn"
+          onClick={manejarCerrarSesion}
+          style={{ marginTop: 12, width: "100%" }}
+        >
+          Cerrar sesión
+        </button>
       </div>
 
       {/* La sección "Informes" se sacó de acá por completo (queda solo en

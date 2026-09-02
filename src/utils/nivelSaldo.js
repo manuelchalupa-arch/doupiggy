@@ -5,42 +5,28 @@
 // AppShell lo necesita para aplicar el fondo correspondiente en TODAS las
 // pestañas, no solo en Inicio.
 
-import { parteDeGasto } from "./division";
-import { esPagoConfirmado } from "../services/pagoService";
+import { calcularBalanceGrupo } from "./calcularDeudas";
 
 export const UMBRAL_NEUTRO = 500;
 export const UMBRAL_ALTO = 5000;
 
 /**
  * Saldo neto real del usuario: positivo = le deben, negativo = debe.
- * Los pagosConfirmados son pagos que el acreedor de un par ya cobró: cada
- * uno extingue deuda, así que desciende el saldo de quien cobra (p.para) y
- * asciende el de quien paga (p.de).
+ *
+ * FUENTE ÚNICA DE BALANCE: delega en `calcularBalanceGrupo` (el mismo core
+ * que usa `calcularDeudas`/Resumen), así Inicio y Resumen nunca divergen.
+ * El miembro activo se deriva de los gastos (participantes ∪ quien pagó),
+ * que alcanza para calcular su neto; no hace falta la lista de miembros.
  */
 export function calcularSaldoUsuario(gastos, uidActual, pagosConfirmados = []) {
-  let s = 0;
-  for (const g of gastos) {
-    const miParte = parteDeGasto(g, uidActual);
-    if (g.pagadoPor === uidActual) s += g.monto - miParte;
-    else if ((g.participantes || []).includes(uidActual)) s -= miParte;
+  const uids = new Set();
+  for (const g of gastos || []) {
+    uids.add(g?.pagadoPor);
+    for (const p of g?.participantes || []) uids.add(p);
   }
-  // Sólo descontar un pago confirmado si el par (de → para) todavía tiene
-  // deuda bruta, es decir, si existe al menos un gasto en el que "para"
-  // pagó y "de" es participante. Con esto el saldo de Inicio se mantiene
-  // coherente con calcularDeudas: si el gasto se borró, el par desaparece
-  // y su pago confirmado ya no puede generar un saldo fantasma.
-  const parTieneDeudaBruta = (de, para) =>
-    (gastos || []).some(
-      (g) => g?.pagadoPor === para && (g?.participantes || []).includes(de)
-    );
-  for (const p of pagosConfirmados || []) {
-    if (!esPagoConfirmado(p)) continue;
-    if (!parTieneDeudaBruta(p.de, p.para)) continue;
-    if (p.para === uidActual) s -= p.monto;
-    else if (p.de === uidActual) s += p.monto;
-  }
-  // Redondeo a centavos para evitar arrastre de errores de coma flotante.
-  return Math.round(s * 100) / 100;
+  const miembros = [...uids].filter(Boolean).map((uid) => ({ uid, nombre: uid }));
+  const { resumen } = calcularBalanceGrupo(gastos, miembros, pagosConfirmados);
+  return Math.round((resumen[uidActual]?.neto || 0) * 100) / 100;
 }
 
 /**
