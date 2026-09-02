@@ -100,20 +100,19 @@ export default function AppHeader({ tab, grupoId, grupos = [], onCambiarGrupo, o
             )}
           </div>
 
-          {/* Botón circular "Nuevo grupo": ficha/moneda con las letras NG.
-              Apunta al recurso gráfico futuro: para reemplazar NG por una
-              imagen/SVG basta cambiar el interior de
-              .boton-nuevo-grupo-contenido — no se toca botón, tamaño,
-              posición, área táctil ni lógica. */}
+          {/* Botón circular "Nuevo grupo": ficha/moneda con el recurso
+              gráfico (boton-nuevo-grupo.jpg). La imagen se dibuja como
+              fondo del círculo (cover) y se recorta con overflow:hidden a
+              la forma circular; reemplazando el asset en assets/index.js
+              se cambia el gráfico sin tocar tamaño, posición ni lógica. */}
           <button
             type="button"
             className="boton-nuevo-grupo"
+            style={{ backgroundImage: `url(${brandingAssets.botonNuevoGrupo})` }}
             onClick={onNuevoGrupo}
             aria-label="Crear nuevo grupo"
             title="Crear nuevo grupo"
-          >
-            <span className="boton-nuevo-grupo-contenido" aria-hidden="true">NG</span>
-          </button>
+          />
         </div>
       )}
     </header>

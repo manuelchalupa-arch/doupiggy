@@ -10,6 +10,7 @@ import titulo from "./branding/titulo.webp";
 import madera from "./branding/madera.webp";
 import soga from "./branding/soga.png";
 import monoRojo from "./branding/mono-rojo.png";
+import botonNuevoGrupo from "./branding/boton-nuevo-grupo.jpg";
 
 // ---------- backgrounds (5 estados de saldo + 2 fondos de sección) ----------
 import bgLevel1 from "./backgrounds/bg-level1.webp";
@@ -34,7 +35,7 @@ import avatarCerdito4 from "./sprites/avatar-cerdito4.webp";
 import avatarCerdito5 from "./sprites/avatar-cerdito5.webp";
 import avatarCerdito6 from "./sprites/avatar-cerdito6.webp";
 
-export const brandingAssets = { logo, splash, titulo, madera, soga, monoRojo };
+export const brandingAssets = { logo, splash, titulo, madera, soga, monoRojo, botonNuevoGrupo };
 
 // Sprites completos de la escena "tira y afloje" (Inicio).
 export const spriteAssets = {

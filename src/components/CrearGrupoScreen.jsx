@@ -53,12 +53,16 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado, adi
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        gap: 16,
+        justifyContent: "flex-start",
+        padding: "40px 24px 24px",
+        gap: 20,
       }}
     >
-      <img src={brandingAssets.logo} alt="DouPiggy" style={{ width: 96, height: 96, objectFit: "contain" }} />
+      <img
+        src={brandingAssets.logo}
+        alt="DouPiggy"
+        style={{ width: 288, height: 288, objectFit: "contain", flex: "none" }}
+      />
 
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
         {onCancelar && (
