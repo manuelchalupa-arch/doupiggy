@@ -55,7 +55,15 @@
 
 /* Tarjeta con foto decorativa a color cubriendo TODO el fondo (sin recorte,
    sin bordes ni espacios vacíos alrededor de la imagen, sin blend mode que
-   le saque color). El texto va en un panel legible flotando encima. */
+   le saque color). El texto va en un panel legible flotando encima.
+
+   En la práctica estas tarjetas se usan SIN imagen de fondo propia (p. ej.
+   "Informe del resumen" en la pestaña Resumen, o el formulario de Gastos),
+   de modo que el panel interno ES la superficie visible de la tarjeta. Por
+   eso el panel ocupa el 100% del ancho del contenedor (sin margen interno)
+   y su borde fino arranca y termina en la MISMA línea que las tarjetas
+   equivalentes (`.tarjeta-flotante`) de la misma columna. La transparencia
+   y el blur se aplican directamente sobre esta superficie. */
 .tarjeta-imagen-completa {
   position: relative;
   overflow: hidden;
@@ -73,13 +81,15 @@
 
 .tarjeta-imagen-completa-panel {
   position: relative;
-  margin: 14px;
-  background: color-mix(in srgb, var(--paper) 58%, transparent);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  background: color-mix(in srgb, var(--paper) 48%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: var(--border-thin);
-  border-radius: var(--radius-md);
-  padding: 14px 18px;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
 }
 
 /* ---------- Fondo ilustrado compartido por todas las pestañas ---------- */
