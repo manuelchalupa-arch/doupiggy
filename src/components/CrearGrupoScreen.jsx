@@ -3,6 +3,9 @@
 // de ningún grupo (típicamente: primer login). Tras crear el grupo, NO pasa
 // directo a AppShell: llama a onCreado(grupoId) para que App.jsx muestre
 // primero la pantalla de invitar, y recién después pasa a AppShell.
+// También se reutiliza desde el botón "Nuevo grupo" del header (creando un
+// grupo ADICIONAL): en ese caso App.jsx pasa `adicional`, cambia el título
+// y ofrece onCancelar para volver sin crear nada.
 
 import { useState } from "react";
 import { crearGrupo } from "../services/groupService";
@@ -14,8 +17,12 @@ import { IconoCrearGrupo } from "./IconosRaster";
  * @param {string} props.uidActual
  * @param {object} props.usuarioAuth - objeto de Firebase Auth (para nombre/foto)
  * @param {(grupoId: string) => void} props.onCreado
+ * @param {boolean} [props.adicional] - true cuando se crea un grupo ADICIONAL
+ *   (ya hay otros), no el primero.
+ * @param {() => void} [props.onCancelar] - vuelve atrás sin crear (solo en
+ *   el flujo "nuevo grupo adicional").
  */
-export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
+export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado, adicional = false, onCancelar }) {
   const [nombre, setNombre] = useState("");
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState(null);
@@ -54,10 +61,21 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado }) {
       <img src={brandingAssets.logo} alt="DouPiggy" style={{ width: 96, height: 96, objectFit: "contain" }} />
 
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
-        <h2>Creá tu primer grupo</h2>
+        {onCancelar && (
+          <button
+            type="button"
+            className="btn chico"
+            onClick={onCancelar}
+            style={{ marginBottom: 10 }}
+          >
+            ← Volver
+          </button>
+        )}
+        <h2>{adicional ? "Crear un grupo nuevo" : "Creá tu primer grupo"}</h2>
         <p style={{ margin: "0 0 4px", fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
-          Es el espacio donde van a vivir los gastos compartidos con tu gente.
-          Después vas a poder invitar al resto con un enlace.
+          {adicional
+            ? "Vas a tener un espacio nuevo para organizar otros gastos compartidos. Después vas a poder invitar al resto con un enlace."
+            : "Es el espacio donde van a vivir los gastos compartidos con tu gente. Después vas a poder invitar al resto con un enlace."}
         </p>
 
         <form onSubmit={manejarEnvio}>

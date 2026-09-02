@@ -45,8 +45,9 @@ import {
  * @param {object} props.perfil
  * @param {Array} [props.grupos]
  * @param {(id: string) => void} [props.onCambiarGrupo]
+ * @param {() => void} [props.onNuevoGrupo] - acción "crear nuevo grupo"
  */
-export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [], onCambiarGrupo }) {
+export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [], onCambiarGrupo, onNuevoGrupo }) {
   const [tab, setTab] = useState("inicio");
   const { gastos, error: errorGastos } = useExpenses(grupoId);
   const { pagos, error: errorPagos } = usePagos(grupoId);
@@ -77,7 +78,7 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
 
   return (
     <div>
-      <AppHeader tab={tab} grupoId={grupoId} grupos={grupos} onCambiarGrupo={onCambiarGrupo} />
+      <AppHeader tab={tab} grupoId={grupoId} grupos={grupos} onCambiarGrupo={onCambiarGrupo} onNuevoGrupo={onNuevoGrupo} />
 
       <main>
         <FondoEscena nivel={nivel}>

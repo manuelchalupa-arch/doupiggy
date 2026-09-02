@@ -9,6 +9,15 @@
 // nativo, que se veía sin estilo) con la lista de grupos, coherente con
 // el resto de la app. Elegir una opción actualiza de verdad el grupo
 // activo (onCambiarGrupo), no solo el texto mostrado.
+//
+// Junto al selector vive el botón circular "Nuevo grupo" (una ficha o
+// moneda con las letras NG dentro). Es una acción rápida de gestión de
+// grupos: dispara onNuevoGrupo. La estructura separa el contenedor
+// circular (.boton-nuevo-grupo), el contenido visual interno
+// (.boton-nuevo-grupo-contenido, donde hoy van las letras NG y mañana
+// puede ir un recurso gráfico personalizado) y la acción funcional
+// (onNuevoGrupo). Así, reemplazar NG por una imagen no mueve tamaño,
+// posición, área táctil ni integración con el header.
 
 import { useEffect, useRef, useState } from "react";
 import { brandingAssets } from "../assets";
@@ -19,8 +28,9 @@ import { brandingAssets } from "../assets";
  * @param {string} [props.grupoId]
  * @param {Array<{id: string, nombre: string}>} [props.grupos]
  * @param {(id: string) => void} [props.onCambiarGrupo]
+ * @param {() => void} [props.onNuevoGrupo] - acción de "crear nuevo grupo"
  */
-export default function AppHeader({ tab, grupoId, grupos = [], onCambiarGrupo }) {
+export default function AppHeader({ tab, grupoId, grupos = [], onCambiarGrupo, onNuevoGrupo }) {
   const grupoActivo = grupos.find((g) => g.id === grupoId);
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef(null);
@@ -54,39 +64,56 @@ export default function AppHeader({ tab, grupoId, grupos = [], onCambiarGrupo })
       <img key={tab} src={brandingAssets.titulo} alt="DouPiggy" className="header-titulo-animado" />
 
       {grupoActivo && (
-        <div className="cartel-madera-selector" ref={contenedorRef}>
+        <div className="cartel-header-acciones">
+          <div className="cartel-madera-selector" ref={contenedorRef}>
+            <button
+              type="button"
+              className="cartel-madera-boton"
+              style={{ backgroundImage: `url(${brandingAssets.madera})` }}
+              onClick={() => setAbierto((v) => !v)}
+              aria-haspopup="listbox"
+              aria-expanded={abierto}
+              aria-label={`Grupo activo: ${grupoActivo.nombre}. Tocar para cambiar de grupo.`}
+            >
+              <span className="cartel-madera-texto">{grupoActivo.nombre}</span>
+              <span className={`cartel-madera-flecha${abierto ? " abierta" : ""}`} aria-hidden="true">
+                ▾
+              </span>
+            </button>
+
+            {abierto && (
+              <ul className="cartel-madera-menu" role="listbox" aria-label="Elegir grupo">
+                {grupos.map((g) => (
+                  <li key={g.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={g.id === grupoId}
+                      className={`cartel-madera-menu-item${g.id === grupoId ? " sel" : ""}`}
+                      onClick={() => elegir(g.id)}
+                    >
+                      {g.nombre}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Botón circular "Nuevo grupo": ficha/moneda con las letras NG.
+              Apunta al recurso gráfico futuro: para reemplazar NG por una
+              imagen/SVG basta cambiar el interior de
+              .boton-nuevo-grupo-contenido — no se toca botón, tamaño,
+              posición, área táctil ni lógica. */}
           <button
             type="button"
-            className="cartel-madera-boton"
-            style={{ backgroundImage: `url(${brandingAssets.madera})` }}
-            onClick={() => setAbierto((v) => !v)}
-            aria-haspopup="listbox"
-            aria-expanded={abierto}
-            aria-label={`Grupo activo: ${grupoActivo.nombre}. Tocar para cambiar de grupo.`}
+            className="boton-nuevo-grupo"
+            onClick={onNuevoGrupo}
+            aria-label="Crear nuevo grupo"
+            title="Crear nuevo grupo"
           >
-            <span className="cartel-madera-texto">{grupoActivo.nombre}</span>
-            <span className={`cartel-madera-flecha${abierto ? " abierta" : ""}`} aria-hidden="true">
-              ▾
-            </span>
+            <span className="boton-nuevo-grupo-contenido" aria-hidden="true">NG</span>
           </button>
-
-          {abierto && (
-            <ul className="cartel-madera-menu" role="listbox" aria-label="Elegir grupo">
-              {grupos.map((g) => (
-                <li key={g.id}>
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={g.id === grupoId}
-                    className={`cartel-madera-menu-item${g.id === grupoId ? " sel" : ""}`}
-                    onClick={() => elegir(g.id)}
-                  >
-                    {g.nombre}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       )}
     </header>

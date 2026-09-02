@@ -313,6 +313,63 @@
   background: color-mix(in srgb, var(--mustard) 35%, transparent);
 }
 
+/* Grupo de acciones de la derecha del header: el selector de grupo + el
+   botón circular "nuevo grupo". En columna compacta para no quitarte
+   espacio al selector en pantallas angostas. */
+.cartel-header-acciones {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: none;
+}
+
+/* Botón circular "Nuevo grupo": una ficha/moneda, integrada a la estética
+   cartoon de la app (ella misma es el sello "NG" en relieve, como la madera).
+   `overflow: hidden` + `border-radius: 999px` recortan CUALQUIER contenido
+   interno (hoy las letras NG, mañana un recurso gráfico) a un círculo
+   perfecto, así el reemplazo no altera la forma. */
+.boton-nuevo-grupo {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: var(--border-thick);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 30% 25%, #fff6c8 0%, #f7d24b 40%, #ecb61e 62%, #c98b0e 100%);
+  box-shadow:
+    inset 0 -4px 0 rgba(120, 75, 0, 0.45),
+    inset 0 3px 4px rgba(255, 246, 200, 0.6),
+    var(--shadow-soft);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+.boton-nuevo-grupo:hover { filter: saturate(1.08) brightness(1.03); }
+.boton-nuevo-grupo:active { transform: translateY(2px) scale(0.98); }
+
+/* Contenido interno del botón. Punto de reemplazo del recurso gráfico
+   futuro: acá van hoy las letras NG; para poner un ícono/imagen/SVG
+   personalizado solo hay que ponerlo como hijo de .boton-nuevo-grupo-
+   contenido (o reemplazarlo), y este recorte + centrado lo contienen. */
+.boton-nuevo-grupo-contenido {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+  color: #7a4e00;
+  text-shadow: 0 1px 0 rgba(255, 248, 210, 0.55);
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ---------- Tabbar ---------- */
 .tabbar {
   position: fixed;
@@ -412,6 +469,32 @@
 .titulo-seccion:first-child { margin-top: 0; }
 
 /* ---------- Responsive ---------- */
+
+/* En pantallas muy angostas el header queda apretado con título + selector
+   + botón NG. Se achica el botón, se recorta el ancho del selector y se
+   aprietan los gaps para que todo entre sin desbordar horizontalmente. */
+@media (max-width: 400px) {
+  .cartel-header {
+    gap: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .cartel-header-acciones { gap: 6px; }
+  .boton-nuevo-grupo {
+    width: 42px;
+    height: 42px;
+  }
+  .boton-nuevo-grupo-contenido { font-size: 19px; }
+  .cartel-madera-selector { max-width: 46vw; }
+  .cartel-madera-boton {
+    width: clamp(104px, 26vw, 150px);
+    padding: 0 16px 0 10px;
+  }
+  .cartel-madera-texto { font-size: 11px; }
+  .cartel-madera-flecha { right: 5px; bottom: 5px; font-size: 11px; }
+  .header-titulo-animado { max-width: 44vw; }
+}
+
 @media (max-width: 360px) {
   .cartel-marca span { font-size: 16px; }
   .cartel-contexto .contexto-titulo { font-size: 13px; }

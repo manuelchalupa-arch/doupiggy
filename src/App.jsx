@@ -78,6 +78,10 @@ export default function App() {
   // Mientras tenga un valor, tiene prioridad sobre AppShell.
   const [grupoParaInvitarId, setGrupoParaInvitarId] = useState(null);
 
+  // El usuario pidió crear un NUEVO grupo desde el botón NG del header, aun
+  // cuando ya tiene grupos. Mientras sea true se muestra CrearGrupoScreen.
+  const [creandoGrupo, setCreandoGrupo] = useState(false);
+
   // Si la app está instalada y se abre sin conexión, Firestore solo entrega
   // snapshots locales. Este contador fuerza re-suscribirse cuando IoT vuelve,
   // para que el snapshot de red reemplace el "offline" y la app entre directo
@@ -233,6 +237,17 @@ export default function App() {
             setGrupoParaInvitarId(null);
           }}
         />
+      ) : creandoGrupo ? (
+        <CrearGrupoScreen
+          uidActual={usuario.uid}
+          usuarioAuth={usuario}
+          adicional
+          onCancelar={() => setCreandoGrupo(false)}
+          onCreado={(grupoId) => {
+            setGrupoParaInvitarId(grupoId);
+            setCreandoGrupo(false);
+          }}
+        />
       ) : grupos.length === 0 ? (
         <CrearGrupoScreen
           uidActual={usuario.uid}
@@ -247,6 +262,7 @@ export default function App() {
           perfil={perfil}
           grupos={grupos}
           onCambiarGrupo={setGrupoSeleccionadoId}
+          onNuevoGrupo={() => setCreandoGrupo(true)}
         />
       )}
     </div>
