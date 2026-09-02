@@ -59,9 +59,9 @@ export default function CrearGrupoScreen({ uidActual, usuarioAuth, onCreado, adi
       }}
     >
       <img
-        src={brandingAssets.logo}
+        src={brandingAssets.crearGrupoLogo}
         alt="DouPiggy"
-        style={{ width: 192, height: 192, objectFit: "contain", flex: "none" }}
+        style={{ width: "100%", maxWidth: 480, height: "auto", objectFit: "contain", flex: "none" }}
       />
 
       <div className="tarjeta" style={{ width: "100%", maxWidth: 360 }}>
