@@ -85,7 +85,7 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           type="button"
           className="btn chico accion"

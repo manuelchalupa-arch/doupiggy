@@ -82,7 +82,7 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
       <main>
         <FondoEscena nivel={nivel}>
           {errorDatos && (
-            <div className="tarjeta tarjeta-imagen-completa" style={{ marginBottom: 14 }}>
+            <div className="tarjeta tarjeta-imagen-completa">
               <div className="tarjeta-imagen-completa-panel">
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "var(--burnt)" }}>
                   {esPermisos

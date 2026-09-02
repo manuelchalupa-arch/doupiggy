@@ -75,17 +75,17 @@
 .btn.chico {
   padding: 6px 12px;
   font-size: 0.7rem;
-  box-shadow: 2px 3px 0 var(--ink);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn.chico:hover {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 3px 4px 0 var(--ink);
+  box-shadow: var(--shadow-medium);
 }
 
 .btn.chico:active {
   transform: translateY(1px) scale(0.98);
-  box-shadow: 1px 1px 0 var(--ink);
+  box-shadow: var(--shadow-soft);
 }
 
 .btn.bloque { width: 100%; text-align: center; }
@@ -928,7 +928,7 @@ input.invalido {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 3px 3px 0 var(--ink);
+  box-shadow: var(--shadow-soft);
   cursor: pointer;
 }
 
@@ -1024,7 +1024,7 @@ input.invalido {
   background: var(--paper);
   border: var(--border-medium);
   border-radius: 12px;
-  box-shadow: 4px 4px 0 var(--ink);
+  box-shadow: var(--shadow-soft);
 }
 .avatar-preset-item {
   display: flex;
@@ -1064,9 +1064,9 @@ input.invalido {
   width: 100%;
   max-width: 360px;
   background: var(--paper);
-  border: var(--border-thick);
+  border: var(--border-thin);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-hard), inset 0 0 26px color-mix(in srgb, var(--ink) 7%, transparent);
+  box-shadow: var(--shadow-hard);
   padding: var(--space-md);
   color: var(--ink);
 }
