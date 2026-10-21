@@ -1186,11 +1186,11 @@ input.invalido {
   border-color: var(--ink);
 }
 
-/* Modo "todo el periodo": calendario visible pero inerte (la selección la
-   decide el chip; clickear un día vuelve al modo rango manual). */
+/* Modo "todo el periodo": el calendario queda atenuado como pista visual de
+   que el rango lo define el chip, pero SIGUE clickeable — tocar un día
+   devuelve el control al modo rango manual (inicio y fin). */
 .cal-inactiva {
-  opacity: 0.45;
-  pointer-events: none;
+  opacity: 0.55;
 }
 
 /* ---------- Toast ---------- */

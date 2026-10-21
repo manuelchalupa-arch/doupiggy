@@ -138,10 +138,8 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
       setModalAbierto(false);
       setMensaje(
         cantidad > 0
-          ? `Informe ${formato.toUpperCase()} generado: ${cantidad} gasto${cantidad === 1 ? "" : "s"}${
-              todoElPeriodo ? ` (del ${fechaCorta(desde)} al ${fechaCorta(hasta)})` : ""
-            }.`
-          : "No hubo gastos en ese rango"
+          ? `Informe ${formato.toUpperCase()} generado: ${cantidad} gasto${cantidad === 1 ? "" : "s"} (del ${fechaCorta(desde)} al ${fechaCorta(hasta)}).`
+          : `No hubo gastos entre el ${fechaCorta(desde)} y el ${fechaCorta(hasta)}.`
       );
     } catch (err) {
       setMensaje(err.message);
@@ -225,32 +223,66 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
         <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
           <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
             <h3>Elegí el rango del informe</h3>
-            <button
-              type="button"
-              className={`estrategia-chip${todoElPeriodo ? " sel" : ""}`}
-              style={{ width: "100%", textAlign: "center" }}
-              onClick={() => setTodoElPeriodo(true)}
-            >
-              Todo el periodo · {fechaCorta(rangoTodo.desde)} → {fechaCorta(rangoTodo.hasta)}
-            </button>
-            {todoElPeriodo && (
-              <p className="leyenda-matriz" style={{ margin: "6px 0 8px" }}>
-                Todos los gastos del grupo, del primero al último. El corte se
-                recalcula cuando se confirma un pago entre miembros.
+
+            <div className="estrategia-chips" style={{ marginBottom: 8 }}>
+              <button
+                type="button"
+                className={`estrategia-chip${todoElPeriodo ? " sel" : ""}`}
+                onClick={() => setTodoElPeriodo(true)}
+              >
+                Todo el periodo
+              </button>
+              <button
+                type="button"
+                className={`estrategia-chip${!todoElPeriodo ? " sel" : ""}`}
+                onClick={() => setTodoElPeriodo(false)}
+              >
+                Elegir fechas
+              </button>
+              {!todoElPeriodo && (rangoDesde || rangoHasta) && (
+                <button
+                  type="button"
+                  className="estrategia-chip"
+                  onClick={() => {
+                    setRangoDesde(null);
+                    setRangoHasta(null);
+                  }}
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+
+            {todoElPeriodo ? (
+              <p className="leyenda-matriz" style={{ margin: "0 0 8px" }}>
+                Del {fechaCorta(rangoTodo.desde)} al {fechaCorta(rangoTodo.hasta)}: todos los
+                gastos del grupo, del primero al último. El corte se recalcula cuando se
+                confirma un pago entre miembros.
+              </p>
+            ) : (
+              <p className="leyenda-matriz" style={{ margin: "0 0 8px" }}>
+                Tocá el día de inicio y después el día de fin, dentro del mes que quieras.
+                {rangoDesde && (
+                  <> Rango actual: <strong>{fechaCorta(rangoDesde)}</strong>
+                    {rangoHasta ? <> al <strong>{fechaCorta(rangoHasta)}</strong></> : " — elegí el fin"}
+                  </>
+                )}
               </p>
             )}
+
             <div className={todoElPeriodo ? "cal-inactiva" : undefined}>
               <CalendarioRango
                 desde={rangoDesde}
                 hasta={rangoHasta}
                 onCambiarRango={(d, h) => {
-                  // Clickear un día sale del modo "todo el periodo".
+                  // Tocar un día sale del modo "todo el periodo".
                   setTodoElPeriodo(false);
                   setRangoDesde(d);
                   setRangoHasta(h);
                 }}
               />
             </div>
+
             <div className="modal-acciones">
               <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
                 Cancelar

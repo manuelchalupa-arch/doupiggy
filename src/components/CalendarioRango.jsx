@@ -21,7 +21,12 @@ const DIAS_SEMANA = ["D", "L", "M", "M", "J", "V", "S"];
  * @param {(desde: Date, hasta: Date|null) => void} props.onCambiarRango
  */
 export default function CalendarioRango({ desde, hasta, onCambiarRango }) {
-  const [mesActual, setMesActual] = useState(desde ?? new Date());
+  const [mesNavegado, setMesNavegado] = useState(null);
+
+  // El mes visible sigue a la fecha de inicio cuando la hay; si no, es el mes
+  // actual. `mesNavegado` deja al usuario navegar libremente con ‹ ›.
+  const mesBase = desde ?? new Date();
+  const mesActual = mesNavegado ?? new Date(mesBase.getFullYear(), mesBase.getMonth(), 1);
 
   const primerDia = new Date(mesActual.getFullYear(), mesActual.getMonth(), 1);
   const diasEnMes = new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 0).getDate();
@@ -53,13 +58,21 @@ export default function CalendarioRango({ desde, hasta, onCambiarRango }) {
   return (
     <div className="calendario-pared">
       <div className="cal-header">
-        <button type="button" onClick={() => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1))}>
+        <button
+          type="button"
+          aria-label="Mes anterior"
+          onClick={() => setMesNavegado(new Date(mesActual.getFullYear(), mesActual.getMonth() - 1, 1))}
+        >
           ‹
         </button>
         <strong style={{ fontFamily: "var(--font-display)", fontSize: 15, letterSpacing: 0.4 }}>
           {MESES[mesActual.getMonth()]} {mesActual.getFullYear()}
         </strong>
-        <button type="button" onClick={() => setMesActual(new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 1))}>
+        <button
+          type="button"
+          aria-label="Mes siguiente"
+          onClick={() => setMesNavegado(new Date(mesActual.getFullYear(), mesActual.getMonth() + 1, 1))}
+        >
           ›
         </button>
       </div>
