@@ -15,7 +15,12 @@
 // círculos con la inicial (no hay foto por miembro acá), coloreados por uid.
 
 import { useMemo, useState } from "react";
-import { generarInformeExcel, generarInformePdf, generarInformeEstado } from "../services/reportService";
+import {
+  generarInformeExcel,
+  generarInformePdf,
+  generarInformeEstado,
+  rangoCompletoDeGastos,
+} from "../services/reportService";
 import { formatoARS } from "../utils/format";
 import { calcularDeudas } from "../utils/calcularDeudas";
 import { IconoCalendar, IconoPdf, IconoExcel } from "./IconosRaster";
@@ -38,6 +43,11 @@ function inicialDe(nombre) {
 
 function primeraPalabra(nombre) {
   return (nombre || "").split(/\s+/)[0];
+}
+
+/** Date → "dd/mm/aaaa" (es-AR), para mostrar el rango del informe. */
+function fechaCorta(d) {
+  return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 /** Círculo con la inicial de un miembro, color fijo por uid. */
@@ -85,7 +95,16 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
   const [modalAbierto, setModalAbierto] = useState(false);
   const [rangoDesde, setRangoDesde] = useState(null);
   const [rangoHasta, setRangoHasta] = useState(null);
+  // "Todo el periodo" es el modo por defecto del modal: informe con TODOS los
+  // gastos del grupo (del primero al último) sin elegir fechas a mano.
+  const [todoElPeriodo, setTodoElPeriodo] = useState(true);
   const [mensaje, setMensaje] = useState(null);
+
+  // Del primer gasto a la fecha más reciente entre la última recepción
+  // confirmada y el último gasto. Se recalcula solo al cambiar gastos/pagos
+  // (p. ej. cuando se confirma un depósito entre miembros); mientras tanto
+  // el rango se mantiene.
+  const rangoTodo = useMemo(() => rangoCompletoDeGastos(gastos, pagos), [gastos, pagos]);
 
   const nombrePorUid = useMemo(() => {
     const mapa = {};
@@ -110,14 +129,19 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
   }
 
   function generar(formato) {
-    if (!rangoDesde) return;
-    const hasta = rangoHasta ?? rangoDesde;
+    const desde = todoElPeriodo ? rangoTodo.desde : rangoDesde;
+    const hasta = todoElPeriodo ? rangoTodo.hasta : (rangoHasta ?? rangoDesde);
+    if (!desde) return;
     const generador = formato === "pdf" ? generarInformePdf : generarInformeExcel;
     try {
-      const cantidad = generador(gastos, nombrePorUid, rangoDesde, hasta);
+      const cantidad = generador(gastos, nombrePorUid, desde, hasta);
       setModalAbierto(false);
       setMensaje(
-        cantidad > 0 ? `Informe ${formato.toUpperCase()} generado (${cantidad} gastos)` : "No hubo gastos en ese rango"
+        cantidad > 0
+          ? `Informe ${formato.toUpperCase()} generado: ${cantidad} gasto${cantidad === 1 ? "" : "s"}${
+              todoElPeriodo ? ` (del ${fechaCorta(desde)} al ${fechaCorta(hasta)})` : ""
+            }.`
+          : "No hubo gastos en ese rango"
       );
     } catch (err) {
       setMensaje(err.message);
@@ -177,55 +201,84 @@ export default function SettlementPanel({ uidActual, miembros, gastos, pagos = [
             type="button"
             className="btn accion bloque"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            onClick={() => setModalAbierto(true)}
+            onClick={() => {
+              // Al abrir siempre arranca en "todo el periodo" (el corte ya
+              // viene calculado); el calendario queda para rangos manuales.
+              setTodoElPeriodo(true);
+              setModalAbierto(true);
+            }}
           >
             <IconoCalendar tamano={16} />
             Generar informe
           </button>
           {mensaje && <p className="ayuda-error" style={{ color: "var(--avocado)" }}>{mensaje}</p>}
         </div>
+      </div>
 
-        {modalAbierto && (
-          <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
-            <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
-              <h3>Elegí el rango del informe</h3>
+      {/* Modal del informe. IMPORTANTE: vive FUERA de la tarjeta — `.tarjeta`
+          aplica backdrop-filter, que convierte a ese ancestro en containing
+          block del position:fixed del modal y quedaría recortado adentro
+          (el calendario se veía cortado/chico). Mismo patrón que ExpenseForm
+          e InfoProfile: nunca renderizar .modal-fondo dentro de un elemento
+          con backdrop-filter o transform. */}
+      {modalAbierto && (
+        <div className="modal-fondo" onClick={() => setModalAbierto(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-label="Elegí el rango del informe" onClick={(e) => e.stopPropagation()}>
+            <h3>Elegí el rango del informe</h3>
+            <button
+              type="button"
+              className={`estrategia-chip${todoElPeriodo ? " sel" : ""}`}
+              style={{ width: "100%", textAlign: "center" }}
+              onClick={() => setTodoElPeriodo(true)}
+            >
+              Todo el periodo · {fechaCorta(rangoTodo.desde)} → {fechaCorta(rangoTodo.hasta)}
+            </button>
+            {todoElPeriodo && (
+              <p className="leyenda-matriz" style={{ margin: "6px 0 8px" }}>
+                Todos los gastos del grupo, del primero al último. El corte se
+                recalcula cuando se confirma un pago entre miembros.
+              </p>
+            )}
+            <div className={todoElPeriodo ? "cal-inactiva" : undefined}>
               <CalendarioRango
                 desde={rangoDesde}
                 hasta={rangoHasta}
                 onCambiarRango={(d, h) => {
+                  // Clickear un día sale del modo "todo el periodo".
+                  setTodoElPeriodo(false);
                   setRangoDesde(d);
                   setRangoHasta(h);
                 }}
               />
-              <div className="modal-acciones">
-                <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="btn chico accion"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => generar("excel")}
-                  disabled={!rangoDesde}
-                >
-                  <IconoExcel tamano={14} />
-                  Excel
-                </button>
-                <button
-                  type="button"
-                  className="btn chico accion"
-                  style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  onClick={() => generar("pdf")}
-                  disabled={!rangoDesde}
-                >
-                  <IconoPdf tamano={14} />
-                  PDF
-                </button>
-              </div>
+            </div>
+            <div className="modal-acciones">
+              <button type="button" className="btn chico secundario" onClick={() => setModalAbierto(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn chico accion"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => generar("excel")}
+                disabled={!todoElPeriodo && !rangoDesde}
+              >
+                <IconoExcel tamano={14} />
+                Excel
+              </button>
+              <button
+                type="button"
+                className="btn chico accion"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                onClick={() => generar("pdf")}
+                disabled={!todoElPeriodo && !rangoDesde}
+              >
+                <IconoPdf tamano={14} />
+                PDF
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ---------- 3. A QUIÉN HAY QUE PAGARLE ---------- */}
       <div className="tarjeta-flotante">

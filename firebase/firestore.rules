@@ -71,11 +71,17 @@ service cloud.firestore {
       allow delete: if estaAutenticado() && resource.data.creadoPor == request.auth.uid;
 
       // --- gastos (subcolección) ---
+      // Solo el creador del gasto puede editarlo o borrarlo. Cualquier
+      // miembro puede crear los suyos (creadoPor == auth.uid) y todos
+      // pueden leer la lista completa.
       match /gastos/{gastoId} {
         allow read: if esMiembroDelGrupo(grupoId);
         allow create: if esMiembroDelGrupo(grupoId) &&
           request.auth.uid == request.resource.data.creadoPor;
-        allow update, delete: if esMiembroDelGrupo(grupoId);
+        allow update: if esMiembroDelGrupo(grupoId) &&
+          resource.data.creadoPor == request.auth.uid;
+        allow delete: if esMiembroDelGrupo(grupoId) &&
+          resource.data.creadoPor == request.auth.uid;
       }
 
       // --- prestamos (subcolección) ---
@@ -92,30 +98,43 @@ service cloud.firestore {
       }
 
       // --- pagos (subcolección) ---
-      // Ciclo de vida de un pago real (trazabilidad completa):
-      //   - CREAR: el DEUDOR declara que envió dinero ("declarado"), o se
-      //     conserva el alta legacy del ACREEDOR confirmando directo (sin
-      //     estado) para no romper los registros ya creados por la versión
-      //     vieja. Nunca de == para.
-      //   - La deuda NO se considera saldada en el create: la confirmación
-      //     real llega recién con el update del acreedor.
-      //   - UPDATE (máquina de estados, con el rol correcto por transición):
-      //       declarado -> confirmado : SOLO el acreedor (para)
-      //       declarado -> rechazado  : SOLO el acreedor (para)
-      //       declarado -> cancelado  : SOLO el deudor (de), mientras siga
-      //                                 pendiente de confirmación
-      //   - DELETE: solo para deshacer un "recibido" legacy (lo creó el
-      //     acreedor) o una declaración propia todavía no confirmada.
+      // Obligación/pago con ciclo de vida sincronizado entre ambas partes.
+      // Una única entidad por par(deudor → acreedor) que ambos leen en vivo.
+      //
+      //   Estados nuevos (canónicos):
+      //     PAYMENT_REPORTED  → el DEUDOR marcó que pagó. Deuda NO saldada.
+      //     RECEIPT_CONFIRMED  → el ACREEDOR confirmó que recibió. Recién acá
+      //                          la deuda se descuenta (se salda).
+      //     ARCHIVED           → liquidación cerrada, pasa al historial.
+      //   Compatibilidad legacy: "declarado" ≈ PAYMENT_REPORTED y
+      //   "confirmado"/sin-estado ≈ RECEIPT_CONFIRMED (se aceptan las
+      //   transiciones viejas para no romper registros existentes).
+      //
+      //   - CREAR: SOLO el DEUDOR informa (estado PAYMENT_REPORTED, o legacy
+      //     "declarado"); nunca de == para. No se salda nada al crear.
+      //   - UPDATE (máquina de estados con rol correcto por transición):
+      //       PAYMENT_REPORTED -> RECEIPT_CONFIRMED : SOLO acreedor (para)
+      //       PAYMENT_REPORTED -> cancelado/terminal : SOLO deudor (de)
+      //       (legacy declarado -> confirmado|rechazado|cancelado se mantiene)
       match /pagos/{pagoId} {
         allow read: if esMiembroDelGrupo(grupoId);
         allow create: if esMiembroDelGrupo(grupoId) &&
           request.resource.data.de != request.resource.data.para &&
+          request.resource.data.de == request.auth.uid &&
           (
-            (request.resource.data.de == request.auth.uid &&
-             request.resource.data.estado == "declarado") ||
-            (request.resource.data.para == request.auth.uid)
+            request.resource.data.estado == "PAYMENT_REPORTED" ||
+            request.resource.data.estado == "declarado"
           );
         allow update: if esMiembroDelGrupo(grupoId) && (
+          // Nuevo esquema: informado -> confirmado (solo el acreedor).
+          (resource.data.estado == "PAYMENT_REPORTED" &&
+           request.resource.data.estado == "RECEIPT_CONFIRMED" &&
+           request.auth.uid == resource.data.para) ||
+          // Nuevo esquema: el deudor cancela/descarta su informe.
+          (resource.data.estado == "PAYMENT_REPORTED" &&
+           request.resource.data.estado == "cancelado" &&
+           request.auth.uid == resource.data.de) ||
+          // Legacy: declarado -> confirmado / rechazado (acreedor) o cancelado (deudor).
           (resource.data.estado == "declarado" &&
            request.resource.data.estado == "confirmado" &&
            request.auth.uid == resource.data.para) ||

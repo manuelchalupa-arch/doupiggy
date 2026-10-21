@@ -8,6 +8,47 @@
 // local de Firestore.
 
 import { calcularDeudas } from "../utils/calcularDeudas";
+import { esPagoConfirmado } from "./pagoService";
+
+/** Timestamp de Firestore (o ms) → Date | null. Genérico para gastos y pagos. */
+function fechaDe(ts) {
+  if (!ts) return null;
+  if (ts.toDate) return ts.toDate();
+  if (typeof ts.toMillis === "function") return new Date(ts.toMillis());
+  if (typeof ts === "number") return new Date(ts);
+  return null;
+}
+
+/**
+ * Rango "todo el periodo" del informe: desde el PRIMER gasto del grupo hasta
+ * la fecha más reciente entre la ÚLTIMA RECEPCIÓN CONFIRMADA y el último
+ * gasto. Regla de negocio: el corte se recalcula solo cuando se confirma un
+ * depósito entre miembros (o entra un gasto nuevo); mientras tanto se
+ * mantiene, y nunca quedan gastos del grupo afuera del rango.
+ * Grupo vacío → rango de hoy (informe sin filas, inocuo).
+ *
+ * @param {Array} gastos
+ * @param {Array} pagosConfirmados - pagos del grupo (cualquier estado; acá se
+ *   filtran solo los confirmados como recibidos)
+ * @returns {{desde: Date, hasta: Date}}
+ */
+export function rangoCompletoDeGastos(gastos = [], pagosConfirmados = []) {
+  const fechasGastos = gastos.map((g) => fechaDe(g.creadoEn)).filter(Boolean);
+  const fechasConfirmaciones = pagosConfirmados
+    .filter(esPagoConfirmado)
+    .map((p) => fechaDe(p.confirmadoEn) ?? fechaDe(p.declaradoEn) ?? fechaDe(p.creadoEn))
+    .filter(Boolean);
+
+  const hoy = new Date();
+  const desde = fechasGastos.length
+    ? new Date(Math.min(...fechasGastos.map((f) => f.getTime())))
+    : new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+
+  const marcas = [...fechasGastos, ...fechasConfirmaciones, desde].map((f) => f.getTime());
+  const hasta = new Date(Math.max(...marcas));
+
+  return { desde, hasta };
+}
 
 /**
  * @param {Array} gastos - gastos del grupo, cada uno con `creadoEn` (Timestamp de Firestore)

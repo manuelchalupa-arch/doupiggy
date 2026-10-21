@@ -832,6 +832,31 @@ input.invalido {
 
 .lista-historial::-webkit-scrollbar-track { background: var(--cream); }
 
+/* Modal alto con lista scrolleable (historial completo de gastos) */
+.modal-alto {
+  display: flex;
+  flex-direction: column;
+  max-height: min(80dvh, 560px);
+}
+
+.lista-modal {
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.lista-modal::-webkit-scrollbar { width: 9px; }
+
+.lista-modal::-webkit-scrollbar-thumb {
+  background: var(--mustard);
+  border: var(--border-thin);
+  border-radius: 8px;
+}
+
+.lista-modal::-webkit-scrollbar-track { background: var(--cream); }
+
 .item-gasto {
   display: flex;
   align-items: center;
@@ -1159,6 +1184,13 @@ input.invalido {
   background: var(--burnt);
   color: var(--paper);
   border-color: var(--ink);
+}
+
+/* Modo "todo el periodo": calendario visible pero inerte (la selección la
+   decide el chip; clickear un día vuelve al modo rango manual). */
+.cal-inactiva {
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 /* ---------- Toast ---------- */

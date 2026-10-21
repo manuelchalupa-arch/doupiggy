@@ -43,6 +43,23 @@ function antiguedadDelPar(gastos, deudor, acreedor, ahoraMs) {
 }
 
 /**
+ * Concepto sugerido para una deuda (deudor → acreedor): la descripción del
+ * gasto MÁS RECIENTE que originó ese par. Sirve de "liquidación relacionada"
+ * cuando se informa el pago; el deudor puede editarlo.
+ */
+function conceptoDelPar(gastos, deudor, acreedor) {
+  const candidatos = gastos
+    .filter((g) => g.pagadoPor === acreedor && (g.participantes || []).includes(deudor))
+    .map((g) => g)
+    .sort((a, b) => {
+      const msA = a.creadoEn?.toDate ? a.creadoEn.toDate().getTime() : 0;
+      const msB = b.creadoEn?.toDate ? b.creadoEn.toDate().getTime() : 0;
+      return msB - msA;
+    });
+  return candidatos[0]?.descripcion ?? null;
+}
+
+/**
  * @param {object} datos
  * @param {Array} datos.gastos
  * @param {Array<{uid:string,nombre:string,alias?:string,cbu?:string}>} datos.miembros
@@ -73,6 +90,7 @@ export function calcularPosicionLiquidacion({ gastos = [], miembros = [], pagos 
         alias: infoPorUid[p.para]?.alias ?? null,
         cbu: infoPorUid[p.para]?.cbu ?? null,
         antiguedadDias: antiguedadDelPar(gastos, uidActual, p.para, ahoraMs),
+        concepto: conceptoDelPar(gastos, uidActual, p.para),
       });
       totalDebo += monto;
     } else if (p.para === uidActual) {
@@ -84,6 +102,7 @@ export function calcularPosicionLiquidacion({ gastos = [], miembros = [], pagos 
         alias: infoPorUid[p.de]?.alias ?? null,
         cbu: infoPorUid[p.de]?.cbu ?? null,
         antiguedadDias: antiguedadDelPar(gastos, p.de, uidActual, ahoraMs),
+        concepto: conceptoDelPar(gastos, p.de, uidActual),
       });
       totalMeDeben += monto;
     }
@@ -94,20 +113,31 @@ export function calcularPosicionLiquidacion({ gastos = [], miembros = [], pagos 
   // Lo que te deben: primero lo más grande.
   meDeben.sort((a, b) => b.monto - a.monto);
 
-  // Pendiente de confirmación: declaraciones en vuelo que te involucran.
+  // Pendiente de confirmación: recibos informados en vuelo que te involucran.
+  // Un solo registro por obligación (de → para); lo ven las DOS partes.
   const pendientes = (pagos || [])
-    .filter((p) => p.estado === "declarado" && (p.de === uidActual || p.para === uidActual))
-    .map((p) => ({
-      id: p.id,
-      de: p.de,
-      para: p.para,
-      monto: Math.round((p.monto || 0) * 100) / 100,
-      sentido: p.de === uidActual ? "declare-yo" : "me-declararon",
-      quien: infoPorUid[p.de]?.nombre ?? p.de,
-      quienPara: infoPorUid[p.para]?.nombre ?? p.para,
-      declaradoEn: p.declaradoEn,
-    }))
-    .sort((a, b) => (b.declaradoEn?.toMillis?.() ?? 0) - (a.declaradoEn?.toMillis?.() ?? 0));
+    .filter(
+      (p) =>
+        // estados informados en vuelo (+ legacy "declarado")
+        (p.estado === "declarado" || p.estado === "PAYMENT_REPORTED") &&
+        (p.de === uidActual || p.para === uidActual)
+    )
+    .map((p) => {
+      const informadoEnTs = p.informadoEn ?? p.declaradoEn ?? p.creadoEn;
+      return {
+        id: p.id,
+        grupoId: p.grupoId ?? null,
+        de: p.de,
+        para: p.para,
+        monto: Math.round((p.monto || 0) * 100) / 100,
+        concepto: p.concepto ?? null,
+        sentido: p.de === uidActual ? "declare-yo" : "me-declararon",
+        quien: infoPorUid[p.de]?.nombre ?? p.de,
+        quienPara: infoPorUid[p.para]?.nombre ?? p.para,
+        informadoEn: informadoEnTs,
+      };
+    })
+    .sort((a, b) => (b.informadoEn?.toMillis?.() ?? 0) - (a.informadoEn?.toMillis?.() ?? 0));
 
   const totalPendienteConfirmacion = Math.round(pendientes.reduce((a, p) => a + p.monto, 0) * 100) / 100;
 

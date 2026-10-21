@@ -12,6 +12,7 @@ import {
   calcularDivisionIgualitaria,
 } from "../services/expenseService";
 import { formatoARS, parsePeso } from "../utils/format";
+import { calcularDeudas } from "../utils/calcularDeudas";
 import { IconoTrash, IconoInvitacion } from "./IconosRaster";
 import InvitarGrupo from "./InvitarGrupo";
 
@@ -22,8 +23,10 @@ import InvitarGrupo from "./InvitarGrupo";
  * @param {Array<{uid: string, nombre: string}>} props.miembros - miembros del grupo
  * @param {Array} props.gastos - gastos ya suscriptos por AppShell (evita un
  *   segundo listener: AppShell es el dueño de useExpenses)
+ * @param {Array} [props.pagos] - pagos confirmados (para ocultar los gastos
+ *   saldados: la deuda que generaron ya se pagó y se confirmó)
  */
-export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
+export default function ExpenseForm({ grupoId, uidActual, miembros, gastos, pagos = [] }) {
   const [monto, setMonto] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [pagadoPor, setPagadoPor] = useState(uidActual);
@@ -33,8 +36,34 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
   const [invitarAbierto, setInvitarAbierto] = useState(false);
+  const [historialAbierto, setHistorialAbierto] = useState(false);
 
-  const ultimosCuatro = gastos.slice(0, 4);
+  // Ocultar gastos SALDADOS (directiva del usuario): cuando se confirma el
+  // pago de una deuda, los gastos que la generaron desaparecen de la vista.
+  // Un gasto queda oculto recién cuando TODAS las deudas por par que lo
+  // originaron están saldadas (si un gasto tiene varios deudores y solo uno
+  // pagó, sigue visible hasta que todos cubran su parte).
+  const posDeuda = useMemo(
+    () => calcularDeudas(gastos, miembros, pagos),
+    [gastos, miembros, pagos]
+  );
+  const parSaldado = useMemo(() => {
+    const saldo = new Map();
+    for (const p of posDeuda.pares) {
+      // pares de resultarDeudas: de debe a para y sigue pendiente.
+      saldo.set(`${p.de}\u0000${p.para}`, false);
+    }
+    return saldo;
+  }, [posDeuda]);
+  const gastosVisibles = gastos.filter((g) => {
+    const participantes = g.participantes || [];
+    return participantes.some((part) => {
+      if (part === g.pagadoPor) return true;
+      // Si la deuda de part → pagadoPor sigue en pares, el gasto se mantiene.
+      return parSaldado.get(`${part}\u0000${g.pagadoPor}`) !== false;
+    });
+  });
+  const ultimosCuatro = gastosVisibles.slice(0, 4);
 
   const montoNumerico = parsePeso(monto);
 
@@ -169,17 +198,69 @@ export default function ExpenseForm({ grupoId, uidActual, miembros, gastos }) {
                 <div className="meta">Pagó {nombreDe(g.pagadoPor)}</div>
               </div>
               <div className="monto">{formatoARS.format(g.monto)}</div>
-              <button
-                className="btn-borrar"
-                aria-label="Borrar gasto"
-                onClick={() => manejarBorrado(g)}
-              >
-                <IconoTrash tamano={14} prohibido />
-              </button>
+              {g.creadoPor === uidActual && (
+                <button
+                  className="btn-borrar"
+                  aria-label="Borrar gasto"
+                  onClick={() => manejarBorrado(g)}
+                >
+                  <IconoTrash tamano={14} prohibido />
+                </button>
+              )}
             </div>
           ))}
         </div>
+        {gastosVisibles.length > 4 && (
+          <button
+            type="button"
+            className="btn chico secundario"
+            style={{ marginTop: 10, width: "100%" }}
+            onClick={() => setHistorialAbierto(true)}
+          >
+            Ver todos los gastos ({gastosVisibles.length})
+          </button>
+        )}
       </div>
+
+      {historialAbierto && (
+        <div className="modal-fondo" onClick={() => setHistorialAbierto(false)}>
+          <div
+            className="modal modal-alto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Todos los gastos del grupo"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Todos los gastos ({gastosVisibles.length})</h3>
+            <div className="lista-historial lista-modal">
+              {gastosVisibles.map((g) => (
+                <div className="item-gasto" key={g.id}>
+                  <IconoRecibo />
+                  <div className="texto-gasto">
+                    <div className="desc">{g.descripcion}</div>
+                    <div className="meta">Pagó {nombreDe(g.pagadoPor)}</div>
+                  </div>
+                  <div className="monto">{formatoARS.format(g.monto)}</div>
+                  {g.creadoPor === uidActual && (
+                    <button
+                      className="btn-borrar"
+                      aria-label="Borrar gasto"
+                      onClick={() => manejarBorrado(g)}
+                    >
+                      <IconoTrash tamano={14} prohibido />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="modal-acciones">
+              <button type="button" className="btn chico secundario" onClick={() => setHistorialAbierto(false)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {invitarAbierto && (
         <div className="modal-fondo" onClick={() => setInvitarAbierto(false)}>

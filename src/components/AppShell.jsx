@@ -115,7 +115,7 @@ export default function AppShell({ grupoId, grupo, uidActual, perfil, grupos = [
           {tab === "gastos" && (
             // key={grupoId} remonta el form al cambiar de grupo: reinicia
             // participantes/pagador para que no queden uids del grupo previo.
-            <ExpenseForm key={grupoId} grupoId={grupoId} uidActual={uidActual} miembros={miembros} gastos={gastos} />
+            <ExpenseForm key={grupoId} grupoId={grupoId} uidActual={uidActual} miembros={miembros} gastos={gastos} pagos={pagos} />
           )}
 
           {tab === "liquidacion" && (

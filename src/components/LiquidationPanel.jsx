@@ -71,6 +71,7 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
   const [pagoModal, setPagoModal] = useState(null);
   const [rechazoPago, setRechazoPago] = useState(null);
   const [confirmandoId, setConfirmandoId] = useState(null);
+  const [confirmoRecepcion, setConfirmoRecepcion] = useState(false);
   const [copiado, setCopiado] = useState({});
   const timers = useRef({});
 
@@ -111,15 +112,15 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
     );
   }
 
-  async function manejarDeclararPago({ para, monto }) {
+  async function manejarDeclararPago({ para, monto, concepto }) {
     if (procesando) return;
     setError(null);
     setMensaje(null);
     setProcesando("declarar");
     try {
-      await declararPagoEnviado(grupoId, { de: uidActual, para, monto });
+      await declararPagoEnviado(grupoId, { de: uidActual, para, monto, concepto });
       setPagoModal(null);
-      avisarMensaje(`Pago de ${formatoARS.format(monto)} declarado. Esperando confirmación.`);
+      avisarMensaje(`Pago de ${formatoARS.format(monto)} informado: esperando confirmación.`);
     } catch (err) {
       setError(mensajeDeError(err));
     } finally {
@@ -299,22 +300,32 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
                   <div className="pendiente-fila cobrar" key={p.id}>
                     <div className="pendiente-info">
                       <p className="pendiente-titulo">
-                        <strong>{p.quien}</strong> indica que te envió {formatoARS.format(p.monto)}
+                        <strong>{p.quien}</strong> informó que te envió {formatoARS.format(p.monto)}
+                        {p.grupoId ? ` · ${p.concepto ? `"${p.concepto}"` : "pago vinculado"}` : ""}
                       </p>
-                      <p className="pendiente-meta">Estás cobrando este pago. ¿Lo recibiste?</p>
+                      <p className="pendiente-meta">
+                        {p.concepto ? `Concepto: ${p.concepto}` : "Pago informado"} · Informado {fechaCorta(p.informadoEn)}
+                      </p>
                     </div>
                     {confirmandoId === p.id ? (
                       <div className="pendiente-acciones confirmar-en-linea">
-                        <span className="confirma-ayuda">¿Confirmás que recibiste {formatoARS.format(p.monto)}?</span>
+                        <label className="casilla-termino">
+                          <input
+                            type="checkbox"
+                            checked={confirmoRecepcion}
+                            onChange={(e) => setConfirmoRecepcion(e.target.checked)}
+                          />
+                          <span>Confirmo que recibí el pago</span>
+                        </label>
                         <button
                           type="button"
                           className="btn chico accion"
-                          disabled={procesando !== null}
+                          disabled={procesando !== null || !confirmoRecepcion}
                           onClick={() => manejarConfirmarPago(p)}
                         >
-                          Sí, confirmar
+                          Sí, confirmar recepción
                         </button>
-                        <button type="button" className="btn chico secundario" disabled={procesando !== null} onClick={() => setConfirmandoId(null)}>
+                        <button type="button" className="btn chico secundario" disabled={procesando !== null} onClick={() => { setConfirmandoId(null); setConfirmoRecepcion(false); }}>
                           Cancelar
                         </button>
                       </div>
@@ -324,7 +335,7 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
                           type="button"
                           className="btn chico accion"
                           disabled={procesando !== null}
-                          onClick={() => setConfirmandoId(p.id)}
+                          onClick={() => { setConfirmoRecepcion(false); setConfirmandoId(p.id); }}
                         >
                           Confirmar
                         </button>
@@ -343,19 +354,21 @@ export default function LiquidationPanel({ grupoId, uidActual, miembros, gastos,
                   <div className="pendiente-fila pagar" key={p.id}>
                     <div className="pendiente-info">
                       <p className="pendiente-titulo">
-                        Declaraste haber pagado <strong>{formatoARS.format(p.monto)}</strong> a {p.quienPara}
+                        Informaste el pago de <strong>{formatoARS.format(p.monto)}</strong> a {p.quienPara}
                       </p>
-                      <p className="pendiente-meta">Esperando confirmación del acreedor.</p>
+                      <p className="pendiente-meta">
+                        {p.concepto ? `Concepto: ${p.concepto} · ` : ""}Informado {fechaCorta(p.informadoEn)}
+                      </p>
                     </div>
                     <div className="pendiente-acciones">
-                      <span className="pago-estado declarado">Esperando</span>
+                      <span className="pago-estado declarado">Pendiente de confirmación</span>
                       <button
                         type="button"
                         className="btn chico secundario"
                         disabled={procesando !== null}
                         onClick={() => manejarCancelarDeclaracion(p)}
                       >
-                        Cancelar declaración
+                        Cancelar informe
                       </button>
                     </div>
                   </div>
@@ -530,11 +543,20 @@ function fechaTexto(p) {
   return new Date(t).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
+function fechaCorta(ts) {
+  const ms = ts?.toDate ? ts.toDate().getTime() : (typeof ts === "number" ? ts : ts?.toMillis?.());
+  if (!ms) return "sin fecha";
+  return new Date(ms).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 function etiquetaEstado(p) {
   switch (p.estado) {
-    case "declarado": return "Declarado";
+    case "declarado":
+    case "PAYMENT_REPORTED":
+      return "Declarado";
     case "rechazado": return "No confirmado";
     case "cancelado": return "Cancelado";
+    case "ARCHIVED": return "Archivado (liquidación cerrada)";
     default: return "Confirmado";
   }
 }
@@ -542,6 +564,8 @@ function etiquetaEstado(p) {
 /** Sheet (modal) del deudor: ver alias/CBU, copiar y declarar el pago. */
 function SheetPagar({ deuda, pendientes, procesando, copiado, onCopiar, onDeclarar, onCerrar }) {
   const [montoTexto, setMontoTexto] = useState(deuda.monto ? String(deuda.monto) : "");
+  const [concepto, setConcepto] = useState(deuda.concepto ?? "");
+  const [confirmo, setConfirmo] = useState(false);
   const [errorLocal, setErrorLocal] = useState(null);
 
   const monto = parsePeso(montoTexto);
@@ -556,12 +580,16 @@ function SheetPagar({ deuda, pendientes, procesando, copiado, onCopiar, onDeclar
       setErrorLocal(`El monto debe ser mayor a 0 y no superar ${formatoARS.format(deuda.monto)}.`);
       return;
     }
+    if (!confirmo) {
+      setErrorLocal("Marcá la casilla para confirmar que realizaste el pago.");
+      return;
+    }
     if (yaDeclarado) {
-      setErrorLocal("Ya declaraste un pago de ese mismo monto a esta persona. Esperá la confirmación.");
+      setErrorLocal("Ya informaste un pago de ese mismo monto a esta persona. Esperá la confirmación.");
       return;
     }
     setErrorLocal(null);
-    onDeclarar({ para: deuda.para, monto });
+    onDeclarar({ para: deuda.para, monto, concepto: concepto.trim() || null });
   }
 
   return (
@@ -603,20 +631,35 @@ function SheetPagar({ deuda, pendientes, procesando, copiado, onCopiar, onDeclar
           placeholder={deuda.monto ? String(deuda.monto) : "0"}
         />
         {montoInvalido && <p className="ayuda-error">El monto debe ser mayor a 0 y no superar {formatoARS.format(deuda.monto)}.</p>}
-        {yaDeclarado && <p className="ayuda-error">Ya declaraste un pago de ese mismo monto a esta persona. Esperá la confirmación.</p>}
-        {errorLocal && <p className="ayuda-error">{errorLocal}</p>}
 
-        <p className="leyenda-matriz" style={{ marginTop: 8 }}>
-          1) Copiá el alias y transferí. 2) Declará el pago: quedará esperando
-          confirmación de {deuda.nombre}. La deuda se descuenta recién cuando confirma.
-        </p>
+        <label className="campo">Concepto / liquidación (opcional)</label>
+        <input
+          type="text"
+          value={concepto}
+          onChange={(e) => setConcepto(e.target.value)}
+          placeholder="Ej.: expensas de agosto"
+        />
+
+        <label className="casilla-termino">
+          <input
+            type="checkbox"
+            checked={confirmo}
+            onChange={(e) => setConfirmo(e.target.checked)}
+          />
+          <span>Confirmo que realicé el pago</span>
+        </label>
+        {!confirmo && !errorLocal && <p className="leyenda-matriz" style={{ marginTop: 6 }}>
+          1) Copiá el alias y transferí. 2) Marcá la casilla y declará el pago: quedará esperando confirmación de {deuda.nombre}. La deuda se salda recién cuando confirma.
+        </p>}
+        {yaDeclarado && <p className="ayuda-error">Ya informaste un pago de ese mismo monto a esta persona. Esperá la confirmación.</p>}
+        {errorLocal && <p className="ayuda-error">{errorLocal}</p>}
 
         <div className="modal-acciones">
           <button type="button" className="btn chico secundario" onClick={onCerrar} disabled={procesando !== null}>
             Cancelar
           </button>
           <button type="button" className="btn chico accion" onClick={confirmar} disabled={procesando !== null}>
-            {procesando === "declarar" ? "Registrando..." : "Ya realicé el pago"}
+            {procesando === "declarar" ? "Registrando..." : "Informar pago"}
           </button>
         </div>
       </div>
